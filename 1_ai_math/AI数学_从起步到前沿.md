@@ -32,7 +32,7 @@
 
 > 梯度下降就是先看脚下哪个方向下坡最陡（**负梯度方向**），然后朝那个方向迈一小步（**受控的线性试探**），一步步逼近这座山的最低点。
 
-> **本章路线**：§1.1–§1.4 建立梯度下降直觉；§1.5 Adam 处理"每个方向步长不同"；§1.6–§1.7 看局部极小/鞍点与学习率调度；§1.8–§1.10 收束。时间紧可先读 §1.1–§1.5，再回来补调度。
+> **本章路线**：先建立梯度下降直觉（迷雾下山、动手算一个碗、步长之争），再用 Adam 处理"每个方向步长不同"，接着看局部极小/鞍点与学习率调度，最后收束。时间紧可先读直觉与 Adam，再回来补调度。
 
 > **核心概念**：
 > 1. 梯度指向最陡上坡，下山要沿负梯度方向迈小步。
@@ -40,7 +40,7 @@
 > 3. Adam 用梯度历史给每个方向自适应步幅，解决"一个学习率管所有方向"的难题。
 > 4. 高维里梯度为零的点多是鞍点，不是全局最优；动量能帮逃离。
 
-> **动笔前自检**：①你会算 $f(x)=x^2$ 在 $x=3$ 处的导数吗？②"下山"时，为什么不能直接朝最低点的方向走？带着你的猜测往下读，答案会在 §1.1–§1.4 展开。
+> **动笔前自检**：①你会算 $f(x)=x^2$ 在 $x=3$ 处的导数吗？②"下山"时，为什么不能直接朝最低点的方向走？带着你的猜测往下读，答案就在本章逐步展开。
 
  * * *
 ## 1.1 怎么在迷雾中下山
@@ -263,7 +263,7 @@ Adam 的自适应步幅 $\eta/\sqrt{v_t}$ 为**每个标量参数**单独调节�
 
 打个比方：Adam 像逐个工位调转速——哪个工位振动大（梯度大）就给它降速，哪个工位安静就给它加速（标量自适应）。但这条流水线上，不同工位之间的协作关系（矩阵的奇异值谱结构）它看不见——如果整条线只有一个方向在转、其他全停了，Adam 不会发现，因为它只盯着每个工位自己的转速表。
 
-Muon（Liu et al., 2025，arXiv:2502.16982）给出一个新思路：**不逐标量缩放，而是在矩阵层面把动量正交化**。具体做法分两步：
+Muon 给出一个新思路：**不逐标量缩放，而是在矩阵层面把动量正交化**。^[1]^具体做法分两步：
 
 **第一步：正交化动量**。拿 Adam 算出的动量矩阵 $M_t$（动量矩阵：Adam 的一阶矩 $m_t$，形状和权重矩阵一样，是梯度历史的指数滑动平均），对它做一次**正交化**——把矩阵的奇异值全部拉成 1，只保留方向信息。
 
@@ -296,9 +296,9 @@ Muon 已被多个万亿参数级模型采用：Kimi K2（1T 总参数）提出 *
 
 **其他前沿优化器**。Muon 之外还有几条路线在探索"比 Adam 更好"：
 
-- **Lion**（Google Brain, 2023）：砍掉 Adam 的二阶矩估计 $v_t$，只用动量 $m_t$ 的符号做更新——$x_{t+1} = x_t - \eta \cdot \text{sign}(m_t)$。参数量更小、更快，但在 LLM 预训练上稳定性不如 AdamW，目前主要用于视觉模型。
-- **Shampoo**（Google, 2018，PaLM 采用）：不像 Adam 逐标量缩放，而是为每个参数矩阵维护两个 Kronecker 因子 $L$ 和 $R$（分别近似梯度的左、右协方差），用 $L^{-1/4} G R^{-1/4}$ 做预处理。思路和 Muon 类似——利用矩阵结构——但用二阶统计量而非正交化。计算比 Muon 更贵。
-- **Schedule-Free**（Defazio et al., Meta AI, 2024）：消除学习率调度这一超参数。不维护动量，而是在当前参数和平均参数之间做插值，理论上不需要 warmup 和 decay。赢得了 MLCommons 2024 AlgoPerf 算法效率挑战赛；NeurIPS 论文进一步证明它在 LLM 预训练中无需 decay 阶段即可沿损失面的"河流"结构有效收敛。
+- **Lion**：砍掉 Adam 的二阶矩估计 $v_t$，只用动量 $m_t$ 的符号做更新——$x_{t+1} = x_t - \eta \cdot \text{sign}(m_t)$。参数量更小、更快，但在 LLM 预训练上稳定性不如 AdamW，目前主要用于视觉模型。^[2]^
+- **Shampoo**：不像 Adam 逐标量缩放，而是为每个参数矩阵维护两个 Kronecker 因子 $L$ 和 $R$（分别近似梯度的左、右协方差），用 $L^{-1/4} G R^{-1/4}$ 做预处理。^[3]^思路和 Muon 类似——利用矩阵结构——但用二阶统计量而非正交化。计算比 Muon 更贵。
+- **Schedule-Free**：消除学习率调度这一超参数。不维护动量，而是在当前参数和平均参数之间做插值，理论上不需要 warmup 和 decay。赢得了 MLCommons 2024 AlgoPerf 算法效率挑战赛；NeurIPS 论文进一步证明它在 LLM 预训练中无需 decay 阶段即可沿损失面的"河流"结构有效收敛。^[4]^
 
 这些路线的共同目标：Adam 把矩阵展平成标量逐个处理，丢掉了矩阵结构信息；Lion 用符号简化、Shampoo 用 Kronecker 因子、Schedule-Free 用平均插值、Muon 用正交化——各自从不同角度找回这层信息。
 
@@ -408,7 +408,7 @@ Ch1的梯度下降假设你可以自由移动——想往哪走就往哪走。�
 
 > 拉格朗日乘子法教你"在有限预算内把事做到最好"。那个叫 $\lambda$（lambda）的变量，量化了一件事：约束每放松一点点，你能多赚多少。经济学把这个量叫"影子价格"。
 
-> **本章路线**：§2.1–§2.3 先建立"相切"直觉并完成推导；§2.4–§2.5 看不等式约束与对偶；§2.6–§2.8 收束。时间紧可先读 §2.1–§2.4 和 §2.6。
+> **本章路线**：先建立"相切"直觉并完成拉格朗日推导，再看不等式约束（KKT）与对偶，最后收束。时间紧可先读相切直觉、KKT 与 AI 落地。
 
 > **核心概念**：
 > 1. 约束优化把"目标"和"限制"缝进同一个拉格朗日函数。
@@ -682,7 +682,7 @@ Ch2你学会了带着镣铐跳舞——在约束条件下求最优解。但约�
 
 > 从"一无所知时最诚实的态度是什么"出发，用约束优化推导出Softmax——神经网络输出概率分布的数学根基。交叉熵衡量预测好坏，它的梯度形式简洁到只需"预测值减真实值"。
 
-> **本章路线**：§3.1–§3.3 走完"最大熵→Softmax"的推导链；§3.4–§3.5 看公式速查与前沿延伸；§3.6–§3.8 收束。时间紧可先读 §3.1–§3.4 和 §3.6。
+> **本章路线**：先走完"最大熵→Softmax"的推导链，再看公式速查与前沿延伸，最后收束。时间紧可先读推导链、公式速查与 AI 落地。
 
 > **核心概念**：
 > 1. 一无所知时，均匀分布是最诚实的选择。
@@ -1187,7 +1187,7 @@ Ch3推导出交叉熵损失——它告诉你"预测有多差"。但知道"差"�
 
 >前向传播是逐层加工：每一层把输入做线性变换，再通过激活函数添加非线性，最后汇总输出结果。反向传播则是从输出端的误差出发，沿链式法则倒着追查每一层的责任，精确到每一个参数。
 
-> **本章路线**：§4.0 先选损失函数；§4.1–§4.4 走通前向与反向；§4.5–§4.6 看激活函数与数值稳定性；§4.9 看自动微分如何工程化；§4.10 收束。
+> **本章路线**：先选损失函数，再走通前向与反向传播，接着看激活函数梯度与数值稳定性、自动微分如何工程化，最后收束。
 
 > **核心概念**：
 > 1. 前向传播是数据逐层加工，反向传播是误差逐层追责。
@@ -1719,7 +1719,7 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\righ
 
 > Attention 的公式只有一行，但要让它真正可用，还有一串配套：位置编码让词带上顺序，多头让关注视角并行，反向传播让它学会加权，KV Cache 让它生成变快——最后，它和其他积木拼成完整的语言模型。
 
-> **本章路线**：§5.1–§5.8 先吃透 Attention 核心；§5.9 是选读的长序列延伸；§5.10 看这些零件如何拼成完整语言模型——这是本章的"奖励关"。
+> **本章路线**：先吃透 Attention 核心（动态加权、位置编码、多头并行、NumPy 实现），再看选读的长序列延伸（混合架构与 Mamba），最后看这些零件如何拼成完整语言模型——本章的"奖励关"。
 
 > **核心概念**：
 > 1. Attention 是数据依赖的动态加权：Q 查 K，Softmax 给权重，加权 V。
@@ -2145,7 +2145,7 @@ LLaMA 2 70B和LLaMA 3系列采用了更激进的GQA——例如LLaMA 2 70B用64�
 
 标准Attention的计算流程是：先算 $S=QK^T$（一个 $L \times L$ 矩阵），存入HBM；再从HBM读出 $S$ 算softmax得到 $A$，又存入HBM；最后从HBM读出 $A$ 算 $O=AV$。那个 $L \times L$ 的中间矩阵被反复写入和读出HBM——而HBM的带宽远低于计算单元的速度，GPU大部分时间在等数据搬运，不在算。当 $L=65536$ 时，仅这一个矩阵就需要约8GB显存（FP16）。
 
-**Flash Attention**（Dao 等，2022）的核心思路：**不要把 $L \times L$ 矩阵写到HBM**。具体分两步：
+**Flash Attention** 的核心思路：**不要把 $L \times L$ 矩阵写到HBM**。^[24]^具体分两步：
 
 **第一步：分块计算。** 把Q、K、V切成刚好能塞进SRAM的小块，在SRAM内完成局部的 $QK^T$ 和 $AV$ 计算，只把最终输出 $O$ 写回HBM——全程不存储完整的 $L \times L$ 注意力矩阵。
 
@@ -2463,7 +2463,7 @@ Ch5的Attention矩阵随序列长度 $O(n^2)$ 增长——序列一长就算不�
 
 > SVD 揭示的洞见是：大矩阵的有效信息维度往往很低——它催生整个低秩方法家族：LoRA用低秩微调大模型，MLA用低秩压缩注意力缓存，DSA/CSA用稀疏加低秩加速计算。低秩不只是技巧，更是大自然的信息组织方式。
 
-> **本章路线**：Part A（§6.1–§6.4）建立低秩数学与 LoRA；Part B（§6.5–§6.8）看 MLA/DSA/CSA/MoE 如何变成高效 AI 工程拼图。时间紧时，优先 Part A 的 §6.1–§6.4 和 Part B 的 §6.8。
+> **本章路线**：Part A 建立低秩数学与 LoRA；Part B 看 MLA/DSA/CSA 与 MoE 如何拼成高效 AI 工程。时间紧时，优先 Part A（低秩与 LoRA）和 Part B 的 AI 落地。
 
 > **核心概念**：
 > 1. SVD 把任意矩阵拆成旋转 $\times$ 拉伸 $\times$ 旋转，大矩阵有效信息维度常很低。
@@ -3200,7 +3200,7 @@ $r$ 不是越小越好，这是效率和表达力之间的权衡。$r$ 决定了
 > 2. 混合架构、MoE、测试时算力、数据墙、扩散模型不是孤立新闻。
 > 3. AR 与扩散在 MLE 框架下统一，但优化几何不同。
 
-从 Ch1 的梯度下降到 Ch6 的低秩全景，你已经掌握了理解前沿的数学工具。这些工具能解释哪些当前的前沿突破？AI 领域正在经历五场深刻的范式转移，每一场都能用前六章的数学工具看清它的结构。
+从 Ch1 的梯度下降到 Ch6 的低秩全景，你已经掌握了理解前沿的数学工具。这些工具能解释哪些当前的前沿突破？AI 领域正在经历五场深刻的范式转移，每一场都能用前六章的数学工具看清它的结构。需要先声明一个结构：**五场里前四场是真正的范式转移**（混合架构、MoE、测试时算力、扩散模型），**第五场"数据墙"不是范式，而是这四场共同的资源舞台**——它决定这四场还能跑多远，也让"范式转移"的故事收束在数据供给的天花板上。
 
 
 > 五场范式转移的结构：Attention+SSM 混合架构（Ch5+Ch6 的延伸）、Dense 到 MoE（Ch6 稀疏激活的延伸）、训练时算力到测试时算力（Ch1 梯度下降+Ch3 Softmax+Ch4 链式法则的延伸）、数据墙与模型崩塌（Ch3 最大熵的延伸）、扩散模型的数学桥梁（Ch1 梯度+Ch3 分数匹配的延伸）。前六章的数学工具，就是理解这些前沿的钥匙。
@@ -3219,7 +3219,7 @@ Ch6.7节的MoE不压缩参数总量，而是让每次计算只调用少量参数
 
 **第三场转移：从训练时算力到测试时算力。**
 
-这是当前最深刻的发现。Snell等人（DeepMind, 2024）的系统实验证明：推理时让模型"多想想"——自我修正、多路径探索、反复验证——比无脑堆训练规模更有效。OpenAI的o1系列（2024.09）把这条路变成了产品：模型在回答前生成大量用户不可见的"思考token"，在数学竞赛和代码任务上大幅超越同参数量的普通模型。DeepSeek-R1（2025.01，其成果登上*Nature*封面）用更极简的方式验证了这条路：跳过监督微调，用纯强化学习（GRPO，Group Relative Policy Optimization，群组相对策略优化）训练，模型自己涌现出反思和回溯——研究者称之为"aha moment"。
+这是当前最深刻的发现。Snell 等人的系统实验证明：推理时让模型"多想想"——自我修正、多路径探索、反复验证——比无脑堆训练规模更有效。^[34]^OpenAI的o1系列（2024.09）把这条路变成了产品：模型在回答前生成大量用户不可见的"思考token"，在数学竞赛和代码任务上大幅超越同参数量的普通模型。DeepSeek-R1（2025.01，其成果登上*Nature*封面）用更极简的方式验证了这条路：跳过监督微调，用纯强化学习（GRPO，Group Relative Policy Optimization，群组相对策略优化）训练，模型自己涌现出反思和回溯——研究者称之为"aha moment"。
 
 > **跨篇引用**：推理模型的训练配方（GRPO的数学推导、PPO/RLHF的关系）和"推理算力的三代演进"在《基座模型》§3.3、§3.6有完整展开。本节只讲数学联系。
 
@@ -3263,7 +3263,7 @@ Scaling Law有一个隐含前提：你得有足够多的数据可用。而这个
 
 **一句话：AR 把生成拆成一系列离散分类（Softmax），扩散把生成拆成一系列连续回归（梯度方向）——前者是 Ch3 的极致，后者是 Ch1 的极致，两者在 MLE 框架下统一，但优化几何根本不同。**
 
-当前的前沿正在模糊这条边界：Emu3（智源，*Nature* 2025）证明纯 next-token prediction 也能做图像/视频生成；VAR（Visual AutoRegressive，视觉自回归，NeurIPS 2024 最佳论文）把视觉 AR 改为 next-scale prediction 后 FID（Fréchet Inception Distance，生成图像质量指标）超越 DiT；BAGEL/Transfusion（两种混合自回归与扩散的架构）在同一个 Transformer 里左半跑 AR、右半跑扩散。两大范式不是"谁取代谁"，而是在 MLE 的统一框架下各自占据最自然的优化几何——离散序列用交叉熵，连续信号用分数匹配。
+当前的前沿正在模糊这条边界：Emu3（智源，*Nature* 2025）证明纯 next-token prediction 也能做图像/视频生成；VAR（Visual AutoRegressive，视觉自回归，NeurIPS 2024）把视觉 AR 改为 next-scale prediction 后 FID（Fréchet Inception Distance，生成图像质量指标）超越 DiT；BAGEL/Transfusion（两种混合自回归与扩散的架构）在同一个 Transformer 里左半跑 AR、右半跑扩散。两大范式不是"谁取代谁"，而是在 MLE 的统一框架下各自占据最自然的优化几何——离散序列用交叉熵，连续信号用分数匹配。
 
 > **跨篇引用**：两大范式的九维系统对比表和融合前沿时间线，见《扩散》§9.7。AR 范式在基座模型中的生成边界和融合趋势，见《基座模型》§6.2"AR 范式的生成边界与融合趋势"。
 
@@ -3465,7 +3465,7 @@ Scaling Law有一个隐含前提：你得有足够多的数据可用。而这个
 4. 多头=多个子空间并行——类比"多个专家从不同角度会诊"还是"一个专家更努力"？
 5. RoPE 让 Q/K 带着什么信息旋转？余弦周期函数让注意力随距离怎样变化？
 6. 边界：RoPE 只在训练长度内校准过——外推时，哪些频率早没信号了？周期性是"编码属性"还是"泛化保证"？
-7. 三列：SwiGLU 一列、Attention 一列、"本质"一列；提示：章首（§5 开头）给过一段现成对比。
+7. 三列：SwiGLU 一列、Attention 一列、"本质"一列；提示：章首给过一段现成对比。
 8. 想想"查字典"——查一行向量是 O(1) 还是逐行计算？
 9. 一个管"谁和谁相关"，一个管"这个词本身意味着什么"——只用其中一个，模型缺哪半？
 10. 深层梯度要连乘多少层？把输入直接加到输出，给梯度留了什么"高速公路"？
@@ -3594,12 +3594,7 @@ Scaling Law有一个隐含前提：你得有足够多的数据可用。而这个
 - → **Attention**（Ch5）用链式法则分析 Q/K/V 梯度，实现数据依赖的动态加权
 - → **低秩全景**（Ch6）发现 Attention 的大矩阵天然低秩，用 SVD/LoRA/MLA 瘦身
 - 六章串成一条问题链：自由优化→约束优化→概率输出→梯度回传→动态加权→高效计算。
-2. 五场范式转移各自的前六章数学基础：
-   - **混合架构** → Attention（Ch5）+ 低秩压缩（Ch6）
-   - **MoE** → 路由稀疏（Ch6，每次只激活少数专家）
-   - **测试时算力** → 梯度下降（Ch1，迭代优化的思想）+ Softmax（Ch3，采样温度）+ 前向传播序列依赖（Ch4，多步推理中每步输出是下步输入）+ 拉格朗日乘子（Ch2，GRPO的约束思路）
-   - **数据墙与模型崩塌** → 最大熵原理（Ch3，真实数据高熵、递归训练低熵）+ 分数匹配（Ch3.5，模型生成倾向高概率区域）
-   - **扩散模型** → 梯度下降（Ch1，Langevin动力学）+ 分数匹配（Ch3.5，$\nabla_x \ln p(x)$）
+2. 五场范式转移各自的前六章数学基础（详见正文同一速查，此处不重复）：
 </details>
 
 <details>
@@ -3689,62 +3684,62 @@ Softmax 温度——控制分布多紧：趋于零则确定，趋于无穷则均
 
 **第 1 章 优化基础**
 
-- Liu 等 2025. *Muon: An optimizer for hidden layers in deep learning*. arXiv:2502.16982. —— Ch1.5 矩阵自适应优化器（正交化动量）。
-- Chen 等 2023. *Symbolic Discovery of Optimization Algorithms*（Lion，Google Brain）. arXiv:2302.06675. —— Ch1.5 符号动量优化器。
-- Gupta 等 2018. *Shampoo: Preconditioned Stochastic Tensor Optimization*（Google）. ICML. —— Ch1.5 Kronecker 因子预处理。
-- Defazio 等 2024. *The Road Less Scheduled*（Schedule-Free，Meta AI）. NeurIPS 2025. —— Ch1.5 无调度优化器。
-- Kingma & Ba 2015. *Adam: A Method for Stochastic Optimization*. ICLR. arXiv:1412.6980. —— Ch1.5 自适应优化器基线。
-- Loshchilov & Hutter 2019. *Decoupled Weight Decay Regularization*（AdamW）. ICLR. arXiv:1711.05101. —— Ch1.5/Ch5.10 权重衰减与 LLM 预训练默认优化器。
+- [1] Liu 等 2025. *Muon: An optimizer for hidden layers in deep learning*. arXiv:2502.16982. —— Ch1.5 矩阵自适应优化器（正交化动量）。
+- [2] Chen 等 2023. *Symbolic Discovery of Optimization Algorithms*（Lion，Google Brain）. arXiv:2302.06675. —— Ch1.5 符号动量优化器。
+- [3] Gupta 等 2018. *Shampoo: Preconditioned Stochastic Tensor Optimization*（Google）. ICML. —— Ch1.5 Kronecker 因子预处理。
+- [4] Defazio 等 2024. *The Road Less Scheduled*（Schedule-Free，Meta AI）. NeurIPS 2025. —— Ch1.5 无调度优化器。
+- [5] Kingma & Ba 2015. *Adam: A Method for Stochastic Optimization*. ICLR. arXiv:1412.6980. —— Ch1.5 自适应优化器基线。
+- [6] Loshchilov & Hutter 2019. *Decoupled Weight Decay Regularization*（AdamW）. ICLR. arXiv:1711.05101. —— Ch1.5/Ch5.10 权重衰减与 LLM 预训练默认优化器。
 
 **第 2 章 拉格朗日乘子法**
 
-- Boyd & Vandenberghe 2004. *Convex Optimization*. Cambridge University Press. —— Ch2.3-2.5 KKT 条件与对偶理论的标准参考。
+- [7] Boyd & Vandenberghe 2004. *Convex Optimization*. Cambridge University Press. —— Ch2.3-2.5 KKT 条件与对偶理论的标准参考。
 
 **第 3 章 最大熵→Softmax→交叉熵**
 
-- Jaynes 1957. *Information Theory and Statistical Mechanics*. Physical Review. —— Ch3.3 最大熵原理的原始论文。
-- Bridle 1990. *Training Stochastic Model Recognition Algorithms as Networks can Lead to Maximum Mutual Information Estimation of Parameters*. —— Ch3.4 交叉熵损失的早期推导。
+- [8] Jaynes 1957. *Information Theory and Statistical Mechanics*. Physical Review. —— Ch3.3 最大熵原理的原始论文。
+- [9] Bridle 1990. *Training Stochastic Model Recognition Algorithms as Networks can Lead to Maximum Mutual Information Estimation of Parameters*. —— Ch3.4 交叉熵损失的早期推导。
 
 **第 4 章 MLP 前向与反向传播**
 
-- Rumelhart, Hinton & Williams 1986. *Learning representations by back-propagating errors*. Nature. —— Ch4.4 反向传播算法的奠基论文。
-- Glorot & Bengio 2010. *Understanding the difficulty of training deep feedforward neural networks*. AISTATS. —— Ch4.6 Xavier 初始化。
-- He 等 2015. *Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification*. ICCV. —— Ch4.6 Kaiming 初始化。
-- Ba, Kiros & Hinton 2016. *Layer Normalization*. arXiv:1607.06450. —— Ch4.5 LayerNorm。
-- Zhang & Sennrich 2019. *Root Mean Square Layer Normalization*. NeurIPS. arXiv:1910.07467. —— Ch4.5 RMSNorm。
-- Shazeer 2020. *GLU Variants Improve Transformer*. arXiv:2002.05202. —— Ch4.5 SwiGLU 激活函数。
+- [10] Rumelhart, Hinton & Williams 1986. *Learning representations by back-propagating errors*. Nature. —— Ch4.4 反向传播算法的奠基论文。
+- [11] Glorot & Bengio 2010. *Understanding the difficulty of training deep feedforward neural networks*. AISTATS. —— Ch4.6 Xavier 初始化。
+- [12] He 等 2015. *Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification*. ICCV. —— Ch4.6 Kaiming 初始化。
+- [13] Ba, Kiros & Hinton 2016. *Layer Normalization*. arXiv:1607.06450. —— Ch4.5 LayerNorm。
+- [14] Zhang & Sennrich 2019. *Root Mean Square Layer Normalization*. NeurIPS. arXiv:1910.07467. —— Ch4.5 RMSNorm。
+- [15] Shazeer 2020. *GLU Variants Improve Transformer*. arXiv:2002.05202. —— Ch4.5 SwiGLU 激活函数。
 
 **第 5 章 Attention 机制**
 
-- Bahdanau, Cho & Bengio 2015. *Neural Machine Translation by Jointly Learning to Align and Translate*. ICLR. —— Ch5.2 加性注意力的原始论文。
-- Vaswani 等 2017. *Attention Is All You Need*. NeurIPS. arXiv:1706.03762. —— Ch5.2-5.6 Transformer 与缩点积注意力。
-- Su 等 2021. *RoFormer: Enhanced Transformer with Rotary Position Embedding*. arXiv:2104.09864. —— Ch5.3 RoPE 位置编码。
-- Devlin 等 2019. *BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding*. NAACL. arXiv:1810.04805. —— Ch5.10 预训练语言模型的起点。
-- Radford 等 2018. *Improving Language Understanding by Generative Pre-Training*（GPT-1，OpenAI）. —— Ch5.10 自回归语言模型的起点。
-- Radford 等 2019. *Language Models are Unsupervised Multitask Learners*（GPT-2，OpenAI）. —— Ch5.10 规模与能力涌现。
-- Brown 等 2020. *Language Models are Few-Shot Learners*（GPT-3，OpenAI）. NeurIPS. arXiv:2005.14165. —— Ch5.10 In-context learning。
-- Ainslie 等 2023. *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. EMNLP. arXiv:2305.13245. —— Ch5.6 GQA 分组查询注意力。
-- Dao 等 2022. *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. NeurIPS. arXiv:2205.14135. —— Ch5.6 FlashAttention。
-- Geva 等 2021. *Transformer Feed-Forward Layers Are Key-Value Memories*. EMNLP. arXiv:2012.14913. —— Ch5.10 FFN 键值记忆视角。
-- DeepSeek-AI 2024. *DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model*（MLA）. arXiv:2405.04434. —— Ch5.6 多头潜在注意力。
+- [16] Bahdanau, Cho & Bengio 2015. *Neural Machine Translation by Jointly Learning to Align and Translate*. ICLR. —— Ch5.2 加性注意力的原始论文。
+- [17] Vaswani 等 2017. *Attention Is All You Need*. NeurIPS. arXiv:1706.03762. —— Ch5.2-5.6 Transformer 与缩点积注意力。
+- [18] Su 等 2021. *RoFormer: Enhanced Transformer with Rotary Position Embedding*. arXiv:2104.09864. —— Ch5.3 RoPE 位置编码。
+- [19] Devlin 等 2019. *BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding*. NAACL. arXiv:1810.04805. —— Ch5.10 预训练语言模型的起点。
+- [20] Radford 等 2018. *Improving Language Understanding by Generative Pre-Training*（GPT-1，OpenAI）. —— Ch5.10 自回归语言模型的起点。
+- [21] Radford 等 2019. *Language Models are Unsupervised Multitask Learners*（GPT-2，OpenAI）. —— Ch5.10 规模与能力涌现。
+- [22] Brown 等 2020. *Language Models are Few-Shot Learners*（GPT-3，OpenAI）. NeurIPS. arXiv:2005.14165. —— Ch5.10 In-context learning。
+- [23] Ainslie 等 2023. *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. EMNLP. arXiv:2305.13245. —— Ch5.6 GQA 分组查询注意力。
+- [24] Dao 等 2022. *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. NeurIPS. arXiv:2205.14135. —— Ch5.6 FlashAttention。
+- [25] Geva 等 2021. *Transformer Feed-Forward Layers Are Key-Value Memories*. EMNLP. arXiv:2012.14913. —— Ch5.10 FFN 键值记忆视角。
+- [26] DeepSeek-AI 2024. *DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model*（MLA）. arXiv:2405.04434. —— Ch5.6 多头潜在注意力。
 
 **第 6 章 低秩的世界**
 
-- Eckart & Young 1936. *The approximation of one matrix by another of lower rank*. Psychometrika. —— Ch6.2 Eckart-Young-Mirsky 定理。
-- Hu 等 2022. *LoRA: Low-Rank Adaptation of Large Language Models*. ICLR. arXiv:2106.09685. —— Ch6.4 低秩微调。
-- Dettmers 等 2023. *QLoRA: Efficient Finetuning of Quantized Language Models*. NeurIPS. arXiv:2305.14314. —— Ch6.4 量化 + 低秩双重压缩。
-- Liu 等 2024. *DoRA: Weight-Decomposed Low-Rank Adaptation*. arXiv:2402.09353. —— Ch6.4 幅度-方向解耦微调。
-- Zhang 等 2023. *AdaLoRA: Adaptive Budget Allocation for Parameter-Efficient Fine-Tuning*. ICLR. arXiv:2303.10512. —— Ch6.4 动态秩分配。
-- Shazeer 等 2017. *Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer*. ICLR. arXiv:1701.06538. —— Ch6.7 MoE 稀疏激活。
-- DeepSeek-AI 2025. *DeepSeek-V3 Technical Report*. arXiv:2412.19437. —— Ch6.7 无辅助损失负载均衡 + MoE + MLA 组合。
+- [27] Eckart & Young 1936. *The approximation of one matrix by another of lower rank*. Psychometrika. —— Ch6.2 Eckart-Young-Mirsky 定理。
+- [28] Hu 等 2022. *LoRA: Low-Rank Adaptation of Large Language Models*. ICLR. arXiv:2106.09685. —— Ch6.4 低秩微调。
+- [29] Dettmers 等 2023. *QLoRA: Efficient Finetuning of Quantized Language Models*. NeurIPS. arXiv:2305.14314. —— Ch6.4 量化 + 低秩双重压缩。
+- [30] Liu 等 2024. *DoRA: Weight-Decomposed Low-Rank Adaptation*. arXiv:2402.09353. —— Ch6.4 幅度-方向解耦微调。
+- [31] Zhang 等 2023. *AdaLoRA: Adaptive Budget Allocation for Parameter-Efficient Fine-Tuning*. ICLR. arXiv:2303.10512. —— Ch6.4 动态秩分配。
+- [32] Shazeer 等 2017. *Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer*. ICLR. arXiv:1701.06538. —— Ch6.7 MoE 稀疏激活。
+- [33] DeepSeek-AI 2025. *DeepSeek-V3 Technical Report*. arXiv:2412.19437. —— Ch6.7 无辅助损失负载均衡 + MoE + MLA 组合。
 
 **第 7 章 前沿展望**
 
-- Snell 等 2024. *Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters*（UC Berkeley × DeepMind）. arXiv:2408.03314. —— Ch7 测试时算力的系统实验。
-- OpenAI 2024. *Learning to Reason with LLMs*（o1 技术博客）. —— Ch7 推理模型产品化。
-- DeepSeek-AI 2025. *DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning*. arXiv:2501.12948. —— Ch7 纯 RL 推理涌现。
-- Shumailov 等 2024. *The Curse of Recursion: Training on Generated Data Makes Models Forget*（Oxford/Cambridge）. *Nature* 631, 544–551. —— Ch7 模型崩塌的数学证明。
-- Wang 等 2024. *Emu3: Next-Token Prediction is All You Need*（智源）. arXiv:2409.18869. ★ —— Ch7 纯 next-token 统一多模态。
-- Tian 等 2024. *Visual Autoregressive Modeling: Scalable Image Generation via Next-Scale Prediction*（VAR）. NeurIPS 2024 最佳论文. arXiv:2404.02905. —— Ch7 next-scale 视觉自回归。
-- Deng 等 2025. *Emerging Properties in Unified Multimodal Pretraining*（BAGEL）. arXiv:2505.14683. —— Ch7 MoT 混合融合架构。
+- [34] Snell 等 2024. *Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters*（UC Berkeley × DeepMind）. arXiv:2408.03314. —— Ch7 测试时算力的系统实验。
+- [35] OpenAI 2024. *Learning to Reason with LLMs*（o1 技术博客）. —— Ch7 推理模型产品化。
+- [36] DeepSeek-AI 2025. *DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning*. arXiv:2501.12948. —— Ch7 纯 RL 推理涌现。
+- [37] Shumailov 等 2024. *The Curse of Recursion: Training on Generated Data Makes Models Forget*（Oxford/Cambridge）. *Nature* 631, 544–551. —— Ch7 模型崩塌的数学证明。
+- [38] Wang 等 2024. *Emu3: Next-Token Prediction is All You Need*（智源）. arXiv:2409.18869. ★ —— Ch7 纯 next-token 统一多模态。
+- [39] Tian 等 2024. *Visual Autoregressive Modeling: Scalable Image Generation via Next-Scale Prediction*（VAR）. NeurIPS 2024. arXiv:2404.02905. —— Ch7 next-scale 视觉自回归。
+- [40] Deng 等 2025. *Emerging Properties in Unified Multimodal Pretraining*（BAGEL）. arXiv:2505.14683. —— Ch7 MoT 混合融合架构。
 

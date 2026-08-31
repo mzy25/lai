@@ -16,7 +16,7 @@
   --bg: #fafaf8; --card: #ffffff; --ink: #1f2937; --ink-soft: #4b5563;
   --line: #e5e7eb; --accent: #2563eb; --accent-soft: #eff6ff;
   --code-bg: #f3f4f6; --sidebar-w: 300px;
-  --blockquote-bg: #f9fafb; --blockquote-line: #d1d5db;
+  --blockquote-bg: #fafbfc;
   --th-bg: #f3f4f6; --row-alt: #fafafa; --pre-bg: #1f2937; --pre-ink: #f9fafb;
   --summary-bg: #f9fafb;
 }
@@ -25,7 +25,7 @@
   :root {
     --bg: #111827; --card: #1f2937; --ink: #e5e7eb; --ink-soft: #9ca3af;
     --line: #374151; --accent: #60a5fa; --accent-soft: #1e3a5f;
-    --code-bg: #273244; --blockquote-bg: #1a2332; --blockquote-line: #4b5563;
+    --code-bg: #273244; --blockquote-bg: #1a2332;
     --th-bg: #273244; --row-alt: #1a2332; --pre-bg: #0d1117; --pre-ink: #e5e7eb;
     --summary-bg: #273244;
   }
@@ -33,7 +33,7 @@
 }
 html { scroll-behavior:smooth; }
 body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",system-ui,sans-serif;
-       background:var(--bg); color:var(--ink); line-height:1.75; }
+       background:var(--bg); color:var(--ink); line-height:1.9; }
 a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; word-break:break-word; }
 
 /* 图片全局防溢出 */
@@ -45,7 +45,7 @@ img { max-width:100%; height:auto; }
 /* 侧边栏 */
 .sidebar { width:var(--sidebar-w); flex-shrink:0; background:var(--card);
            border-right:1px solid var(--line); position:sticky; top:0; height:100vh;
-           overflow-y:auto; padding:20px 14px; z-index:50; }
+           overflow-y:auto; padding:20px 14px; z-index:50; transition:margin-left .3s ease; }
 .sidebar-header { font-weight:700; font-size:1.05rem; padding:6px 10px 14px;
                   border-bottom:1px solid var(--line); margin-bottom:10px;
                   color:var(--ink); display:flex; align-items:center; gap:8px; }
@@ -77,6 +77,37 @@ img { max-width:100%; height:auto; }
 
 /* 侧边栏折叠按钮（窄屏） */
 .sidebar-toggle { display:none; }
+/* 桌面端：侧边目录自动隐藏（下滑收起/上滑展开）+ 悬浮开关 */
+.layout.collapsed .sidebar { margin-left: calc(-1 * var(--sidebar-w)); }
+.sidebar-float-toggle { position:fixed; left:calc(var(--sidebar-w) - 18px); top:14px; z-index:70; width:38px; height:38px;
+  border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+  font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 6px rgba(0,0,0,.14); transition:border-color .15s, color .15s; }
+.sidebar-float-toggle::before { content:'☰'; }
+.sidebar-float-toggle:hover { border-color:var(--accent); color:var(--accent); }
+/* 收起时开关仍锚定目录右缘位置，不单独跑到最左占位 */
+
+/* 当前位置提示条 */
+.whereami { position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:80;
+  max-width:60vw; padding:5px 16px; border-radius:999px; background:var(--card);
+  border:1px solid var(--line); color:var(--ink-soft); font-size:0.8rem;
+  box-shadow:0 1px 6px rgba(0,0,0,.10); opacity:0; transition:opacity .25s;
+  pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.whereami.show { opacity:1; }
+@media (max-width: 1024px) { .whereami { max-width:82vw; } }
+
+/* 跨篇引用可点跳转 */
+.xref { text-decoration:underline dotted; text-underline-offset:3px; }
+.xref:hover { background:var(--accent-soft); text-decoration:underline; }
+
+/* 术语 hover 卡片（data-def 悬浮释义） */
+.term { position:relative; border-bottom:1px dotted var(--ink-soft); cursor:help; }
+.term::after { content:attr(data-def); position:absolute; left:0; bottom:calc(100% + 8px); z-index:95;
+  width:max-content; max-width:min(320px, 72vw); background:var(--card); color:var(--ink);
+  border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:0.84rem;
+  line-height:1.65; box-shadow:0 4px 16px rgba(0,0,0,.16); white-space:normal;
+  visibility:hidden; opacity:0; transition:opacity .15s; font-weight:400; }
+.term:hover::after, .term:focus::after { visibility:visible; opacity:1; }
 
 /* 文档切换 */
 .doc-switch { display:flex; gap:6px; margin:10px 0; flex-wrap:wrap; }
@@ -96,7 +127,7 @@ img { max-width:100%; height:auto; }
 
 /* 主内容 */
 .main { flex:1; min-width:0; padding:36px 48px 80px; }
-.doc-section { max-width:860px; margin:0 auto 60px; }
+.doc-section { max-width:1080px; margin:0 auto 60px; }
 .doc-section + .doc-section { border-top:2px solid var(--line); padding-top:48px; }
 
 /* 性能：超长页面滚动时跳过视口外内容的渲染/绘制 */
@@ -121,13 +152,13 @@ h5, h6 { font-size:1rem; margin:20px 0 10px; color:var(--ink-soft); }
 h2, h3, h4 { font-weight:700; }
 
 /* 正文 */
-p { margin:0 0 16px; }
+p { margin:0 0 18px; }
 ul, ol { margin:0 0 16px 26px; }
 li { margin:4px 0; }
 strong { font-weight:700; }
 
 /* 引用 */
-blockquote { border-left:4px solid var(--blockquote-line); background:var(--blockquote-bg); padding:12px 18px;
+blockquote { background:var(--blockquote-bg); padding:14px 18px;
              margin:18px 0; border-radius:0 6px 6px 0; color:var(--ink-soft); }
 blockquote > p:last-child { margin-bottom:0; }
 
@@ -229,6 +260,8 @@ sup { font-size:0.7em; color:var(--accent); }
   .sidebar-toggle { display:block; background:var(--accent); color:#fff; border:none;
                     padding:8px 14px; border-radius:6px; cursor:pointer; font-size:0.95rem;
                     margin-bottom:10px; }
+  .layout.collapsed .sidebar { margin-left:0; }
+  .sidebar-float-toggle { display:none; }
   .main { padding:24px 18px 60px; }
 }
 @media (max-width: 640px) {
@@ -240,7 +273,7 @@ sup { font-size:0.7em; color:var(--accent); }
 
 /* ===== 打印样式 ===== */
 @media print {
-  .sidebar, .sidebar-toggle, .back-top, .progress { display:none !important; }
+  .sidebar, .sidebar-toggle, .sidebar-float-toggle, .back-top, .progress { display:none !important; }
   .layout { display:block; }
   .main { padding:0; max-width:100%; }
   .doc-section { max-width:100%; margin:0 0 30px; page-break-after:always; }
@@ -259,6 +292,8 @@ sup { font-size:0.7em; color:var(--accent); }
 </head>
 <body>
 <div class="progress" id="progress"></div>
+<button class="sidebar-float-toggle" id="sidebarFloatToggle" title="目录"></button>
+<div class="whereami" id="whereami"></div>
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-header">📚 目录 <span class="brand">· AI 五篇合集</span></div>
@@ -375,6 +410,17 @@ sup { font-size:0.7em; color:var(--accent); }
             b.classList.toggle('active', b.dataset.doc === sec.id);
           });
         }
+        // 当前位置提示条
+        const wa = document.getElementById('whereami');
+        if (wa) {
+          const ch = entry.target.closest('.chapter');
+          const chEl = ch && ch.querySelector('h2');
+          const chName = chEl && chEl.dataset.label ? chEl.dataset.label : '';
+          wa.textContent = chName ? sec.dataset.title + ' · ' + chName : sec.dataset.title;
+          wa.classList.add('show');
+          clearTimeout(wa._t);
+          wa._t = setTimeout(function () { wa.classList.remove('show'); }, 2600);
+        }
       }
     });
   }, { rootMargin: '-10% 0px -70% 0px' });
@@ -463,6 +509,22 @@ sup { font-size:0.7em; color:var(--accent); }
     }
   }, { passive: true });
   backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  /* ===== 侧边目录：自动隐藏（下滑收起 / 上滑展开）+ 悬浮开关 ===== */
+  const sLayout = document.querySelector('.layout');
+  document.getElementById('sidebarFloatToggle').addEventListener('click', function () {
+    sLayout.classList.toggle('collapsed');
+  });
+  let sLastY = window.scrollY;
+  window.addEventListener('scroll', function () {
+    const st = window.scrollY;
+    if (st > sLastY + 24 && st > 320 && !sLayout.classList.contains('collapsed')) {
+      sLayout.classList.add('collapsed');
+    } else if (st < sLastY - 24 && sLayout.classList.contains('collapsed')) {
+      sLayout.classList.remove('collapsed');
+    }
+    sLastY = st;
+  }, { passive: true });
 })();
 
 /* ===== 代码高亮 ===== */
@@ -483,6 +545,48 @@ sup { font-size:0.7em; color:var(--accent); }
       throwOnError: false
     });
   }
+})();
+
+/* ===== 术语 hover 卡片：每书首现术语包成 .term（悬浮显示释义） ===== */
+(function () {
+  // 术语卡由 tools/glossary.json 生成（C4 唯一源）；改动术语请编辑该文件后重建
+  var GLOSSARY = {{GLOSSARY}};
+  function boundaryOK(data, i, len) {
+    var prev = i > 0 ? data[i - 1] : '';
+    var next = data[i + len] || '';
+    var re = /[A-Za-z0-9_]/;
+    return !(re.test(prev) || re.test(next));
+  }
+  document.querySelectorAll('.doc-section').forEach(function (sec) {
+    var seen = {};
+    GLOSSARY.forEach(function (g) {
+      var term = g[0], def = g[1];
+      if (seen[term]) return;
+      var walker = document.createTreeWalker(sec, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+          var p = node.parentElement;
+          if (p && p.closest('code, pre, a, sup, .katex, .math, .term')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var node;
+      while ((node = walker.nextNode())) {
+        var idx = node.data.indexOf(term);
+        if (idx === -1 || !boundaryOK(node.data, idx, term.length)) continue;
+        var span = document.createElement('span');
+        span.className = 'term';
+        span.setAttribute('data-def', def);
+        span.setAttribute('tabindex', '0');
+        span.textContent = term;
+        var rest = node.splitText(idx + term.length);
+        node.splitText(idx);
+        var mid = node.nextSibling;
+        node.parentNode.replaceChild(span, mid);
+        seen[term] = true;
+        break;
+      }
+    });
+  });
 })();
 </script>
 </body>

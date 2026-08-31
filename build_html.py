@@ -56,6 +56,18 @@ FIG_PREFIX = {
     "4_ai_law": "ailaw",
 }
 
+# 篇目录 → 书名简称（正文跨篇引用写法）
+BOOK_ALIAS = {
+    "1_ai_math": "AI数学",
+    "1a_diffusion": "扩散",
+    "2_foundation": "基座模型",
+    "3_use_ai": "用好AI",
+    "4_ai_law": "AI law",
+}
+
+# 跨篇引用索引：{书名: {编号(normalized): 目标标题 id}}
+HEADING_INDEX = {}
+
 
 # 自动安装前端资源所用的 npm 缓存目录（系统临时目录，避免污染仓库）
 NPM_CACHE_DIR = Path(tempfile.gettempdir()) / "ai-primer-npm-assets"
@@ -793,18 +805,83 @@ def mark_long_math(html: str) -> str:
                   r'<span class="math inline math-long">\1</span>', html)
 
 
+def _png_dims(path: Path):
+    """读取 PNG 宽高（IHDR），失败返回 None。用于懒加载预占位，避免锚点跳转错位。"""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(26)
+        if head[:8] != b'\x89PNG\r\n\x1a\n' or head[12:16] != b'IHDR':
+            return None
+        import struct
+        w, h = struct.unpack('>II', head[16:24])
+        return w, h
+    except Exception:
+        return None
+
+
 def fix_image_tags(html: str, fig_prefix: str) -> str:
     """修图片路径（pandoc 输出 src="figures/xxx"）并加篇名前缀。
 
-    立即加载而非懒加载：懒加载会让锚点跳转后图片陆续撑开页面，
-    目标标题被推出视口（侧边栏目录跳错位的根因）。
+    懒加载 + 宽高预占位：构建期把 PNG 真实宽高写入 width/height，
+    浏览器据属性预留等比空间，懒加载不再引发布局抖动，
+    锚点跳转（侧边目录）不会错位。
     """
     def _img_repl(m):
         src = m.group(1)
         rest = m.group(2)  # 含 alt；可能以 "/" 结尾（pandoc 的 /> 被换行拆开）
         rest = re.sub(r'/?\s*$', '', rest)
-        return f'<img src="figures/{fig_prefix}_{src}"{rest} decoding="async" />'
+        attrs = ' loading="lazy" decoding="async"'
+        dim = _png_dims(HTML_DIR / "figures" / f"{fig_prefix}_{src}")
+        if dim:
+            attrs += f' width="{dim[0]}" height="{dim[1]}"'
+        return f'<img src="figures/{fig_prefix}_{src}"{rest}{attrs} />'
     return re.sub(r'<img src="figures/([^"]*)"([^><]*)>', _img_repl, html)
+
+
+def index_headings(html_frag: str, book: str) -> None:
+    """收集 doc 前缀标题的编号 → id 映射（供跨篇引用跳转）。"""
+    pat = re.compile(r'<h[2-6][^>]*?id="([^"]+)"[^>]*?data-label="([^"]*)"')
+    for m in pat.finditer(html_frag):
+        hid, label = m.group(1), html_mod.unescape(m.group(2)).strip()
+        key = None
+        cm = re.match(r'第\s*(\d+)\s*章', label)
+        if cm:
+            key = cm.group(1)
+        else:
+            sm = re.match(r'(\d{1,2}(?:\.\d{1,3})*)', label)
+            if sm and sm.group(1) != label.lstrip('0'):
+                key = sm.group(1)
+        if key:
+            HEADING_INDEX.setdefault(book, {})[key] = hid
+
+
+_XREF_PAT = re.compile(
+    r'《(AI数学|扩散|基座模型|用好AI|AI law)》\s*([§]?\s*\d{1,2}(?:\.\d{1,3})*|第\s*\d+\s*章)'
+)
+
+
+def rewrite_cross_refs(body: str) -> str:
+    """把正文跨篇引用《书名》§X.Y / 第X章 改成可点击跳转链接（只处理文本节点）。"""
+    def repl(m):
+        book, num = m.group(1), m.group(2)
+        cm = re.match(r'第\s*(\d+)\s*章', num)
+        if cm:
+            key = cm.group(1)
+        else:
+            key = re.sub(r'[\s§]', '', num)
+        target = HEADING_INDEX.get(book, {}).get(key)
+        if not target:
+            return m.group(0)
+        return f'<a class="xref" href="#{target}">{m.group(0)}</a>'
+
+    parts = re.split(r'(<[^>]*>)', body)
+    out = []
+    for part in parts:
+        if part.startswith("<") and part.endswith(">"):
+            out.append(part)
+        else:
+            out.append(_XREF_PAT.sub(repl, part))
+    return "".join(out)
 
 
 def render_doc(md_rel: str, title: str, doc_id: str) -> str:
@@ -824,6 +901,7 @@ def render_doc(md_rel: str, title: str, doc_id: str) -> str:
 
     html = pandoc_to_html(text, md_path.parent)
     html = bump_headings(html, doc_id)
+    index_headings(html, BOOK_ALIAS[md_rel.split("/")[0]])
     html = inject_selfcheck_popups(html, qa_data)
     html = prefix_code_block_ids(html, doc_id)
     html = prefix_internal_hrefs(html, doc_id, id_set)
@@ -854,6 +932,7 @@ def main():
 
     sections = [render_doc(md_rel, title, doc_id) for md_rel, title, doc_id in DOCS]
     body = "\n".join(sections)
+    body = rewrite_cross_refs(body)
 
     # 自检：五篇全部产出才算成功
     for _, _, doc_id in DOCS:
@@ -864,9 +943,15 @@ def main():
         f'      <button class="doc-btn" data-doc="{doc_id}">{label}</button>'
         for (_, _, doc_id), label in zip(DOCS, DOC_LABELS)
     )
+    import json as _json
+    import pathlib as _pl
+    _glossary = _json.dumps(
+        _json.loads((_pl.Path(__file__).resolve().parent / "tools" / "glossary.json").read_text(encoding="utf-8"))["terms"],
+        ensure_ascii=False)
     html_out = (
         TEMPLATE.replace("{{BODY}}", body)
                 .replace("{{DOC_BTNS}}", doc_btns)
+                .replace("{{GLOSSARY}}", _glossary)
     )
     out = Path(args.out)
     out.write_text(html_out, encoding="utf-8")
