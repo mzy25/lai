@@ -253,9 +253,9 @@ def fig_ch3_rlhf_pipeline():
 
     # Answer A (chosen)
     rect_a = FancyBboxPatch((1, 5.5), 8, 1.8, boxstyle="round,pad=0.1",
-                             facecolor='#E8F5E9', edgecolor='#2E7D32', lw=1.5)
+                             facecolor='#E3F2FD', edgecolor='#1565C0', lw=1.5)
     ax.add_patch(rect_a)
-    ax.text(5, 6.8, '回答A (chosen)', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#2E7D32', fontweight='bold')
+    ax.text(5, 6.8, '回答A (chosen)', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#1565C0', fontweight='bold')
     ax.text(5, 6.0, '"多休息，多喝水，\n症状严重吃退烧药"', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center')
 
     # Answer B (rejected)
@@ -302,9 +302,9 @@ def fig_ch3_rlhf_pipeline():
 
     # 输出分数
     rect = FancyBboxPatch((7.5, 7), 2, 1.5, boxstyle="round,pad=0.1",
-                           facecolor='#E8F5E9', edgecolor='#2E7D32', lw=1)
+                           facecolor='#E3F2FD', edgecolor='#1565C0', lw=1)
     ax.add_patch(rect)
-    ax.text(8.5, 7.75, '分数\nR=2.5', fontsize=10, fontproperties=CJK_FONT_NAME, ha='center', color='#2E7D32', fontweight='bold')
+    ax.text(8.5, 7.75, '分数\nR=2.5', fontsize=10, fontproperties=CJK_FONT_NAME, ha='center', color='#1565C0', fontweight='bold')
 
     ax.annotate('', xy=(7.5, 7.75), xytext=(6.5, 7.75),
                 arrowprops=dict(arrowstyle='->', lw=1.5, color='gray'))
@@ -357,14 +357,14 @@ def fig_ch3_rlhf_pipeline():
 
     # PPO 更新
     rect = FancyBboxPatch((1, 3.5), 6, 1.5, boxstyle="round,pad=0.1",
-                           facecolor='#E8F5E9', edgecolor='#2E7D32', lw=1.5)
+                           facecolor='#E3F2FD', edgecolor='#1565C0', lw=1.5)
     ax.add_patch(rect)
-    ax.text(4, 4.6, 'PPO 策略更新', fontsize=10, fontproperties=CJK_FONT_NAME, ha='center', fontweight='bold', color='#2E7D32')
+    ax.text(4, 4.6, 'PPO 策略更新', fontsize=10, fontproperties=CJK_FONT_NAME, ha='center', fontweight='bold', color='#1565C0')
     ax.text(4, 3.9, r'$\max R_\phi(x,y) - \beta \cdot KL(\pi_\theta \| \pi_{ref})$', fontsize=10, ha='center')
 
     # 更新箭头
     ax.annotate('', xy=(1.75, 6.4), xytext=(1.75, 5.1),
-                arrowprops=dict(arrowstyle='->', lw=2, color='#2E7D32'))
+                arrowprops=dict(arrowstyle='->', lw=2, color='#1565C0'))
 
     # KL约束标注
     rect = FancyBboxPatch((7.5, 3.5), 2, 1.5, boxstyle="round,pad=0.1",
@@ -565,7 +565,7 @@ def fig_ch5_vla_pipeline():
     ax.add_patch(rect)
     # 模拟场景：红色积木 + 盒子
     ax.add_patch(mpatches.Rectangle((0.8, 3.5), 0.8, 0.6, color='#F44336'))  # 红积木
-    ax.add_patch(mpatches.Rectangle((1.8, 3.5), 0.7, 0.5, color='#9E9E9E'))  # 盒子
+    ax.add_patch(mpatches.Rectangle((1.8, 3.5), 0.7, 0.5, color='#757575'))  # 盒子
     ax.text(1.55, 6.3, '摄像头', fontsize=10, fontproperties=CJK_FONT_NAME, ha='center', fontweight='bold', color='#1565C0')
     ax.text(1.55, 2.5, '224x224\nRGB', fontsize=8, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
 
@@ -671,7 +671,7 @@ def fig_ch1_token_zoo():
         ('音频', 'EnCodec\n离散码本', '#FFF3E0', '#E65100', '1秒\n24kHz', '75 tokens'),
         ('视频', 'Tubelet\n时空块', '#F3E5F5', '#7B1FA2', '16帧\n224x224', '1568 tokens'),
         ('3D', 'Point\nTransformer', '#FFEBEE', '#C62828', '10万点\n点云', '~1000 tokens'),
-        ('触觉', 'VQ-VAE\n力反馈', '#E0F7FA', '#006064', '1秒\n1000Hz', '~30 tokens'),
+        ('触觉', 'VQ-VAE\n力反馈', '#F5F5F5', '#1565c0', '1秒\n1000Hz', '~30 tokens'),
     ]
 
     for i, (name, method, fc, ec, inp, tokens) in enumerate(modalities):
@@ -744,7 +744,7 @@ def fig_ch1_clip_space():
     ax.set_xlim(-3, 3); ax.set_ylim(-2.5, 2.5)
     # 画几个图文对在空间中靠近
     pairs = [
-        ('猫', 'cat', -1.8, 1.5, '#E91E63'),
+        ('猫', 'cat', -1.8, 1.5, '#C62828'),
         ('狗', 'dog', -1.2, 0.8, '#2196F3'),
         ('车', 'car', 1.5, -0.5, '#4CAF50'),
         ('房', 'house', 1.8, 1.2, '#FF9800'),
@@ -940,7 +940,7 @@ def fig_ch3_grpo_advantage():
     rewards = [1, 0, 1, 0, 0, 1, 0, 0]
     advantages = [1.29, -0.77, 1.29, -0.77, -0.77, 1.29, -0.77, -0.77]
 
-    colors = ['#4CAF50' if r == 1 else '#EF5350' for r in rewards]
+    colors = ['#4A90D9' if r == 1 else '#C62828' for r in rewards]
     bars = ax.bar(responses, advantages, color=colors, width=0.6, edgecolor='black', lw=0.5)
     ax.axhline(y=0, color='black', lw=1)
 
@@ -948,7 +948,7 @@ def fig_ch3_grpo_advantage():
     for i, (bar, r, a) in enumerate(zip(bars, rewards, advantages)):
         y_pos = a + 0.08 if a > 0 else a - 0.15
         ax.text(i, y_pos, f'R={r}\nA={a:+.2f}', ha='center', fontsize=8, fontweight='bold',
-                color='#2E7D32' if a > 0 else '#C62828')
+                color='#1565C0' if a > 0 else '#C62828')
 
     ax.set_ylabel('组内相对优势 $\\hat{A}_i$', fontsize=12, fontproperties=CJK_FONT_NAME)
     ax.set_title('8个回答的奖励与优势\n$\\hat{A}_i=(R_i-\\mu)/\\sigma$  (mean=0.375, std=0.484)', fontsize=11, fontproperties=CJK_FONT_NAME)
@@ -956,8 +956,8 @@ def fig_ch3_grpo_advantage():
     ax.grid(True, axis='y', alpha=0.2)
 
     # 图例
-    ax.scatter([], [], c='#4CAF50', marker='s', s=80, label='正确 (R=1) → 正优势 (被强化)')
-    ax.scatter([], [], c='#EF5350', marker='s', s=80, label='错误 (R=0) → 负优势 (被弱化)')
+    ax.scatter([], [], c='#4A90D9', marker='s', s=80, label='正确 (R=1) → 正优势 (被强化)')
+    ax.scatter([], [], c='#C62828', marker='s', s=80, label='错误 (R=0) → 负优势 (被弱化)')
     ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='upper right')
 
     # --- 右图：GRPO vs PPO 对比 ---
@@ -977,14 +977,14 @@ def fig_ch3_grpo_advantage():
 
     # GRPO
     rect = FancyBboxPatch((5.5, 6), 4, 3, boxstyle="round,pad=0.1",
-                           facecolor='#E8F5E9', edgecolor='#2E7D32', lw=1.5)
+                           facecolor='#E3F2FD', edgecolor='#1565C0', lw=1.5)
     ax.add_patch(rect)
-    ax.text(7.5, 8.5, 'GRPO', fontsize=13, ha='center', fontweight='bold', color='#2E7D32')
+    ax.text(7.5, 8.5, 'GRPO', fontsize=13, ha='center', fontweight='bold', color='#1565C0')
     grpo_items = ['策略模型', '参考模型', '奖励模型', '组内相对排名 (代替critic)']
     for i, item in enumerate(grpo_items):
-        color = '#2E7D32' if i < 3 else '#C62828'
+        color = '#1565C0' if i < 3 else '#C62828'
         ax.text(7.5, 8.0 - i * 0.45, f'• {item}', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color=color)
-    ax.text(7.5, 6.3, '3个模型, 省一半显存', fontsize=8, fontproperties=CJK_FONT_NAME, ha='center', color='#2E7D32')
+    ax.text(7.5, 6.3, '3个模型, 省一半显存', fontsize=8, fontproperties=CJK_FONT_NAME, ha='center', color='#1565C0')
 
     # 共同点
     rect = FancyBboxPatch((1.5, 3), 7, 2.5, boxstyle="round,pad=0.1",
@@ -998,7 +998,7 @@ def fig_ch3_grpo_advantage():
     # 核心差异
     ax.text(5, 1.5, '核心差异：优势计算', fontsize=11, fontproperties=CJK_FONT_NAME, ha='center', fontweight='bold', color='#7B1FA2')
     ax.text(2.5, 0.8, 'PPO: 价值网络估计', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#1565C0')
-    ax.text(7.5, 0.8, 'GRPO: 组内相对排名', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#2E7D32')
+    ax.text(7.5, 0.8, 'GRPO: 组内相对排名', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#1565C0')
 
     plt.suptitle('GRPO：砍掉价值网络，用组内相对排名代替', fontsize=14, y=1.02, fontproperties=CJK_FONT_NAME, fontweight='bold')
     plt.tight_layout()
@@ -1066,11 +1066,11 @@ def fig_ch6_capability_stack():
     # 颜色分组：前三章冷色系蓝色渐变区分，后两章暖色系红色渐变区分
     layers = [
         # 感知-认知栈（前三章），整体垂直居中 -> y从1.5开始，蓝色系不同深浅
-        ('Ch1 萃取', '把世界变成 token', '#E8F5FD', '#1565C0', 1.5, 1.8, 'left'),
-        ('Ch2 筑基', '预训练→潜空间\n能力涌现', '#D1EFFF', '#0D47A1', 3.2, 1.8, 'left'),
-        ('Ch3 炼灵', 'RLHF/DPO\n选对的话', '#BBDEFB', '#1976D2', 4.9, 1.8, 'left'),
+        ('Ch1 萃取', '把世界变成 token', '#E3F2FD', '#1565C0', 1.5, 1.8, 'left'),
+        ('Ch2 筑基', '预训练→潜空间\n能力涌现', '#2196F3', '#1565C0', 3.2, 1.8, 'left'),
+        ('Ch3 炼灵', 'RLHF/DPO\n选对的话', '#2196F3', '#1565C0', 4.9, 1.8, 'left'),
         # 输出端（后两章），垂直居中对齐 -> 整体中心和左侧相同，红色系不同深浅
-        ('Ch4 应变', 'KV Cache/流式\n实时交互', '#FFF3E0', '#F57C00', 2.8, 1.8, 'right'),
+        ('Ch4 应变', 'KV Cache/流式\n实时交互', '#FFF3E0', '#F57F17', 2.8, 1.8, 'right'),
         ('Ch5 行动', 'VLA/Sim-to-Real\n物理世界', '#FFEBEE', '#C62828', 4.7, 1.8, 'right'),
     ]
 
@@ -1117,7 +1117,7 @@ def fig_ch1_modality_scale():
     modalities = ['一句话\n"今天天气不错"', '图片\n224x224', '音频1s\nEnCodec', '音频1s\nmel-spec', '视频\n16帧224x224', '3D点云\n10万点', '触觉1s\n1000Hz']
     raw_numbers = [20, 150528, 24000, 8000, 2408448, 300000, 1000]
     token_counts = [20, 196, 75, 100, 1568, 1000, 30]
-    colors = ['#1565C0', '#2E7D32', '#E65100', '#FF9800', '#7B1FA2', '#C62828', '#006064']
+    colors = ['#1565C0', '#2E7D32', '#E65100', '#FF9800', '#7B1FA2', '#C62828', '#1565c0']
 
     x = np.arange(len(modalities))
     width = 0.35
@@ -1160,7 +1160,7 @@ def fig_ch2_scaling_law():
 
     # 标注模型点
     models = [
-        ('GPT-2', 3e21, 2.2, '#9E9E9E'),
+        ('GPT-2', 3e21, 2.2, '#757575'),
         ('GPT-3', 3e23, 1.75, '#FF9800'),
         ('Chinchilla', 6e23, 1.65, '#4CAF50'),
         ('LLaMA-3-70B', 6e24, 1.4, '#2196F3'),
@@ -1354,14 +1354,14 @@ def fig_ch5_helix_layered():
     ax.text(3.75, 3.8, 'System 1 时间轴', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#E65100', fontweight='bold')
     for i in range(10):
         x = 1 + i * 0.55
-        ax.add_patch(mpatches.Rectangle((x, 3.2), 0.4, 0.3, facecolor='#FFE0B2', edgecolor='#E65100', lw=0.5))
+        ax.add_patch(mpatches.Rectangle((x, 3.2), 0.4, 0.3, facecolor='#FFF3E0', edgecolor='#E65100', lw=0.5))
     ax.text(6.5, 3.35, '50Hz', fontsize=8, fontproperties=CJK_FONT_NAME, color='#E65100')
 
     # System 2 时间轴
     ax.text(10.25, 3.8, 'System 2 时间轴', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='#1565C0', fontweight='bold')
     for i in range(3):
         x = 7.5 + i * 1.8
-        ax.add_patch(mpatches.Rectangle((x, 3.2), 0.8, 0.3, facecolor='#BBDEFB', edgecolor='#1565C0', lw=0.5))
+        ax.add_patch(mpatches.Rectangle((x, 3.2), 0.8, 0.3, facecolor='#2196F3', edgecolor='#1565C0', lw=0.5))
     ax.text(13.0, 3.35, '2Hz', fontsize=8, fontproperties=CJK_FONT_NAME, color='#1565C0')
 
     # 对应：GPT-Live委托架构
@@ -1390,13 +1390,13 @@ def fig_ch6_world_model_factions():
     # 布局：(x=1, 5.5), (x=5, 5.5) 上排；(x=1, 2.5), (x=5, 2.5) 下排
     factions = [
         # 生成派（左上方）
-        ('扩散世界模型派', 'GAIA-2, Sora', '学完整分布\n能生成像素', '#FFF3E0', '#F57C00', 1, 5.5),
+        ('扩散世界模型派', 'GAIA-2, Sora', '学完整分布\n能生成像素', '#FFF3E0', '#F57F17', 1, 5.5),
         # 生成派（右上方）
-        ('空间智能派', 'World Labs (Marble)', '3D 世界\n可交互', '#FFE0B2', '#EF6C00', 5, 5.5),
+        ('空间智能派', 'World Labs (Marble)', '3D 世界\n可交互', '#FFF3E0', '#F57F17', 5, 5.5),
         # 生成派（左下方）
-        ('生成式视频派', 'Genie 3, GWM-1', '物理自洽\n视频生成', '#FFEBEE', '#E64A19', 1, 2.5),
+        ('生成式视频派', 'Genie 3, GWM-1', '物理自洽\n视频生成', '#FFEBEE', '#E65100', 1, 2.5),
         # 生成派（右下方）
-        ('具身仿真派', 'GigaWorld, Cosmos', '世界模型→\n合成数据→VLA', '#FFCDD2', '#C62828', 5, 2.5),
+        ('具身仿真派', 'GigaWorld, Cosmos', '世界模型→\n合成数据→VLA', '#F5F5F5', '#C62828', 5, 2.5),
         # 非生成派（右上）
         ('JEPA 派', 'V-JEPA 2, AMI', '潜空间预测\n不生成像素', '#E3F2FD', '#1565C0', 9, 5.5),
         # 非生成派（右下）
@@ -1543,13 +1543,13 @@ def fig_ch6_concept_city():
     ax.set_title('概念城市：潜空间有结构，可观测，可干预', fontsize=14, fontweight='bold', pad=15, fontproperties=CJK_FONT_NAME)
 
     districts = [
-        (0.5, 4.2, 5, 3.2, '#E8F4FD', '#2166AC', '地址：概念的方向',
+        (0.5, 4.2, 5, 3.2, '#E3F2FD', '#2166AC', '地址：概念的方向',
          '• 线性方向编码概念\n• "国王"-"男"+"女"≈"女王"\n• 概念层次 = 几何嵌套\n• 跨语言迁移（英→法）'),
-        (6.5, 4.2, 5, 3.2, '#FDF2E8', '#E66101', '道路：信息流电路',
+        (6.5, 4.2, 5, 3.2, '#FFEBEE', '#E66101', '道路：信息流电路',
          '• SAE 拆解叠加特征\n• 归因图追踪特征传递\n• 双跳推理: Dallas→Texas→Austin\n• 前瞻规划: 先选韵脚再填词'),
-        (0.5, 0.5, 5, 3.2, '#F0F8E8', '#1B7837', '功能区：FFN 关联记忆',
+        (0.5, 0.5, 5, 3.2, '#E8F5E9', '#1B7837', '功能区：FFN 关联记忆',
          '• FFN = 键值存储器\n• 知识主要在中层 MLP\n• ROME/MEMIT 精准编辑\n• 涟漪效应: 改一处波及关联'),
-        (6.5, 0.5, 5, 3.2, '#F8E8F4', '#7B2D8B', '城市规划：干预谱系',
+        (6.5, 0.5, 5, 3.2, '#F3E5F5', '#7B2D8B', '城市规划：干预谱系',
          '• 知识编辑 (权重级)\n• 激活引导 (方向级)\n• SAE 特征引导 (特征级)\n• 越狱 = 压低拒绝方向'),
     ]
     for x, y, w, h, fc, ec, title, content in districts:

@@ -1,6 +1,6 @@
 """共享的 matplotlib 配图基础设施（四个章节脚本共用）。
 
-统一四篇脚本的字体配置、保存函数与输出目录行为：
+统一五篇脚本的字体配置、保存函数与输出目录行为：
 - CJK 字体自动探测（NotoSansCJK 常规/粗体），缺失时回退 sans-serif 并警告
 - save_fig() 统一 dpi/bbox/facecolor，目标目录自动创建
 - setup_rc() 统一 rcParams（dpi、字号、负号、面板底色）
@@ -16,7 +16,8 @@ import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# 常用 CJK 字体候选路径（按优先级）。NotoSansCJK 是四篇脚本当前使用的字体。
+# 常用 CJK 字体候选路径（按优先级）。NotoSansCJK 是五篇脚本当前使用的字体。
+# 五篇脚本统一 dpi=200（save_fig 默认），共享同一保存与字体规范。
 _CJK_CANDIDATES = [
     "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
     "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
@@ -29,11 +30,26 @@ _CJK_CANDIDATES = [
 
 # 探测到的 CJK 字体名（None 表示未找到，回退 sans-serif）
 CJK_FONT_NAME: str | None = None
+CJK_BOLD_NAME: str | None = None
 
 for _path in _CJK_CANDIDATES:
     if Path(_path).exists():
         _fp = fm.FontProperties(fname=_path)
         CJK_FONT_NAME = _fp.get_name()
+        fm.fontManager.addfont(_path)
+        break
+
+# 粗体 CJK：NotoSansCJK-Bold.ttc 是候选列表第二项；单独探测并注册，
+# 让 fontweight='bold' 的标签用真粗体而非合成加粗。
+_BOLD_CANDIDATES = [
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+    "C:/Windows/Fonts/msyhbd.ttc",
+    "C:/Windows/Fonts/simhei.ttf",
+]
+for _path in _BOLD_CANDIDATES:
+    if Path(_path).exists():
+        _fp = fm.FontProperties(fname=_path)
+        CJK_BOLD_NAME = _fp.get_name()
         fm.fontManager.addfont(_path)
         break
 
@@ -44,6 +60,23 @@ if CJK_FONT_NAME is None:
         "可安装 fonts-noto-cjk 或将字体路径加入 fig_common 的 _CJK_CANDIDATES。",
         stacklevel=2,
     )
+
+
+# ═══════════════════════ 共享语义色板（五篇约定） ═══════════════════════
+# 语义角色（跨篇一致）：danger=错误/危险 success=正确/有效 warning=强调 primary=主
+# 四族三阶色（l=浅填充 / m=主体 / d=强调深色）；灰三阶 + 墨色/白。
+# 全部配图一律从本表取色（含改图/新图），禁止引入表外独点色。
+ROLE_DANGER   = "#C62828"   # 红 危险/错误
+ROLE_SUCCESS  = "#2E7D32"   # 绿 正确/成功
+ROLE_WARNING  = "#F57F17"   # 橙 警告/强调
+ROLE_PRIMARY  = "#1565C0"   # 蓝 主色（Material 系，全库兼容）
+BLUE    = {"l": "#9DC3E6", "m": "#4A90D9", "d": "#1F4E79"}
+RED     = {"l": "#FF8C8C", "m": "#C62828", "d": "#8B0000"}
+GREEN   = {"l": "#A8D8B9", "m": "#55A868", "d": "#2D6A3A"}
+ORANGE  = {"l": "#FFD9A0", "m": "#E8A33D", "d": "#C87D1A"}
+GRAY    = {"l": "#F0F0F0", "m": "#9E9E9E", "d": "#555555"}
+INK     = "#1A1A2E"
+WHITE   = "#FFFFFF"
 
 
 def setup_rc(*, dpi: int = 200, facecolor: str = "white") -> None:

@@ -22,23 +22,23 @@ from fig_common import CJK_FONT_NAME, setup_rc  # noqa: E402
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "figures"
 
-# 扩散脚本沿用原字号配置（figure.dpi 100 + save dpi 150）；CJK_FONT_NAME 字体由共享模块探测。
-setup_rc(dpi=100)
+# 扩散脚本 dpi 已与其余四本统一（200）；CJK_FONT_NAME 字体由共享模块探测。
+setup_rc(dpi=200)
 
 plt.rcParams['font.size'] = 11
 plt.rcParams['axes.titlesize'] = 13
 plt.rcParams['axes.labelsize'] = 11
 
 
-def save_fig(fig, name):
-    """统一保存函数"""
-    fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=150, facecolor='white')
+def save(fig, name):
+    """统一保存函数（与其余四本一致，均经 fig_common.save_fig）"""
+    fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor='white')
     print(f"[OK] {OUTPUT_DIR / name}")
 
 # =============================================================================
-# 图1: Ch1 前向过程 - 信号衰减与噪声增长
+# Ch1 前向过程——信号衰减与噪声增长
 # =============================================================================
-def fig1_forward_process():
+def fig_ch1_forward_process():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     t = np.arange(0, 1001)
@@ -91,13 +91,13 @@ def fig1_forward_process():
             ha='center', fontsize=10, style='italic')
     ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis('off')
 
-    save_fig(fig, 'fig_forward_process.png')
+    save(fig, 'fig_ch1_forward_process.png')
 
 
 # =============================================================================
-# 图12: Ch2 反向过程 - 去噪步骤与贝叶斯概念
+# Ch3 反向过程——去噪步骤与贝叶斯概念
 # =============================================================================
-def fig2_reverse_process():
+def fig_ch3_reverse_process():
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
 
     # 左图: 逐步去噪可视化
@@ -141,13 +141,13 @@ def fig2_reverse_process():
             ha='center', fontsize=10, style='italic')
     ax.axis('off'); ax.set_title('贝叶斯反向过程')
 
-    save_fig(fig, 'fig_reverse_process.png')
+    save(fig, 'fig_ch3_reverse_process.png')
 
 
 # =============================================================================
-# 图8: Ch3 分数函数 - 等高线地图与Langevin动力学
+# Ch2 分数函数——等高线地图与 Langevin 动力学
 # =============================================================================
-def fig3_score_function():
+def fig_ch2_score_function():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     x = np.linspace(-3, 3, 50)
@@ -218,13 +218,13 @@ def fig3_score_function():
     ax.axis('off')
     ax.set_title('梯度下降 vs 分数函数')
 
-    save_fig(fig, 'fig_score_function.png')
+    save(fig, 'fig_ch2_score_function.png')
 
 
 # =============================================================================
-# 图19: Ch4 训练目标 - 噪声预测MSE
+# Ch4 训练目标——噪声预测 MSE
 # =============================================================================
-def fig4_training_objective():
+def fig_ch4_training_objective():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: 噪声预测流程
@@ -300,13 +300,13 @@ def fig4_training_objective():
     ax.axis('off')
     ax.set_title('扩散 U-Net 中的反向传播')
 
-    save_fig(fig, 'fig_training_objective.png')
+    save(fig, 'fig_ch4_training_objective.png')
 
 
 # =============================================================================
-# 图23: Ch5 采样策略 - DDPM vs DDIM
+# Ch5 采样策略——DDPM vs DDIM
 # =============================================================================
-def fig5_sampling_strategies():
+def fig_ch5_sampling_strategies():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: DDPM vs DDIM路径
@@ -355,7 +355,7 @@ def fig5_sampling_strategies():
     abar = np.cos(t_ode * np.pi / 2) ** 2   # t=1→abar=0(噪声端), t=0→abar=1(数据端)
     # (噪声起点, 数据终点)：两者都保序 ⇒ 任意 t 的正系数组合保序 ⇒ 轨迹互不相交
     pairs = [(-2.2, -1.5), (-0.8, -1.2), (0.8, 1.2), (2.2, 1.5)]
-    blues = ['#1f4e79', '#2e75b6', '#5b9bd5', '#3b7dd8']
+    blues = ['#1f4e79', '#2e75b6', '#5b9bd5', '#2e75b6']
     for k, (y_noise, y_data) in enumerate(pairs):
         y = y_data * np.sqrt(abar) + y_noise * np.sqrt(1 - abar)
         ax.plot(t_ode, y, '-', color=blues[k], linewidth=2.2, zorder=3,
@@ -373,13 +373,13 @@ def fig5_sampling_strategies():
     ax.set_ylim(-2.8, 2.8)
     ax.invert_xaxis()
 
-    save_fig(fig, 'fig_sampling_strategies.png')
+    save(fig, 'fig_ch5_sampling_strategies.png')
 
 
 # =============================================================================
-# 图27: Ch6 条件控制与LoRA
+# Ch6 条件控制与 LoRA
 # =============================================================================
-def fig6_conditional_control():
+def fig_ch6_conditional_control():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: CFG引导强度
@@ -453,13 +453,13 @@ def fig6_conditional_control():
     ax.axis('off')
     ax.set_title('LoRA：低秩适配')
 
-    save_fig(fig, 'fig_conditional_control.png')
+    save(fig, 'fig_ch6_conditional_control.png')
 
 
 # =============================================================================
-# 图41: Ch7 前沿展望 - DiT与视频生成
+# Ch9 前沿展望——DiT 与视频生成
 # =============================================================================
-def fig7_frontier():
+def fig_ch9_frontier():
     """Ch9 §9.7: 前沿全景——技法×工具矩阵 + 2022→2026 时间线"""
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.set_xlim(0, 12); ax.set_ylim(0, 10); ax.axis('off')
@@ -506,8 +506,8 @@ def fig7_frontier():
             y = y0 + (3-i)*ch
             # 有内容的格子用浅色背景
             content = models.get((i, j), '')
-            fc = '#F8F8F8' if not content else '#E8F4FD' if i == 0 else '#FDF8E8' if i == 1 else '#F0F8E8' if i == 2 else '#F8E8F4'
-            ec = '#999' if not content else '#2166AC' if i == 0 else '#E66101' if i == 1 else '#1B7837' if i == 2 else '#7B2D8B'
+            fc = '#555555' if not content else '#555555' if i == 0 else '#555555' if i == 1 else '#555555' if i == 2 else '#555555'
+            ec = '#999' if not content else '#1F5FB0' if i == 0 else '#FF6600' if i == 1 else '#2D6A3A' if i == 2 else '#9370DB'
             lw = 1 if not content else 1.5
             box = FancyBboxPatch((x+0.05, y+0.05), cw-0.1, ch-0.1,
                                   boxstyle="round,pad=0.05", facecolor=fc, edgecolor=ec, linewidth=lw)
@@ -521,13 +521,13 @@ def fig7_frontier():
                 xytext=(x0 + 1*cw + cw/2, y0 + 4*ch + 1.2),
                 fontsize=8.5, ha='center', fontproperties=CJK_FONT_NAME, color='#C62828',
                 arrowprops=dict(arrowstyle='->', color='#C62828', lw=1.5),
-                bbox=dict(boxstyle='round,pad=0.2', facecolor='#FFEBEE', edgecolor='#C62828'))
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='#555555', edgecolor='#C62828'))
 
     ax.annotate('MAR\n(线描定序+晕染填内容)', xy=(x0 + 0.5*cw, y0 + 3*ch + ch/2),
                 xytext=(x0 - 0.3, y0 + 4*ch + 1.2),
                 fontsize=8.5, ha='center', fontproperties=CJK_FONT_NAME, color='#C62828',
                 arrowprops=dict(arrowstyle='->', color='#C62828', lw=1.5),
-                bbox=dict(boxstyle='round,pad=0.2', facecolor='#FFEBEE', edgecolor='#C62828'))
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='#555555', edgecolor='#C62828'))
 
     # 时间线
     ty = 1.8
@@ -546,15 +546,15 @@ def fig7_frontier():
     # 核心判断
     ax.text(6, 0.5, '没有一行是"一边绝对赢"——按任务选技法，按工程选工具',
             ha='center', fontsize=10, fontproperties=CJK_FONT_NAME, fontweight='bold', color='#333',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFF9C4', edgecolor='#F9A825'))
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520'))
 
-    save_fig(fig, 'fig_frontier.png')
+    save(fig, 'fig_ch9_frontier.png')
 
 
 # =============================================================================
-# 图20: 时间步嵌入
+# Ch4 时间步嵌入
 # =============================================================================
-def fig_time_embedding():
+def fig_ch4_time_embedding():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: 正弦位置编码
@@ -613,13 +613,13 @@ def fig_time_embedding():
     ax.legend(loc='center right'); ax.grid(True, alpha=0.3)
     ax.set_xlim(0, 1000); ax.set_ylim(0, 1.1)
 
-    save_fig(fig, 'fig_time_embedding.png')
+    save(fig, 'fig_ch4_time_embedding.png')
 
 
 # =============================================================================
-# 图4: 噪声调度对比 + 模型对比 + Inpainting
+# Ch1 噪声调度对比 + 模型对比 + Inpainting
 # =============================================================================
-def fig_schedules_models_inpainting():
+def fig_ch1_schedules_models_inpainting():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: 噪声调度对比
@@ -690,13 +690,13 @@ def fig_schedules_models_inpainting():
     ax.axis('off')
     ax.set_title('图像修复：带掩码的前向过程')
 
-    save_fig(fig, 'fig_schedules_models_inpainting.png')
+    save(fig, 'fig_ch1_schedules_models_inpainting.png')
 
 
 # =============================================================================
-# 图28: ControlNet零初始化 + CFG演进 + 一致性模型
+# Ch6 ControlNet 零初始化 + CFG 演进 + 一致性模型
 # =============================================================================
-def fig_controlnet_cfg_consistency():
+def fig_ch6_controlnet_cfg_consistency():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: ControlNet零初始化
@@ -784,13 +784,13 @@ def fig_controlnet_cfg_consistency():
     ax.axis('off')
     ax.set_title('一致性模型：单步生成')
 
-    save_fig(fig, 'fig_controlnet_cfg_consistency.png')
+    save(fig, 'fig_ch6_controlnet_cfg_consistency.png')
 
 
 # =============================================================================
-# 图35: 潜在扩散模型 + 交叉注意力 + 训练动态
+# Ch9 潜在扩散模型 + 交叉注意力 + 训练动态
 # =============================================================================
-def fig_latent_crossattention_training():
+def fig_ch9_latent_crossattention_training():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: 像素空间 vs 潜在空间
@@ -875,13 +875,13 @@ def fig_latent_crossattention_training():
     ax.legend(loc='upper right', fontsize=8); ax.grid(True, alpha=0.3)
     ax.set_xlim(0, 100); ax.set_ylim(-0.5, 2.5)
 
-    save_fig(fig, 'fig_latent_crossattention_training.png')
+    save(fig, 'fig_ch9_latent_crossattention_training.png')
 
 
 # =============================================================================
-# 图16: SDE vs ODE + 采样器家族 + 多模态
+# Ch3 SDE vs ODE + 采样器家族 + 多模态
 # =============================================================================
-def fig_sde_ode_samplers_multimodal():
+def fig_ch3_sde_ode_samplers_multimodal():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # 左图: SDE vs ODE
@@ -958,15 +958,15 @@ def fig_sde_ode_samplers_multimodal():
     ax.axis('off')
     ax.set_title('扩散超越图像：多模态')
 
-    save_fig(fig, 'fig_sde_ode_samplers_multimodal.png')
+    save(fig, 'fig_ch3_sde_ode_samplers_multimodal.png')
 
 
 # =============================================================================
-# 主函数: 生成所有13张图
+# 主函数：生成全部 41 张图
 # =============================================================================
 
-# === FIG 6: 2D Forward Noising ===
-def fig_2d_forward_noising():
+# Ch1 · 2d forward noising
+def fig_ch1_2d_forward_noising():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
     np.random.seed(42)
     N = 800
@@ -985,12 +985,12 @@ def fig_2d_forward_noising():
         ax.set_xlabel('x1'); ax.set_ylabel('x2')
         ax.set_title(title)
         ax.grid(True, alpha=0.2)
-    save_fig(fig, 'fig_2d_forward_noising.png')
+    save(fig, 'fig_ch1_2d_forward_noising.png')
 
 
-# === FIG 3: VE vs VP Comparison ===
-def fig_ve_vp_comparison():
-    """图3: VE vs VP -- 双峰数据分布在不同时刻的演化"""
+# Ch1 · ve vp comparison
+def fig_ch1_ve_vp_comparison():
+    """VE vs VP——双峰数据分布在不同时刻的演化"""
     fig, axes = plt.subplots(2, 3, figsize=(14, 9))
 
     # 双峰数据: 两个高斯团在 (2,2) 和 (-2,-2)
@@ -1002,8 +1002,8 @@ def fig_ve_vp_comparison():
 
     t_values = [0, 1.0, 3.0]
     t_labels = ['$t=0$\\n(data)', '$t=1$', '$t=3$']
-    blue = '#2196F3'
-    red = '#F44336'
+    blue = '#4A90D9'
+    red = '#FF4444'
 
     for col, (t, tlabel) in enumerate(zip(t_values, t_labels)):
         # ---- VE row ----
@@ -1054,13 +1054,13 @@ def fig_ve_vp_comparison():
                     xytext=(-0.3, 1.15), arrowprops=dict(arrowstyle='->', color='gray', lw=1.5))
 
     fig.text(0.5, 0.02, '灰色虚线圆：VE 显示 $2\\sigma_t$ 噪声半径（增长）；VP 显示单位方差边界（固定）',
-             ha='center', fontsize=9, color='#666666')
+             ha='center', fontsize=9, color='#555555')
     plt.tight_layout(rect=(0.05, 0.04, 1, 1))
-    save_fig(fig, 'fig_ve_vp_comparison.png')
+    save(fig, 'fig_ch1_ve_vp_comparison.png')
 
 
-# === FIG 2: Discrete-Continuous Bridge ===
-def fig_discrete_continuous_bridge():
+# Ch1 · discrete continuous bridge
+def fig_ch1_discrete_continuous_bridge():
     fig, ax = plt.subplots(figsize=(8, 5))
     t = np.arange(0, 1001)
     beta = np.linspace(0.0001, 0.02, 1000)
@@ -1074,11 +1074,11 @@ def fig_discrete_continuous_bridge():
     ax.set_xlabel('时间步 t'); ax.set_ylabel('系数')
     ax.set_title('离散步 = 连续 SDE 的采样')
     ax.set_xlim(0, 1000); ax.set_ylim(0, 1.1); ax.grid(True, alpha=0.3); ax.legend()
-    save_fig(fig, 'fig_discrete_continuous_bridge.png')
+    save(fig, 'fig_ch1_discrete_continuous_bridge.png')
 
 
-# === FIG 11: Multiscale Score Field ===
-def fig_multiscale_score_field():
+# Ch2 · multiscale score field
+def fig_ch2_multiscale_score_field():
     fig, axes = plt.subplots(1, 4, figsize=(18, 4))
     np.random.seed(42)
     N = 300
@@ -1115,11 +1115,11 @@ def fig_multiscale_score_field():
         ax.set_title(title)
         ax.set_xlim(-4, 4); ax.set_ylim(-4, 4); ax.set_aspect('equal')
         ax.set_xlabel('x1'); ax.set_ylabel('x2')
-    save_fig(fig, 'fig_multiscale_score_field.png')
+    save(fig, 'fig_ch2_multiscale_score_field.png')
 
 
-# === FIG 9: Tweedie Geometry ===
-def fig_tweedie_geometry():
+# Ch2 · tweedie geometry
+def fig_ch2_tweedie_geometry():
     fig, ax = plt.subplots(figsize=(7, 6))
     # Background contour
     x = np.linspace(-1, 5, 50); y = np.linspace(-1, 5, 50)
@@ -1149,11 +1149,11 @@ def fig_tweedie_geometry():
     ax.set_xlabel('x1'); ax.set_ylabel('x2')
     ax.set_xlim(-1, 5); ax.set_ylim(-1, 5); ax.set_aspect('equal')
     ax.grid(True, alpha=0.2); ax.legend(loc='lower right')
-    save_fig(fig, 'fig_tweedie_geometry.png')
+    save(fig, 'fig_ch2_tweedie_geometry.png')
 
 
-# === FIG 10: Epsilon-Score Equivalence ===
-def fig_epsilon_score_equivalence():
+# Ch2 · epsilon score equivalence
+def fig_ch2_epsilon_score_equivalence():
     fig, ax = plt.subplots(figsize=(7, 6))
     ax.plot(0, 0, 'ko', markersize=12, zorder=5, label='$x_t$')
 
@@ -1177,11 +1177,11 @@ def fig_epsilon_score_equivalence():
     ax.set_xlabel('x1'); ax.set_ylabel('x2')
     ax.set_xlim(-2, 2); ax.set_ylim(-2, 2); ax.set_aspect('equal')
     ax.grid(True, alpha=0.2); ax.legend()
-    save_fig(fig, 'fig_epsilon_score_equivalence.png')
+    save(fig, 'fig_ch2_epsilon_score_equivalence.png')
 
 
-# === FIG 14: Forward + Reverse Combined ===
-def fig_forward_reverse_combined():
+# Ch3 · forward reverse combined
+def fig_ch3_forward_reverse_combined():
     fig, ax = plt.subplots(figsize=(10, 5.5))
     x0 = 2.0
     T = 1000
@@ -1195,9 +1195,9 @@ def fig_forward_reverse_combined():
 
     # 1. 状态分布漏斗（±2σ）：数据端窄、噪声端宽——这就是"同一条统计路径"
     ax.fill_between(t_full, mu - 2 * sigma, mu + 2 * sigma,
-                    color='#cfe0f5', alpha=0.7, label=r'状态分布 $\mu_t \pm 2\sigma_t$')
+                    color='#9dc3e6', alpha=0.7, label=r'状态分布 $\mu_t \pm 2\sigma_t$')
     # 2. 信号均值中心线（确定性骨架）
-    ax.plot(t_full, mu, '--', color='#5b8fc9', lw=1.8,
+    ax.plot(t_full, mu, '--', color='#5b9bd5', lw=1.8,
             label=r'信号均值 $\sqrt{\bar\alpha_t}\,x_0$')
 
     ts = [0, 120, 280, 480, 720, 1000]
@@ -1225,9 +1225,9 @@ def fig_forward_reverse_combined():
     ax.plot(ts, rev, '-o', color='#e8833a', lw=2.5, ms=8, zorder=5, alpha=0.9, label='反向轨迹（一次采样）')
 
     # 端点：两条轨迹在数据点与噪声点严格交汇
-    ax.scatter([0], [x0], c='#2ca02c', s=200, zorder=7, edgecolors='white', linewidths=1.5)
-    ax.text(-8, x0 + 0.35, r'数据 $x_0$', ha='left', color='#2ca02c', fontsize=12, fontweight='bold')
-    ax.scatter([T], [xT], c='#777777', s=200, zorder=7, edgecolors='white', linewidths=1.5)
+    ax.scatter([0], [x0], c='#228b22', s=200, zorder=7, edgecolors='white', linewidths=1.5)
+    ax.text(-8, x0 + 0.35, r'数据 $x_0$', ha='left', color='#228b22', fontsize=12, fontweight='bold')
+    ax.scatter([T], [xT], c='#555555', s=200, zorder=7, edgecolors='white', linewidths=1.5)
     ax.text(T, xT + 0.35, r'纯噪声 $x_T$', ha='right', color='#555555', fontsize=12, fontweight='bold')
 
     # 方向箭头：前向 → 在上，反向 ← 在下
@@ -1247,11 +1247,11 @@ def fig_forward_reverse_combined():
     ax.grid(True, alpha=0.25)
     for sp in ('top', 'right'):
         ax.spines[sp].set_visible(False)
-    save_fig(fig, 'fig_forward_reverse_combined.png')
+    save(fig, 'fig_ch3_forward_reverse_combined.png')
 
 
-# === FIG 13: DDPM vs NCSN Comparison ===
-def fig_ddpm_ncsn_comparison():
+# Ch3 · ddpm ncsn comparison
+def fig_ch3_ddpm_ncsn_comparison():
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     np.random.seed(42)
     x = np.linspace(-4, 4, 100); y = np.linspace(-4, 4, 100)
@@ -1291,11 +1291,11 @@ def fig_ddpm_ncsn_comparison():
         ax.grid(True, alpha=0.2); ax.legend(loc='upper left', fontsize=8)
 
     fig.suptitle('Same reverse SDE, different discretization', fontsize=11, style='italic', y=0.02)
-    save_fig(fig, 'fig_ddpm_ncsn_comparison.png')
+    save(fig, 'fig_ch3_ddpm_ncsn_comparison.png')
 
 
-# === FIG 15: Reverse SDE Drift Decomposition ===
-def fig_reverse_sde_drift_decomposition():
+# Ch3 · reverse sde drift decomposition
+def fig_ch3_reverse_sde_drift_decomposition():
     fig, ax = plt.subplots(figsize=(7, 6))
     origin = np.array([2.0, 2.0])
     f_neg = np.array([-1.0, -1.0]) * 0.3  # -f toward origin
@@ -1320,11 +1320,11 @@ def fig_reverse_sde_drift_decomposition():
     ax.set_xlabel('x1'); ax.set_ylabel('x2')
     ax.set_xlim(0, 4); ax.set_ylim(0, 4); ax.set_aspect('equal')
     ax.grid(True, alpha=0.2)
-    save_fig(fig, 'fig_reverse_sde_drift_decomposition.png')
+    save(fig, 'fig_ch3_reverse_sde_drift_decomposition.png')
 
 
-# === FIG 17: Unified Training ===
-def fig_unified_training():
+# Ch4 · unified training
+def fig_ch4_unified_training():
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.set_xlim(0, 12); ax.set_ylim(0, 8)
 
@@ -1362,11 +1362,11 @@ def fig_unified_training():
     ax.text(6, 4.75, '相同的总体目标，\n不同的参数化', ha='center', fontsize=10, style='italic')
     ax.set_title('统一训练：DDPM ε-MSE = NCSN 分数匹配')
     ax.axis('off')
-    save_fig(fig, 'fig_unified_training.png')
+    save(fig, 'fig_ch4_unified_training.png')
 
 
-# === FIG 18: Training Loss by t ===
-def fig_training_loss_by_t():
+# Ch4 · training loss by t
+def fig_ch4_training_loss_by_t():
     fig, ax = plt.subplots(figsize=(8, 5))
     t = np.arange(1, 1001)
     beta = np.linspace(0.0001, 0.02, 1000)
@@ -1386,13 +1386,13 @@ def fig_training_loss_by_t():
             '高 SNR → 细节可辨 → 分数方向复杂\n低 SNR → 只剩轮廓 → 分数方向简单',
             fontsize=9, ha='center', style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
-    save_fig(fig, 'fig_training_loss_by_t.png')
+    save(fig, 'fig_ch4_training_loss_by_t.png')
 
 
-# === FIG 24: Three Error Sources —— 按"控制旋钮"分解（三联）===
+# Ch5 · three error sources
 # 每个子图对应表格一行：误差 vs 它各自的控制变量（T / N / 网络质量）。
 # 第3子图：固定 T 时分数项 ≈ c·T·ε² 是常数地板，故总 KL 随 N 单调降至地板。
-def fig_three_error_sources():
+def fig_ch5_three_error_sources():
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
 
     # --- 子图1：初始化误差 vs 终止时刻 T（指数衰减，OU 过程收缩）---
@@ -1450,11 +1450,11 @@ def fig_three_error_sources():
     ax.set_ylim(0.0075, 0.16)
     ax.legend(loc='upper right', fontsize=9, prop=CJK_FONT_NAME); ax.grid(True, which='both', alpha=0.3)
 
-    save_fig(fig, 'fig_three_error_sources.png')
+    save(fig, 'fig_ch5_three_error_sources.png')
 
 
-# === FIG 21: SDE vs ODE Density Match ===
-def fig_sde_ode_density_match():
+# Ch5 · sde ode density match
+def fig_ch5_sde_ode_density_match():
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     x = np.linspace(-5, 5, 200)
     colors = plt.cm.Blues(np.linspace(0.3, 0.9, 5))
@@ -1495,11 +1495,11 @@ def fig_sde_ode_density_match():
         ax.set_xlim(-5, 5); ax.set_ylim(-0.5, 0.45); ax.grid(True, alpha=0.3); ax.legend(fontsize=8, loc='upper right')
     fig.suptitle('不同机制，同一密度演化：$p_t(x)$ 完全相同', fontsize=13, y=1.02)
     plt.tight_layout()
-    save_fig(fig, 'fig_sde_ode_density_match.png')
+    save(fig, 'fig_ch5_sde_ode_density_match.png')
 
 
-# === FIG 29: Masked Diffusion Process ===
-def fig_masked_diffusion_process():
+# Ch7 · masked diffusion process
+def fig_ch7_masked_diffusion_process():
     fig, ax = plt.subplots(figsize=(12, 4))
     ax.set_xlim(0, 12); ax.set_ylim(0, 4)
 
@@ -1522,11 +1522,11 @@ def fig_masked_diffusion_process():
 
     ax.set_title('掩码扩散：token 级的前向与反向')
     ax.axis('off')
-    save_fig(fig, 'fig_masked_diffusion_process.png')
+    save(fig, 'fig_ch7_masked_diffusion_process.png')
 
 
-# === FIG 30: Continuous vs Discrete Parallel ===
-def fig_continuous_discrete_parallel():
+# Ch7 · continuous discrete parallel
+def fig_ch7_continuous_discrete_parallel():
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
     # Continuous
@@ -1563,12 +1563,12 @@ def fig_continuous_discrete_parallel():
     ax.set_xlim(0, 8); ax.set_ylim(0, 6); ax.axis('off')
 
     fig.text(0.5, 0.02, '相同的贝叶斯结构，不同的状态空间', ha='center', fontsize=11, style='italic')
-    save_fig(fig, 'fig_continuous_discrete_parallel.png')
+    save(fig, 'fig_ch7_continuous_discrete_parallel.png')
 
 
-# === FIG 33: Video World Model Closed Loop ===
-def fig_video_worldmodel_closedloop():
-    """视频生成 vs 世界模型：闭环 vs 开环 (文档引用文件名 fig_video_worldmodel.png)"""
+# Ch8 · video worldmodel
+def fig_ch8_video_worldmodel():
+    """视频生成 vs 世界模型：闭环 vs 开环 (文档引用文件名 fig_ch8_video_worldmodel.png)"""
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.set_xlim(0, 12); ax.set_ylim(0, 8)
 
@@ -1616,11 +1616,11 @@ def fig_video_worldmodel_closedloop():
     ax.text(6, 1.5, '预测 → 行动 → 观察 → 重复', ha='center', fontsize=10, style='italic', color='green')
     ax.set_title('视频生成 vs 世界模型')
     ax.axis('off')
-    save_fig(fig, 'fig_video_worldmodel.png')
+    save(fig, 'fig_ch8_video_worldmodel.png')
 
 
-# === FIG 32: Frame Consistency ===
-def fig_frame_consistency():
+# Ch8 · frame consistency
+def fig_ch8_frame_consistency():
     fig, axes = plt.subplots(2, 1, figsize=(10, 8))
     np.random.seed(42)
     frames = np.arange(10)
@@ -1644,11 +1644,11 @@ def fig_frame_consistency():
                      fontsize=10, color='blue', ha='center', va='top')
 
     plt.tight_layout()
-    save_fig(fig, 'fig_frame_consistency.png')
+    save(fig, 'fig_ch8_frame_consistency.png')
 
 
-# === FIG 31: Spacetime Attention ===
-def fig_spacetime_attention():
+# Ch8 · spacetime attention
+def fig_ch8_spacetime_attention():
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
     # Full joint
@@ -1688,13 +1688,13 @@ def fig_spacetime_attention():
     legend_elements = [Line2D([0], [0], color='blue', alpha=0.5, label='空间注意力'),
                        Line2D([0], [0], color='orange', alpha=0.5, label='时间注意力')]
     ax.legend(handles=legend_elements, loc='upper right', fontsize=9)
-    save_fig(fig, 'fig_spacetime_attention.png')
+    save(fig, 'fig_ch8_spacetime_attention.png')
 
 
 # =============================================================================
-# 图34: §8.3 扩散策略 vs 传统策略——多峰动作分布对比
+# Ch8 扩散策略 vs 传统策略——多峰动作分布对比
 # =============================================================================
-def fig_diffusion_policy_multimodal():
+def fig_ch8_diffusion_policy_multimodal():
     fig, axes = plt.subplots(1, 3, figsize=(14, 4.2))
 
     a = np.linspace(-3, 3, 400)
@@ -1706,7 +1706,7 @@ def fig_diffusion_policy_multimodal():
     # ---- 左：多峰动作分布 p(a|s) ----
     ax = axes[0]
     ax.fill_between(a, p, alpha=0.35, color='#4C72B0')
-    ax.plot(a, p, color='#2C3E7B', linewidth=1.8)
+    ax.plot(a, p, color='#1F4E79', linewidth=1.8)
     for x, txt in [(-1.6, '从左抓'), (0, '从上抓'), (1.6, '从右抓')]:
         idx = np.argmin(np.abs(a - x))
         ax.plot(x, p[idx], 'o', color='#C44E52', markersize=8)
@@ -1742,8 +1742,8 @@ def fig_diffusion_policy_multimodal():
 
     # ---- 右：扩散策略——保留所有模式 ----
     ax = axes[2]
-    ax.fill_between(a, p, alpha=0.35, color='#55A868')
-    ax.plot(a, p, color='#2D6A3A', linewidth=1.8)
+    ax.fill_between(a, p, alpha=0.35, color='#4A90D9')
+    ax.plot(a, p, color='#1F4E79', linewidth=1.8)
     rng = np.random.default_rng(42)
     cdf = np.cumsum(p); cdf /= cdf[-1]
     samples = np.interp(rng.uniform(size=15), cdf, a)
@@ -1752,9 +1752,9 @@ def fig_diffusion_policy_multimodal():
     for x, arrow in [(-1.6, '←'), (0, '↑'), (1.6, '→')]:
         idx = np.argmin(np.abs(a - x))
         ax.annotate(arrow, xy=(x, p[idx]), xytext=(x, p[idx] + 0.05),
-                    ha='center', fontsize=16, color='#2D6A3A', fontweight='bold')
+                    ha='center', fontsize=16, color='#1F4E79', fontweight='bold')
     ax.text(0, 0.78, '每次采样从多峰分布里\n落到某一个真实模式',
-            ha='center', fontsize=10, color='#2D6A3A', fontweight='bold')
+            ha='center', fontsize=10, color='#1F4E79', fontweight='bold')
     ax.set_xlim(-3, 3); ax.set_ylim(0, 0.9)
     ax.set_xlabel('动作 a', fontsize=11)
     ax.set_title('扩散策略：从 $p(a\\mid s)$ 里采样 → 保留多峰\n每次动作是一种真实抓法，多样但都能完成任务', fontsize=11)
@@ -1762,12 +1762,12 @@ def fig_diffusion_policy_multimodal():
     ax.set_yticks([])
 
     plt.tight_layout()
-    save_fig(fig, 'fig_diffusion_policy_multimodal.png')
+    save(fig, 'fig_ch8_diffusion_policy_multimodal.png')
 
 
-# === FIG 39: Inference RL Roadmap ===
-def fig_inference_rl_roadmap():
-    """推理时控制路线图 (文档引用文件名 fig_inference_rl.png)"""
+# Ch9 · inference rl
+def fig_ch9_inference_rl():
+    """推理时控制路线图 (文档引用文件名 fig_ch9_inference_rl.png)"""
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.set_xlim(0, 10); ax.set_ylim(0, 6)
 
@@ -1801,11 +1801,11 @@ def fig_inference_rl_roadmap():
 
     ax.set_title('推理期控制：从奖励到采样器的三条路线')
     ax.axis('off')
-    save_fig(fig, 'fig_inference_rl.png')
+    save(fig, 'fig_ch9_inference_rl.png')
 
 
-# === FIG 40: Flow Matching vs Diffusion ===
-def fig_flow_matching_vs_diffusion():
+# Ch9 · flow matching vs diffusion
+def fig_ch9_flow_matching_vs_diffusion():
     """Ch9 §9.1: 扩散 vs 流匹配 vs 一致性模型——相同起终点，不同路径"""
     fig, ax = plt.subplots(figsize=(8, 7))
     np.random.seed(7)
@@ -1864,12 +1864,12 @@ def fig_flow_matching_vs_diffusion():
     ax.invert_yaxis()  # t=T(噪声)在上，t=0(数据)在下——匹配"从噪声走向数据"的阅读方向
     ax.grid(True, alpha=0.2)
     ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='lower left')
-    save_fig(fig, 'fig_flow_matching_vs_diffusion.png')
+    save(fig, 'fig_ch9_flow_matching_vs_diffusion.png')
 
 
 # ====== Ch9 §9.2: DiT 架构（合并自 make_dit_figs.py） ======
 
-def fig_dit_vs_unet():
+def fig_ch9_dit_vs_unet():
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
     # === 左：U-Net 结构 ===
@@ -1885,8 +1885,8 @@ def fig_dit_vs_unet():
         (1, 7, 2.5, 1.2, '#4ECDC4', 'Encoder\n64×64'),
         (3, 5.5, 2.0, 1.0, '#4ECDC4', '32×32'),
         (5, 4, 1.5, 0.8, '#4ECDC4', '16×16'),
-        (7, 5.5, 2.0, 1.0, '#FF8C69', '32×32'),
-        (9, 7, 2.5, 1.2, '#FF8C69', 'Decoder\n64×64'),
+        (7, 5.5, 2.0, 1.0, '#FF4444', '32×32'),
+        (9, 7, 2.5, 1.2, '#FF4444', 'Decoder\n64×64'),
     ]
     for x, y, w, h, color, label in levels:
         rect = FancyBboxPatch((x-w/2, y-h/2), w, h, boxstyle="round,pad=0.1",
@@ -1921,7 +1921,7 @@ def fig_dit_vs_unet():
 
     # Patchify
     rect = FancyBboxPatch((0.5, 6.5), 2, 1, boxstyle="round,pad=0.1",
-                           facecolor='#87CEEB', edgecolor='#333', linewidth=1.5, alpha=0.8)
+                           facecolor='#4ECDC4', edgecolor='#333', linewidth=1.5, alpha=0.8)
     ax.add_patch(rect)
     ax.text(1.5, 7, 'Patchify\n2×2 → token', ha='center', va='center', fontsize=8, fontweight='bold')
 
@@ -1972,10 +1972,10 @@ def fig_dit_vs_unet():
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.8))
 
     plt.tight_layout()
-    save_fig(fig, 'fig_dit_vs_unet.png')
+    save(fig, 'fig_ch9_dit_vs_unet.png')
 
 
-def fig_dit_scaling_law():
+def fig_ch9_dit_scaling_law():
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # DiT 论文真实数据（Peebles & Xie 2023, arXiv:2212.09748, 附录规格表）
@@ -2002,7 +2002,7 @@ def fig_dit_scaling_law():
     for mo, g, p, f, (ox, oy) in zip(models, gflops, params, fid, offs):
         ax.text(g * ox, f * oy, f'{mo}\n{p}M · FID {f}',
                 fontsize=8.5, color='#1f4e79', fontproperties=CJK_FONT_NAME,
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='#eaf2fb',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='#555555',
                           edgecolor='#9dc3e6', alpha=0.9))
 
     # DiT-XL/2 带 CFG 的最优点（摘要确证 FID 2.27）——单独一点，说明上限
@@ -2010,7 +2010,7 @@ def fig_dit_scaling_law():
     ax.annotate('DiT-XL/2 + CFG\nFID 2.27（论文最优）', xy=(118.6, 2.27),
                 xytext=(20, 3.2), fontsize=8.5, color='#2e75b6', fontproperties=CJK_FONT_NAME,
                 arrowprops=dict(arrowstyle='->', color='#2e75b6', lw=1.3),
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='#eaf2fb',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='#555555',
                           edgecolor='#2e75b6', alpha=0.9))
 
     ax.set_xscale('log'); ax.set_yscale('log')
@@ -2024,10 +2024,10 @@ def fig_dit_scaling_law():
     ax.set_ylim(1.8, 90)
 
     plt.tight_layout()
-    save_fig(fig, 'fig_dit_scaling_law.png')
+    save(fig, 'fig_ch9_dit_scaling_law.png')
 
 
-def fig_dit_video_spatime():
+def fig_ch9_dit_video_spatime():
     """DiT 在视频生成中的优势：时空注意力 vs 3D U-Net 卷积"""
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
 
@@ -2056,7 +2056,7 @@ def fig_dit_video_spatime():
 
     ax.text(5, 1.5, '3D 卷积核只能看到\n局部时间窗口（如 3 帧）\n长程时序依赖需要堆很多层',
             ha='center', va='center', fontsize=8, color='#FF4444',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFE0E0', edgecolor='#FF4444', alpha=0.5))
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='#FF4444', edgecolor='#FF4444', alpha=0.5))
 
     ax.text(5, 0, '要看到 t=0 和 t=15 的关系？\n得堆 8+ 层卷积',
             ha='center', va='center', fontsize=8, color='#666', style='italic')
@@ -2082,41 +2082,41 @@ def fig_dit_video_spatime():
     for i in range(4):
         for j in range(i+1, 4):
             ax.plot([positions[i][0], positions[j][0]], [positions[i][1], positions[j][1]],
-                    '-', color='#228B22', linewidth=1, alpha=0.4)
+                    '-', color='#1565C0', linewidth=1, alpha=0.4)
 
     ax.text(4.3, 6.2, '所有 patch 互相看到\n第一层就能建立长程依赖',
-            ha='center', va='center', fontsize=8, color='#228B22', fontweight='bold',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='#90EE90', edgecolor='#228B22', alpha=0.4))
+            ha='center', va='center', fontsize=8, color='#1565C0', fontweight='bold',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='#9DC3E6', edgecolor='#1565C0', alpha=0.4))
 
     ax.text(4.3, 0, 'Sora / MovieGen / Step-Video\n全部选 DiT 不是巧合',
             ha='center', va='center', fontsize=8, color='#666', style='italic',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.6))
 
     plt.tight_layout()
-    save_fig(fig, 'fig_dit_video_spatime.png')
+    save(fig, 'fig_ch9_dit_video_spatime.png')
 
 
 # =============================================================================
 # 新增图（P0）：§2.0 数据流形假设
 # =============================================================================
-def fig_data_manifold():
+def fig_ch2_data_manifold():
     fig, axes = plt.subplots(1, 2, figsize=(13, 5.2))
 
     # ---- 左：高维空间里数据只占低维流形 ----
     ax = axes[0]
     ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.set_aspect('equal'); ax.axis('off')
     ax.add_patch(FancyBboxPatch((0.3, 0.3), 9.4, 9.4, boxstyle="round,pad=0.1",
-                                facecolor='#F0F0F0', edgecolor='#999', linewidth=1.2))
+                                facecolor='#555555', edgecolor='#999', linewidth=1.2))
     ax.text(0.6, 9.2, '高维像素空间（~300 万维）', ha='left', fontsize=11, fontweight='bold', color='#333')
     # 低维流形：一条弯曲的带
     t = np.linspace(0, 2*np.pi, 200)
     mx = 5 + 2.6*np.cos(t) + 0.5*np.cos(2*t)
     my = 5 + 2.2*np.sin(t)
-    ax.plot(mx, my, color='#2D6A3A', linewidth=3, zorder=3)
-    ax.fill(mx, my, color='#55A868', alpha=0.18, zorder=2)
+    ax.plot(mx, my, color='#1F4E79', linewidth=3, zorder=3)
+    ax.fill(mx, my, color='#4A90D9', alpha=0.18, zorder=2)
     # 真实数据点（在流形上）
     idx = np.linspace(0, 199, 7).astype(int)
-    ax.scatter(mx[idx], my[idx], c='#2D6A3A', s=70, zorder=5, label='真实图片（在流形上）')
+    ax.scatter(mx[idx], my[idx], c='#1F4E79', s=70, zorder=5, label='真实图片（在流形上）')
     # 随机点（几乎全是垃圾，落在流形外）
     rng = np.random.default_rng(1)
     rx = rng.uniform(1, 9, 12); ry = rng.uniform(1, 9, 12)
@@ -2130,8 +2130,8 @@ def fig_data_manifold():
     # ---- 右：分数只需在流形附近有效 ----
     ax = axes[1]
     ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.set_aspect('equal'); ax.axis('off')
-    ax.plot(mx, my, color='#2D6A3A', linewidth=3, zorder=3)
-    ax.fill(mx, my, color='#55A868', alpha=0.18, zorder=2)
+    ax.plot(mx, my, color='#1F4E79', linewidth=3, zorder=3)
+    ax.fill(mx, my, color='#4A90D9', alpha=0.18, zorder=2)
     # 流形外的噪声点 + 指回流形的分数箭头
     noise_pts = [(2.2, 8.2), (8.4, 7.6), (8.6, 2.4), (2.0, 2.6)]
     for nx, ny in noise_pts:
@@ -2144,18 +2144,18 @@ def fig_data_manifold():
     ax.plot([], [], color='#4C72B0', lw=2, label='分数方向（指回流形）')
     ax.text(5, 1.0, '分数只需在流形附近有效\n远离流形的地方，指哪都无所谓',
             ha='center', fontsize=10, style='italic', color='#555',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='#E8F0FE', alpha=0.8))
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='#555555', alpha=0.8))
     ax.legend(loc='upper left', fontsize=9, prop=CJK_FONT_NAME)
     ax.set_title('去噪 = 指回流形 = 分数方向', fontsize=12)
 
     plt.tight_layout()
-    save_fig(fig, 'fig_data_manifold.png')
+    save(fig, 'fig_ch2_data_manifold.png')
 
 
 # =============================================================================
 # 新增图（P0）：§5.2 DDIM——换坐标让 ODE 变直线
 # =============================================================================
-def fig_ddim_straight_line():
+def fig_ch5_ddim_straight_line():
     fig, axes = plt.subplots(1, 2, figsize=(13, 5.2))
 
     # VP 调度轨迹（从数据到噪声的一条确定性 ODE 路径）
@@ -2169,7 +2169,7 @@ def fig_ddim_straight_line():
     # ---- 左：原始 x 空间——轨迹是弯的 ----
     ax = axes[0]
     ax.plot(b, x, color='#C44E52', linewidth=2.6, zorder=3)
-    ax.scatter([b[0]], [x[0]], c='#2D6A3A', s=90, zorder=5, label='数据端 ($t\\to 0$)')
+    ax.scatter([b[0]], [x[0]], c='#1F4E79', s=90, zorder=5, label='数据端 ($t\\to 0$)')
     ax.scatter([b[-1]], [x[-1]], c='#4C72B0', s=90, zorder=5, label='噪声端 ($t\\to T$)')
     for k in np.linspace(0, 59, 7).astype(int):
         ax.scatter([b[k]], [x[k]], c='#C44E52', s=22, zorder=4)
@@ -2182,15 +2182,15 @@ def fig_ddim_straight_line():
     ax = axes[1]
     xt = x / a          # 归一化状态 x̃ = x/√ᾱ
     st = b / a          # 归一化噪声比 σ̃ = √(1-ᾱ)/√ᾱ
-    ax.plot(st, xt, color='#2D6A3A', linewidth=2.6, zorder=3)
-    ax.scatter([st[0]], [xt[0]], c='#2D6A3A', s=90, zorder=5)
+    ax.plot(st, xt, color='#1F4E79', linewidth=2.6, zorder=3)
+    ax.scatter([st[0]], [xt[0]], c='#1F4E79', s=90, zorder=5)
     ax.scatter([st[-1]], [xt[-1]], c='#4C72B0', s=90, zorder=5)
     for k in np.linspace(0, 59, 7).astype(int):
-        ax.scatter([st[k]], [xt[k]], c='#2D6A3A', s=22, zorder=4)
+        ax.scatter([st[k]], [xt[k]], c='#1F4E79', s=22, zorder=4)
     # 斜率标注
     ax.annotate('斜率 = $\\varepsilon_\\theta$\n（真的是一条直线）',
                 xy=(st[30], xt[30]), xytext=(st[30]*0.35, xt[30]+0.4),
-                fontsize=10, color='#2D6A3A',
+                fontsize=10, color='#1F4E79',
                 arrowprops=dict(arrowstyle='->', color='#666', lw=1))
     ax.set_xlabel('归一化噪声比 $\\tilde{\\sigma}_t = \\sqrt{1/\\bar{\\alpha}_t - 1}$', fontsize=11)
     ax.set_ylabel('归一化状态 $\\tilde{x}_t = x_t/\\sqrt{\\bar{\\alpha}_t}$', fontsize=11)
@@ -2198,13 +2198,13 @@ def fig_ddim_straight_line():
     ax.grid(True, alpha=0.25)
 
     plt.tight_layout()
-    save_fig(fig, 'fig_ddim_straight_line.png')
+    save(fig, 'fig_ch5_ddim_straight_line.png')
 
 
 # =============================================================================
 # 新增图（P1）：§6.3 CFG——噪声空间里的外推
 # =============================================================================
-def fig_cfg_extrapolation():
+def fig_ch6_cfg_extrapolation():
     fig, ax = plt.subplots(figsize=(9, 6.5))
 
     eps_unc = np.array([0.3, 0.2])
@@ -2212,7 +2212,7 @@ def fig_cfg_extrapolation():
     delta = eps_cond - eps_unc
 
     ws = [0, 1, 3, 7.5, 10]
-    colors = ['#999999', '#4C72B0', '#DD8452', '#C44E52', '#8B0000']
+    colors = ['#555555', '#4C72B0', '#E8833A', '#C44E52', '#C62828']
     pts = [eps_unc + w * delta for w in ws]
 
     # 方向线（从 unc 沿 Δ 延伸）
@@ -2248,7 +2248,7 @@ def fig_cfg_extrapolation():
     # 内插/外推分区说明（左对齐，压在底部空白区）
     ax.text(-0.05, -0.62, '$w\\leq 1$：内插（两点连线之间）', fontsize=9.5, color='#666')
     ax.text(-0.05, -0.80, '$w>1$：外推（冲出连线之外）——CFG 的关键', fontsize=9.5, color='#C44E52', fontweight='bold')
-    ax.text(-0.05, -0.98, '$w$ 过大 → 拉出典型分布区 → 模式坍塌', fontsize=9.5, color='#8B0000')
+    ax.text(-0.05, -0.98, '$w$ 过大 → 拉出典型分布区 → 模式坍塌', fontsize=9.5, color='#C62828')
 
     ax.set_xlabel('噪声预测第 1 维', fontsize=11)
     ax.set_ylabel('噪声预测第 2 维', fontsize=11)
@@ -2257,13 +2257,13 @@ def fig_cfg_extrapolation():
     ax.set_xlim(-0.2, 3.5); ax.set_ylim(-1.15, 0.6)
 
     plt.tight_layout()
-    save_fig(fig, 'fig_cfg_extrapolation.png')
+    save(fig, 'fig_ch6_cfg_extrapolation.png')
 
 
 # =============================================================================
 # 新增图（P2）：§1.5 高斯噪声的唯一性——可处理 vs 崩溃
 # =============================================================================
-def fig_gaussian_uniqueness():
+def fig_ch1_gaussian_uniqueness():
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=False)
     xx = np.linspace(-4, 4, 400)
 
@@ -2272,14 +2272,14 @@ def fig_gaussian_uniqueness():
 
     # ---- 左：高斯噪声——加噪后仍是高斯，闭式可跳步 ----
     ax = axes[0]
-    for mu, s, c, lab in [(0, 0.5, '#2D6A3A', '$x_0$（干净）'),
-                          (0, 0.9, '#55A868', '$t$ 中期'),
-                          (0, 1.5, '#88C99A', '$t$ 后期')]:
+    for mu, s, c, lab in [(0, 0.5, '#1F4E79', '$x_0$（干净）'),
+                          (0, 0.9, '#4A90D9', '$t$ 中期'),
+                          (0, 1.5, '#4A90D9', '$t$ 后期')]:
         ax.plot(xx, gauss(xx, mu, s), color=c, linewidth=2.2, label=lab)
         ax.fill_between(xx, gauss(xx, mu, s), color=c, alpha=0.12)
     ax.text(0, 0.02, '每个 $t$ 的 $p(x_t\\mid x_0)$\n都是高斯，均值方差已知\n→ 闭式跳步 / Tweedie / 反向 SDE',
-            ha='center', fontsize=10, color='#2D6A3A',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='#EAF7EE', edgecolor='#2D6A3A', alpha=0.9))
+            ha='center', fontsize=10, color='#1F4E79',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='#555555', edgecolor='#1F4E79', alpha=0.9))
     ax.set_title('加高斯噪声：条件分布永远是高斯\n（整个框架"算得下去"的地基）', fontsize=11)
     ax.set_xlabel('$x_t$', fontsize=11); ax.set_yticks([])
     ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='upper right')
@@ -2293,26 +2293,26 @@ def fig_gaussian_uniqueness():
     # 数值卷积示意
     conv = np.convolve(lap, uni, mode='same')
     conv /= conv.sum() * (xx[1] - xx[0])   # 归一化为概率密度（避免 np.trapz/trapezoid 版本差异）
-    ax.plot(xx, lap, color='#DD8452', linewidth=2, label='拉普拉斯噪声')
-    ax.plot(xx, uni, color='#8172B3', linewidth=2, label='均匀噪声')
+    ax.plot(xx, lap, color='#E8833A', linewidth=2, label='拉普拉斯噪声')
+    ax.plot(xx, uni, color='#9370DB', linewidth=2, label='均匀噪声')
     ax.plot(xx, conv, color='#C44E52', linewidth=2.6, label='多步叠加后（畸形）')
     ax.fill_between(xx, conv, color='#C44E52', alpha=0.12)
     ax.text(0, 0.02, '换非高斯噪声：\n$p(x_t\\mid x_0)$ 无解析式\n→ 跳步 / Tweedie / 反向 SDE 同时崩溃',
             ha='center', fontsize=10, color='#C44E52',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='#FBEAEA', edgecolor='#C44E52', alpha=0.9))
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='#555555', edgecolor='#C44E52', alpha=0.9))
     ax.set_title('换成别的噪声：解析性崩溃\n（不是不美观，是根本算不动）', fontsize=11)
     ax.set_xlabel('$x_t$', fontsize=11); ax.set_yticks([])
     ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='upper right')
     ax.spines['top'].set_visible(False); ax.spines['right'].set_visible(False)
 
     plt.tight_layout()
-    save_fig(fig, 'fig_gaussian_uniqueness.png')
+    save(fig, 'fig_ch1_gaussian_uniqueness.png')
 
 
 # =============================================================================
 # 新增图（P2）：§6.2 CLIP + 交叉注意力——文字如何进入生成
 # =============================================================================
-def fig_clip_conditioning():
+def fig_ch6_clip_conditioning():
     fig, ax = plt.subplots(figsize=(12, 5))
     ax.set_xlim(0, 12); ax.set_ylim(0, 6); ax.axis('off')
 
@@ -2328,27 +2328,27 @@ def fig_clip_conditioning():
             ax.text((x1+x2)/2, (y1+y2)/2+0.22, txt, ha='center', fontsize=9, color=c)
 
     # 文字 → CLIP → 向量 c
-    box(0.3, 4.2, 1.9, 1.0, '"一只猫"\n(文字条件)', '#FFF2CC', '#D6B656')
-    box(2.9, 4.2, 1.9, 1.0, 'CLIP\n文本编码器', '#DAE8FC', '#6C8EBF')
-    box(5.5, 4.2, 1.7, 1.0, '语义向量 $c$', '#D5E8D4', '#82B366')
+    box(0.3, 4.2, 1.9, 1.0, '"一只猫"\n(文字条件)', '#E8833A', '#DAA520')
+    box(2.9, 4.2, 1.9, 1.0, 'CLIP\n文本编码器', '#9DC3E6', '#5B9BD5')
+    box(5.5, 4.2, 1.7, 1.0, '语义向量 $c$', '#555555', '#55A868')
     arrow(2.2, 4.7, 2.9, 4.7)
     arrow(4.8, 4.7, 5.5, 4.7)
 
     # 图片特征 Q，向量 c 作 K,V，交叉注意力
-    box(0.3, 1.0, 1.9, 1.0, '图片特征\n(查询 $Q$)', '#F8CECC', '#B85450')
-    box(5.3, 1.0, 2.1, 1.0, '交叉注意力\n$Q$ 看一眼 $K,V$', '#E1D5E7', '#9673A6')
-    box(8.6, 1.0, 2.2, 1.0, '条件化的\n图片特征', '#D5E8D4', '#82B366')
+    box(0.3, 1.0, 1.9, 1.0, '图片特征\n(查询 $Q$)', '#FF4444', '#C62828')
+    box(5.3, 1.0, 2.1, 1.0, '交叉注意力\n$Q$ 看一眼 $K,V$', '#555555', '#9370DB')
+    box(8.6, 1.0, 2.2, 1.0, '条件化的\n图片特征', '#555555', '#55A868')
     arrow(2.2, 1.5, 5.3, 1.5, '$Q$')
     arrow(7.4, 1.5, 8.6, 1.5)
     # c 作为 K,V 下注入交叉注意力
-    arrow(6.35, 4.2, 6.35, 2.0, '作键 $K$、值 $V$', '#6C8EBF')
+    arrow(6.35, 4.2, 6.35, 2.0, '作键 $K$、值 $V$', '#5B9BD5')
 
     ax.text(6, 5.6, '文生图的条件通路：文字 → CLIP → 向量 $c$ → 交叉注意力 → 条件生成',
             ha='center', fontsize=12, fontweight='bold', color='#333')
     ax.text(6, 0.3, '每一层都让图片特征"看一眼"文本：文本说画猫，这里就该是猫的轮廓',
             ha='center', fontsize=9.5, style='italic', color='#666')
 
-    save_fig(fig, 'fig_clip_conditioning.png')
+    save(fig, 'fig_ch6_clip_conditioning.png')
 
 
 def main():
@@ -2357,65 +2357,65 @@ def main():
     print("=" * 60)
 
     # Ch1: 前向过程
-    fig1_forward_process()
-    fig_2d_forward_noising()
-    fig_gaussian_uniqueness()       # 新增 §1.5 高斯噪声唯一性
-    fig_ve_vp_comparison()
-    fig_discrete_continuous_bridge()
+    fig_ch1_forward_process()
+    fig_ch1_2d_forward_noising()
+    fig_ch1_gaussian_uniqueness()       # 新增 §1.5 高斯噪声唯一性
+    fig_ch1_ve_vp_comparison()
+    fig_ch1_discrete_continuous_bridge()
 
     # Ch2: 反向过程
-    fig_data_manifold()             # 新增 §2.0 数据流形假设
-    fig2_reverse_process()
-    fig_forward_reverse_combined()
+    fig_ch2_data_manifold()             # 新增 §2.0 数据流形假设
+    fig_ch3_reverse_process()
+    fig_ch3_forward_reverse_combined()
 
     # Ch3: 分数函数
-    fig3_score_function()
-    fig_multiscale_score_field()
-    fig_tweedie_geometry()
-    fig_epsilon_score_equivalence()
+    fig_ch2_score_function()
+    fig_ch2_multiscale_score_field()
+    fig_ch2_tweedie_geometry()
+    fig_ch2_epsilon_score_equivalence()
 
     # Ch4: 训练目标
-    fig4_training_objective()
-    fig_unified_training()
-    fig_training_loss_by_t()
+    fig_ch4_training_objective()
+    fig_ch4_unified_training()
+    fig_ch4_training_loss_by_t()
 
     # Ch5: 采样策略
-    fig5_sampling_strategies()
-    fig_ddpm_ncsn_comparison()
-    fig_reverse_sde_drift_decomposition()
-    fig_three_error_sources()
-    fig_sde_ode_density_match()
-    fig_sde_ode_samplers_multimodal()
-    fig_ddim_straight_line()        # 新增 §5.2 DDIM 换坐标变直线
+    fig_ch5_sampling_strategies()
+    fig_ch3_ddpm_ncsn_comparison()
+    fig_ch3_reverse_sde_drift_decomposition()
+    fig_ch5_three_error_sources()
+    fig_ch5_sde_ode_density_match()
+    fig_ch3_sde_ode_samplers_multimodal()
+    fig_ch5_ddim_straight_line()        # 新增 §5.2 DDIM 换坐标变直线
 
     # Ch6: 条件控制
-    fig6_conditional_control()
-    fig_schedules_models_inpainting()
-    fig_clip_conditioning()         # 新增 §6.2 CLIP + 交叉注意力
-    fig_cfg_extrapolation()         # 新增 §6.3 CFG 外推
-    fig_controlnet_cfg_consistency()
-    fig_latent_crossattention_training()
+    fig_ch6_conditional_control()
+    fig_ch1_schedules_models_inpainting()
+    fig_ch6_clip_conditioning()         # 新增 §6.2 CLIP + 交叉注意力
+    fig_ch6_cfg_extrapolation()         # 新增 §6.3 CFG 外推
+    fig_ch6_controlnet_cfg_consistency()
+    fig_ch9_latent_crossattention_training()
 
     # Ch7: 前沿
-    fig7_frontier()
-    fig_time_embedding()
-    fig_masked_diffusion_process()
-    fig_continuous_discrete_parallel()
+    fig_ch9_frontier()
+    fig_ch4_time_embedding()
+    fig_ch7_masked_diffusion_process()
+    fig_ch7_continuous_discrete_parallel()
 
     # Ch8: 视频与世界模型
-    fig_video_worldmodel_closedloop()
-    fig_frame_consistency()
-    fig_spacetime_attention()
-    fig_diffusion_policy_multimodal()
+    fig_ch8_video_worldmodel()
+    fig_ch8_frame_consistency()
+    fig_ch8_spacetime_attention()
+    fig_ch8_diffusion_policy_multimodal()
 
     # 扩展
-    fig_inference_rl_roadmap()
-    fig_flow_matching_vs_diffusion()
+    fig_ch9_inference_rl()
+    fig_ch9_flow_matching_vs_diffusion()
 
     # Ch9 §9.2: DiT 架构
-    fig_dit_vs_unet()
-    fig_dit_scaling_law()
-    fig_dit_video_spatime()
+    fig_ch9_dit_vs_unet()
+    fig_ch9_dit_scaling_law()
+    fig_ch9_dit_video_spatime()
 
     print("=" * 60)
     print("全部 41 张图生成完毕！")

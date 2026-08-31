@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-r"""把四篇技术文档 md 合体转换为最终发布产物：单个响应式 HTML（动态侧边目录 + KaTeX 公式）。
+r"""把五篇技术文档 md 合体构建为单个响应式 HTML（动态侧边目录 + KaTeX 公式）。
 
 用法:
     python3 build_html.py [--out html/index.html]
 
-流程:
-    1. 每篇 md 用 pandoc 转 HTML（--mathjax 输出 \\(...\\) 供 KaTeX 渲染）
-    2. 内链修复（md_links）：目录锚点改写为 pandoc 实际 id，标题 id 加 doc-N- 前缀后回写 href
-    3. 每篇包进 <div class="doc-section" id="doc-N">，标题层级整体 +1（H1→H2 等）
-    4. 图片路径修正为 html/figures/
-    5. 合并 + 注入模板（CSS/JS/KaTeX CDN）
+每篇处理流水线（render_doc）:
+    1. 自检附录数据抽取（转交互弹窗）与自检区裁剪/保留
+    2. pandoc 转 HTML（--mathjax 输出 LaTeX 定界符供 KaTeX 渲染）
+    3. md_links 内链修复：目录锚点改写为 pandoc 实际 id
+    4. 标题 id/href 加 doc-N- 前缀防跨篇冲突；标题层级 +1（H1→H2 等）
+    5. 表格包裹、长公式标记、图片路径与加载方式修正
+    6. 包进 section.doc-section，并按章包裹
+
+最后合并 body 注入模板（CSS/JS/KaTeX），自检五篇齐全后写出。
 """
 import argparse
 import re
@@ -18,27 +21,30 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import html as html_mod
+
 import md_links
 
 # pandoc reader 参数：harvest（md_links）与真实转换共用，保证标题 id 一字不差
 FROM_FLAGS = md_links.FROM_FLAGS
 
-import md_links
-
-# pandoc reader 参数（harvest 与真实转换必须一字不差，保证 id 一致）
-FROM_FLAGS = "markdown+gfm_auto_identifiers+tex_math_dollars+raw_tex-yaml_metadata_block"
+NL = chr(10)  # 行分隔符（模板/正文拼接用）
 
 ROOT = Path(__file__).resolve().parent
 HTML_DIR = ROOT / "html"
 FIG_SRC = [ROOT / "1_ai_math" / "figures", ROOT / "2_foundation" / "figures",
-           ROOT / "3_use_ai" / "figures", ROOT / "1a_diffusion" / "figures"]
+           ROOT / "3_use_ai" / "figures", ROOT / "1a_diffusion" / "figures",
+           ROOT / "4_ai_law" / "figures"]
 
-# 四篇：(md路径相对ROOT, 显示标题, doc-id)
+# 五篇：(md路径相对ROOT, 显示标题, doc-id)
+DOC_LABELS = ["AI数学", "基座", "用好AI", "扩散", "AI law"]
+
 DOCS = [
     ("1_ai_math/AI数学_从起步到前沿.md", "AI数学：从起步到前沿", "doc-1"),
     ("2_foundation/基座模型_从咿呀到行动.md", "基座模型：从咿呀到行动", "doc-2"),
     ("3_use_ai/用好AI_从有用到好用.md", "用好AI：从有用到好用", "doc-3"),
     ("1a_diffusion/扩散_从噪声生成.md", "扩散：从噪声生成", "doc-4"),
+    ("4_ai_law/AI_law_从现象到规律.md", "AI law：从现象到规律", "doc-5"),
 ]
 
 # 图片重名冲突：不同子目录可能有同名 fig_*.png
@@ -47,6 +53,7 @@ FIG_PREFIX = {
     "1a_diffusion": "diff",
     "2_foundation": "base",
     "3_use_ai": "use",
+    "4_ai_law": "ailaw",
 }
 
 
@@ -121,9 +128,8 @@ def preprocess_md(text: str) -> str:
     return "\n".join(out)
 
 
-def pandoc_to_html(md_text: str, cwd: Path, prefix: str) -> str:
+def pandoc_to_html(md_text: str, cwd: Path) -> str:
     """单篇 md → HTML 片段（pandoc）。用 tempfile 避免残留临时文件。"""
-    import tempfile
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".md", delete=False) as f:
         f.write(md_text)
         tmp_path = f.name
@@ -146,13 +152,11 @@ def pandoc_to_html(md_text: str, cwd: Path, prefix: str) -> str:
 
 SELFCHECK_MARKERS = [
     "## 附录：自检问题与答案",
-    "## B. 自检问题与答案",
     "# 附录：自检问题与答案",
 ]
 
 SELFCHECK_END_MARKERS = [
-    "## 附录：algo-coach——把全篇框架用进一个真实产品",
-    "## C. 逻辑链",
+    "# 附录：逻辑链",
     "> **全书完**",
 ]
 
@@ -198,7 +202,7 @@ def remove_selfcheck_appendix(text: str) -> str:
         )
         connection = conn.group(0) if conn else ""
 
-        text = text[:start] + connection + tail
+        text = text[:start] + connection + '\n' + tail
 
     return text
 
@@ -209,13 +213,10 @@ def remove_selfcheck_toc_refs(text: str) -> str:
     out = []
     for line in lines:
         stripped = line.strip()
-        # 独立的自检附录目录项：HTML 中该附录已被移除，不能保留死链。
-        if stripped.startswith("- 自检题卡住了？提示与答案在文末 ->") or \
-           stripped.startswith("- [自检问题与答案](#附录自检问题与答案)"):
+        # 独立的自检附录目录项：HTML 中该附录已被移除（转为交互弹窗），
+        # 指向它的链接必然是死链——按链接目标匹配，不依赖箭头等文案细节。
+        if "#附录自检问题与答案" in stripped:
             continue
-        # 1a_diffusion 的附录总目录行：链接指向仍保留的 A，但不应再列出已移除的 B。
-        if stripped.startswith("- [附录](#a-数学预备)") and "B 自检问题" in line:
-            line = line.replace(" · B 自检问题", "")
         out.append(line)
     return "".join(out)
 
@@ -259,11 +260,24 @@ def parse_selfcheck_html(appendix_html: str):
                     "answer": None,
                 })
         elif tok.startswith('<details>'):
-            if current is None:
-                continue
             sm = re.search(r'<summary>\s*(.*?)\s*</summary>', tok, re.S)
             summary = sm.group(1).strip() if sm else ""
+            cm = None
+            if current is None and sm:
+                cm = re.match(r'(?:Ch\s*(\d+)|第\s*(\d+)\s*章)\s*(提示|答案|解析)', summary)
+            if cm:
+                # ai-law 风格：无 h3 的整章答案折叠（ChN 答案/提示）→ 按章收录
+                idx = int(cm.group(1) or cm.group(2)) - 1
+                while len(chapters) <= idx:
+                    chapters.append({'heading': 'Ch%d' % (len(chapters) + 1), 'questions': [], 'group_details': []})
+                detail_content = tok[sm.end():-len('</details>')].strip() if sm else tok
+                items = extract_top_level_lis(detail_content)
+                key = 'numbered_hints' if cm.group(3) == '提示' else 'numbered_answers'
+                chapters[idx].setdefault(key, []).extend(items)
+                continue
             content = tok[sm.end():-len('</details>')].strip() if sm else tok
+            if current is None:
+                continue
             if current["questions"] and (
                 current["questions"][-1].get("hint") is None
                 or current["questions"][-1].get("answer") is None
@@ -298,7 +312,7 @@ def extract_selfcheck_data(md_text: str, cwd: Path):
         return []
     start, end = span
     segment = md_text[start:end]
-    appendix_html = pandoc_to_html(segment, cwd, "selfcheck")
+    appendix_html = pandoc_to_html(segment, cwd)
     return parse_selfcheck_html(appendix_html)
 
 
@@ -501,8 +515,18 @@ def inject_selfcheck_popups(html: str, qa_data):
                 popup = make_popup(q.get("hint"), q.get("answer"))
                 if not popup:
                     continue
-                insert_at = slot["end"] if slot["kind"] == "li" else slot["end"]
+                insert_at = slot["end"]
                 insertions.append((region_start + insert_at, popup))
+        elif chapter.get("numbered_answers") or chapter.get("numbered_hints"):
+            # ai-law 风格：题目与答案两侧各 1..N 同序，按位置配对（题目经 <ol start> 全局编号）
+            answers = chapter.get("numbered_answers") or []
+            hints = chapter.get("numbered_hints") or []
+            for j, slot in enumerate(slots):
+                ans_html = answers[j] if j < len(answers) else None
+                hint_html = hints[j] if j < len(hints) else None
+                popup = make_popup(hint_html, ans_html)
+                if popup:
+                    insertions.append((region_start + slot["end"], popup))
         else:
             # AI 数学等没有 Q 编号、以整组 details 出现的章节：
             # 把提示/答案的 <li> 按组切分，逐题插入。
@@ -549,10 +573,9 @@ def inject_selfcheck_popups(html: str, qa_data):
                         ans_html = ans_items[offset + j]
                     popup = make_popup(hint_html, ans_html)
                     if popup:
-                        insert_at = slot["end"] if slot["kind"] == "li" else slot["end"]
+                        insert_at = slot["end"]
                         insertions.append((region_start + insert_at, popup))
                 consumed[answer_key] = offset + len(gslots)
-
         for pos, snippet in sorted(insertions, key=lambda x: x[0], reverse=True):
             html = html[:pos] + snippet + html[pos:]
 
@@ -612,7 +635,6 @@ def bump_headings(html: str, new_doc_id: str) -> str:
     """把 h1-h6 提升一级（h1→h2），并给顶级文档标题加 doc 前缀 id。
     同时给每个标题 id 加 doc 前缀避免跨篇冲突。
     额外给每个标题加 data-label（KaTeX 渲染前的干净纯文本，供 TOC 使用）。"""
-    import html as html_mod
 
     def repl(m):
         tag, attrs, inner = m.group(1), m.group(2), m.group(3)
@@ -720,18 +742,11 @@ def ensure_frontend_assets() -> None:
         _copy_highlight_assets(hljs_src, hljs_dst)
         print(f"✓ 复制 highlight.js 到 html/highlight/")
 
+def copy_figures() -> int:
+    """把各篇 figures/*.png 复制到 html/figures/（按篇加前缀防重名）。
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=str(HTML_DIR / "index.html"))
-    args = ap.parse_args()
-
-    HTML_DIR.mkdir(exist_ok=True)
-    (HTML_DIR / "figures").mkdir(exist_ok=True)
-
-    ensure_frontend_assets()
-
-    # 复制图片（重命名加前缀）；先清空旧图，避免源图删除后残留
+    先清空旧图，避免源图删除后残留。
+    """
     for old in (HTML_DIR / "figures").glob("*.png"):
         old.unlink()
     copied = 0
@@ -743,565 +758,130 @@ def main():
             shutil.copy2(p, HTML_DIR / "figures" / f"{prefix}_{p.name}")
             copied += 1
     print(f"✓ 复制图片 {copied} 张")
+    return copied
 
-    # 逐篇转 HTML
-    sections = []
-    for md_rel, title, doc_id in DOCS:
-        md_path = ROOT / md_rel
-        key = md_rel.split("/")[0]
-        text = md_path.read_text(encoding="utf-8")
-        qa_data = extract_selfcheck_data(text, md_path.parent)
-        text = remove_selfcheck_appendix(text)
-        text = remove_selfcheck_toc_refs(text)
-        text = preprocess_md(text)
-        text, link_warnings, id_set = md_links.fix_internal_links(
-            text, md_path.parent, FROM_FLAGS)
-        for w in link_warnings:
-            print(f"⚠ {md_rel}: {w}")
-        html = pandoc_to_html(text, md_path.parent, key)
-        html = bump_headings(html, doc_id)
-        html = inject_selfcheck_popups(html, qa_data)
-        # 代码块行号 id 去重：pandoc 每篇都从 cb1 开始，合并后会产生重复 id；
-        # 这里给每个 doc 的代码块 id 加上 doc-N- 前缀，保证全局唯一。
-        html = re.sub(r'id="(cb[0-9][^"]*)"', lambda m: f'id="{doc_id}-{m.group(1)}"', html)
-        html = re.sub(r'href="#(cb[0-9][^"]*)"', lambda m: f'href="#{doc_id}-{m.group(1)}"', html)
-        # 内链 href 回写 doc-N- 前缀（fix_internal_links 已把锚点改成 pandoc
-        # 实际 id，此处是纯精确替换；不在 id 集合里的 href 原样保留）
-        html = re.sub(
-            r'href="#([^"]+)"',
-            lambda m: f'href="#{doc_id}-{m.group(1)}"'
-            if m.group(1) in id_set else m.group(0),
-            html)
-        # 注意：不 unescape 公式实体！pandoc 输出 &lt; &gt; &amp; 是安全的 HTML 实体，
-        # DOM textContent 会转回 < > &，KaTeX 读取时得到正确字符。若还原成裸 < 会破坏 HTML 解析。
-        # 表格包 .table-wrap（移动端横向滚动）
-        html = re.sub(r'(<table[^>]*>)', r'<div class="table-wrap">\1', html)
-        html = re.sub(r'(</table>)', r'\1</div>', html)
-        # 超长行内公式（>80字符）标记 math-long，允许换行避免横向滚动
-        html = re.sub(r'<span class="math inline">([^<]{80,}?)</span>',
-                      r'<span class="math inline math-long">\1</span>', html)
-        # 修正图片路径（pandoc 输出 src="figures/xxx.png"）+ 懒加载（保留原 alt）
-        def _img_repl(m):
-            src = m.group(1)
-            rest = m.group(2)  # 含 alt，可能以 "/" 结尾（pandoc 的 /> 被换行拆开）
-            # 去掉尾部 / 或空格，追加 loading="lazy" 并闭合
-            rest = re.sub(r'/?\s*$', '', rest)
-            return f'<img src="figures/{FIG_PREFIX[key]}_{src}"{rest} loading="lazy" decoding="async" />'
-        html = re.sub(r'<img src="figures/([^"]*)"([^><]*)>', _img_repl, html)
-        # 去掉重复的文档大标题（已有外层 doc-title），再按章包裹
-        html = remove_doc_title_heading(html, title)
-        html = wrap_chapters(html)
-        # 文档标题块
-        section = f'<section class="doc-section" id="{doc_id}" data-title="{title}">\n'
-        section += f'<h1 class="doc-title" id="{doc_id}-title">{title}</h1>\n'
-        section += html
-        section += "</section>"
-        sections.append(section)
-        print(f"✓ {md_rel} → HTML ({len(html)} chars)")
 
+def prefix_code_block_ids(html: str, doc_id: str) -> str:
+    """代码块行号 id 加 doc 前缀：pandoc 每篇都从 cb1 开始，合并后 id 会撞车。"""
+    html = re.sub(r'id="(cb[0-9][^"]*)"', lambda m: f'id="{doc_id}-{m.group(1)}"', html)
+    return re.sub(r'href="#(cb[0-9][^"]*)"', lambda m: f'href="#{doc_id}-{m.group(1)}"', html)
+
+
+def prefix_internal_hrefs(html: str, doc_id: str, id_set) -> str:
+    """内链 href 回写 doc 前缀（fix_internal_links 已把锚点改成 pandoc 实际 id）。
+
+    仅替换 id_set 中的精确匹配；不在集合里的 href 原样保留。
+    注意：不 unescape 公式实体！pandoc 输出 &lt; &gt; &amp; 是安全 HTML 实体，
+    DOM textContent 会转回 < > &，KaTeX 读取时得到正确字符；
+    若还原成裸 < 会破坏 HTML 解析。
+    """
+    return re.sub(
+        r'href="#([^"]+)"',
+        lambda m: f'href="#{doc_id}-{m.group(1)}"' if m.group(1) in id_set else m.group(0),
+        html)
+
+
+def wrap_tables(html: str) -> str:
+    """表格包 .table-wrap（移动端横向滚动）。"""
+    html = re.sub(r'(<table[^>]*>)', r'<div class="table-wrap">\1', html)
+    return re.sub(r'(</table>)', r'\1</div>', html)
+
+
+def mark_long_math(html: str) -> str:
+    """超长行内公式（>80 字符）标记 math-long，允许换行避免横向滚动。"""
+    return re.sub(r'<span class="math inline">([^<]{80,}?)</span>',
+                  r'<span class="math inline math-long">\1</span>', html)
+
+
+def fix_image_tags(html: str, fig_prefix: str) -> str:
+    """修图片路径（pandoc 输出 src="figures/xxx"）并加篇名前缀。
+
+    立即加载而非懒加载：懒加载会让锚点跳转后图片陆续撑开页面，
+    目标标题被推出视口（侧边栏目录跳错位的根因）。
+    """
+    def _img_repl(m):
+        src = m.group(1)
+        rest = m.group(2)  # 含 alt；可能以 "/" 结尾（pandoc 的 /> 被换行拆开）
+        rest = re.sub(r'/?\s*$', '', rest)
+        return f'<img src="figures/{fig_prefix}_{src}"{rest} decoding="async" />'
+    return re.sub(r'<img src="figures/([^"]*)"([^><]*)>', _img_repl, html)
+
+
+def render_doc(md_rel: str, title: str, doc_id: str) -> str:
+    """单篇 md → doc-section 块 HTML（完整流水线）。"""
+    md_path = ROOT / md_rel
+    fig_prefix = FIG_PREFIX[md_rel.split("/")[0]]
+
+    text = md_path.read_text(encoding="utf-8")
+    qa_data = extract_selfcheck_data(text, md_path.parent)
+    text = remove_selfcheck_appendix(text)
+    text = remove_selfcheck_toc_refs(text)
+    text = preprocess_md(text)
+    text, link_warnings, id_set = md_links.fix_internal_links(
+        text, md_path.parent, FROM_FLAGS)
+    for w in link_warnings:
+        print(f"⚠ {md_rel}: {w}")
+
+    html = pandoc_to_html(text, md_path.parent)
+    html = bump_headings(html, doc_id)
+    html = inject_selfcheck_popups(html, qa_data)
+    html = prefix_code_block_ids(html, doc_id)
+    html = prefix_internal_hrefs(html, doc_id, id_set)
+    html = wrap_tables(html)
+    html = mark_long_math(html)
+    html = fix_image_tags(html, fig_prefix)
+    html = remove_doc_title_heading(html, title)
+    html = wrap_chapters(html)
+
+    section = f'<section class="doc-section" id="{doc_id}" data-title="{title}">\n'
+    section += f'<h1 class="doc-title" id="{doc_id}-title">{title}</h1>\n'
+    section += html
+    section += "</section>"
+    print(f"✓ {md_rel} → HTML ({len(html)} chars)")
+    return section
+
+def main():
+    ap = argparse.ArgumentParser(description="构建 AI 五篇合集单页 HTML")
+    ap.add_argument("--out", default=str(HTML_DIR / "index.html"),
+                    help="输出文件路径（默认 html/index.html）")
+    args = ap.parse_args()
+
+    HTML_DIR.mkdir(exist_ok=True)
+    (HTML_DIR / "figures").mkdir(exist_ok=True)
+
+    ensure_frontend_assets()
+    copy_figures()
+
+    sections = [render_doc(md_rel, title, doc_id) for md_rel, title, doc_id in DOCS]
     body = "\n".join(sections)
 
-    # 模板
-    html_out = TEMPLATE.replace("{{BODY}}", body)
+    # 自检：五篇全部产出才算成功
+    for _, _, doc_id in DOCS:
+        if f'id="{doc_id}"' not in body:
+            raise RuntimeError(f"构建结果缺少文档 {doc_id}，请检查 pandoc 输出")
+
+    doc_btns = NL.join(
+        f'      <button class="doc-btn" data-doc="{doc_id}">{label}</button>'
+        for (_, _, doc_id), label in zip(DOCS, DOC_LABELS)
+    )
+    html_out = (
+        TEMPLATE.replace("{{BODY}}", body)
+                .replace("{{DOC_BTNS}}", doc_btns)
+    )
     out = Path(args.out)
     out.write_text(html_out, encoding="utf-8")
     print(f"✓ 输出 {out} ({out.stat().st_size/1024:.0f} KB)")
 
 
-TEMPLATE = r"""<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 四篇入门读物合集</title>
-<link rel="stylesheet" href="katex/katex.min.css">
-<link rel="stylesheet" href="highlight/atom-one-dark.min.css" id="hljs-theme">
-<script src="katex/katex.min.js"></script>
-<script src="katex/contrib/auto-render.min.js"></script>
-<script src="highlight/highlight.min.js"></script>
-<style>
-/* ===== 基础 ===== */
-* { margin:0; padding:0; box-sizing:border-box; }
-:root {
-  --bg: #fafaf8; --card: #ffffff; --ink: #1f2937; --ink-soft: #4b5563;
-  --line: #e5e7eb; --accent: #2563eb; --accent-soft: #eff6ff;
-  --code-bg: #f3f4f6; --sidebar-w: 300px;
-  --blockquote-bg: #f9fafb; --blockquote-line: #d1d5db;
-  --th-bg: #f3f4f6; --row-alt: #fafafa; --pre-bg: #1f2937; --pre-ink: #f9fafb;
-  --summary-bg: #f9fafb;
-}
-/* 深色模式 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111827; --card: #1f2937; --ink: #e5e7eb; --ink-soft: #9ca3af;
-    --line: #374151; --accent: #60a5fa; --accent-soft: #1e3a5f;
-    --code-bg: #273244; --blockquote-bg: #1a2332; --blockquote-line: #4b5563;
-    --th-bg: #273244; --row-alt: #1a2332; --pre-bg: #0d1117; --pre-ink: #e5e7eb;
-    --summary-bg: #273244;
-  }
-  img { filter: brightness(0.9); }
-}
-html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",system-ui,sans-serif;
-       background:var(--bg); color:var(--ink); line-height:1.75; }
-a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; word-break:break-word; }
+def _load_template() -> str:
+    """读取页面模板（与构建脚本分离的 template.html）。"""
+    path = ROOT / "template.html"
+    if not path.exists():
+        raise RuntimeError(f"缺少模板文件：{path}")
+    return path.read_text(encoding="utf-8")
 
-/* 图片全局防溢出 */
-img { max-width:100%; height:auto; }
 
-/* ===== 布局 ===== */
-.layout { display:flex; max-width:1500px; margin:0 auto; min-height:100vh; }
-
-/* 侧边栏 */
-.sidebar { width:var(--sidebar-w); flex-shrink:0; background:var(--card);
-           border-right:1px solid var(--line); position:sticky; top:0; height:100vh;
-           overflow-y:auto; padding:20px 14px; z-index:50; }
-.sidebar-header { font-weight:700; font-size:1.05rem; padding:6px 10px 14px;
-                  border-bottom:1px solid var(--line); margin-bottom:10px;
-                  color:var(--ink); display:flex; align-items:center; gap:8px; }
-.sidebar-header .brand { font-size:0.8rem; color:var(--ink-soft); font-weight:400; }
-.toc { list-style:none; font-size:0.86rem; }
-.toc li { margin:1px 0; }
-.toc a { display:block; padding:4px 10px; border-radius:5px; color:var(--ink-soft);
-         transition:all .15s; border-left:2px solid transparent; }
-.toc a:hover { background:var(--accent-soft); color:var(--accent); }
-.toc a.active { background:var(--accent-soft); color:var(--accent); border-left-color:var(--accent); font-weight:600; }
-.toc .lvl-2 { padding-left:22px; }
-.toc .lvl-3 { padding-left:38px; font-size:0.8rem; }
-.toc .lvl-4 { padding-left:52px; font-size:0.78rem; color:#9ca3af; }
-/* 折叠式目录：章 = 可展开组，默认收起 */
-.toc .toc-chapter { margin:0; }
-.toc .toc-chapter-head { display:flex; align-items:center; cursor:pointer;
-                         padding:6px 0; font-weight:600; }
-.toc .toc-chapter-head::before { content:'▸'; display:inline-block; width:16px;
-                                 color:var(--ink-soft); transition:transform .15s; font-size:0.75rem; }
-.toc .toc-chapter.open .toc-chapter-head::before { transform:rotate(90deg); }
-.toc .toc-chapter-head a { flex:1; font-weight:600; }
-.toc .toc-children { display:none; list-style:none; padding:0; }
-.toc .toc-chapter.open .toc-children { display:block; }
-.toc .toc-children .lvl-3 { padding-left:22px; }
-.toc .toc-children .lvl-4 { padding-left:38px; font-size:0.78rem; color:#9ca3af; }
-.toc .doc-head { font-weight:700; color:var(--ink); margin-top:8px; font-size:0.9rem; }
-.toc .doc-head a { color:var(--ink); }
-.toc .doc-head a:hover { color:var(--accent); }
-
-/* 侧边栏折叠按钮（窄屏） */
-.sidebar-toggle { display:none; }
-
-/* 文档切换 */
-.doc-switch { display:flex; gap:6px; margin:10px 0; flex-wrap:wrap; }
-.doc-btn { flex:1; min-width:60px; padding:6px 4px; border:1px solid var(--line);
-           background:var(--card); color:var(--ink-soft); border-radius:6px;
-           cursor:pointer; font-size:0.82rem; transition:all .15s; }
-.doc-btn:hover { border-color:var(--accent); color:var(--accent); }
-.doc-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
-
-/* 搜索框 */
-.search-box { margin:10px 0; }
-.search-box input { width:100%; padding:8px 10px; border:1px solid var(--line);
-                    border-radius:6px; font-size:0.88rem; background:var(--card);
-                    color:var(--ink); outline:none; }
-.search-box input:focus { border-color:var(--accent); }
-.search-box input::placeholder { color:var(--ink-soft); opacity:.7; }
-
-/* 主内容 */
-.main { flex:1; min-width:0; padding:36px 48px 80px; }
-.doc-section { max-width:860px; margin:0 auto 60px; }
-.doc-section + .doc-section { border-top:2px solid var(--line); padding-top:48px; }
-
-/* 性能：超长页面滚动时跳过视口外内容的渲染/绘制 */
-.chapter {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 800px;
-}
-figure, pre, .table-wrap, details, blockquote {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 300px;
-}
-.doc-title { font-size:1.9rem; font-weight:800; margin-bottom:8px; color:var(--ink);
-             padding-bottom:12px; border-bottom:3px solid var(--accent); }
-.doc-section > .doc-title + * { margin-top:20px; }
-
-/* 标题 */
-h2 { font-size:1.55rem; color:var(--ink); margin:40px 0 18px; padding-bottom:8px;
-     border-bottom:1px solid var(--line); scroll-margin-top:20px; }
-h3 { font-size:1.25rem; margin:30px 0 14px; color:var(--ink); scroll-margin-top:20px; }
-h4 { font-size:1.1rem; margin:24px 0 12px; color:var(--ink-soft); scroll-margin-top:20px; }
-h5, h6 { font-size:1rem; margin:20px 0 10px; color:var(--ink-soft); }
-h2, h3, h4 { font-weight:700; }
-
-/* 正文 */
-p { margin:0 0 16px; }
-ul, ol { margin:0 0 16px 26px; }
-li { margin:4px 0; }
-strong { font-weight:700; }
-
-/* 引用 */
-blockquote { border-left:4px solid var(--blockquote-line); background:var(--blockquote-bg); padding:12px 18px;
-             margin:18px 0; border-radius:0 6px 6px 0; color:var(--ink-soft); }
-blockquote > p:last-child { margin-bottom:0; }
-
-/* 公式 */
-.katex { font-size:1.05em; }
-.math.display { display:block; margin:18px 0; overflow-x:auto; overflow-y:hidden; padding:4px 0; max-width:100%; }
-span.math.inline { white-space:nowrap; overflow:visible; display:inline-block;
-                   vertical-align:middle; padding:1px 0; }
-span.math.inline.math-long { white-space:normal; overflow:visible; }
-/* KaTeX 内部强制 nowrap，math-long 需覆盖让长公式换行 */
-span.math.inline.math-long .katex,
-span.math.inline.math-long .katex .base { white-space:normal !important; }
-span.math.inline.math-long .katex .base { width:auto !important; }
-/* 移动端：公式超宽时触摸可滚动，但隐藏滚动条（无滑动箭头干扰） */
-@media (max-width: 640px) {
-  span.math.inline { max-width:100%; overflow-x:auto; overflow-y:hidden;
-                     scrollbar-width:none; -ms-overflow-style:none; }
-  span.math.inline::-webkit-scrollbar { display:none; }
-  span.math.inline.math-long { max-width:100%; }
-}
-
-/* 表格 */
-.table-wrap { overflow-x:auto; margin:20px 0; }
-table { border-collapse:collapse; width:100%; font-size:0.92rem; }
-th, td { border:1px solid var(--line); padding:8px 12px; text-align:left; white-space:normal; }
-th { background:var(--th-bg); font-weight:700; }
-tr:nth-child(even) td { background:var(--row-alt); }
-
-/* 代码 */
-code { background:var(--code-bg); padding:2px 6px; border-radius:4px;
-       font-family:"SF Mono",Consolas,monospace; font-size:0.88em; }
-pre { background:var(--pre-bg); color:var(--pre-ink); padding:16px; border-radius:8px;
-      overflow-x:auto; margin:18px 0; font-size:0.88rem; line-height:1.6; }
-pre code { background:transparent; color:inherit; padding:0; }
-/* 非代码的“逻辑链/示意图”块：不用深色代码框，改用浅色卡片，避免黑框 */
-pre:not(.sourceCode):not(.hljs) {
-  background: var(--blockquote-bg);
-  color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-}
-pre:not(.sourceCode):not(.hljs) code {
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-}
-/* 代码高亮：白底主题覆盖（浅色模式） */
-.hljs { background:var(--code-bg) !important; border-radius:8px; }
-code.hljs, pre.hljs { padding:0; }
-
-/* details 折叠 */
-details { margin:14px 0; border:1px solid var(--line); border-radius:8px;
-          background:var(--card); overflow:hidden; }
-summary { cursor:pointer; padding:10px 16px; font-weight:600; color:var(--ink);
-          background:var(--summary-bg); user-select:none; list-style:none; position:relative; }
-summary::-webkit-details-marker { display:none; }
-summary::before { content:"▸"; display:inline-block; margin-right:8px; color:var(--accent);
-                  transition:transform .2s; }
-details[open] summary::before { transform:rotate(90deg); }
-details[open] summary { border-bottom:1px solid var(--line); }
-details > *:not(summary) { padding:10px 16px; }
-details > p { padding:10px 16px; }
-
-/* 自检题旁的内嵌提示/答案（popup） */
-.selfcheck-popup { margin:0.35em 0 0.65em; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-.selfcheck-popup details { margin:0; border:1px solid var(--line); border-radius:8px; background:var(--card); }
-.selfcheck-popup summary { padding:4px 10px; font-size:0.82rem; font-weight:600; border-radius:7px; display:inline-block; }
-.selfcheck-popup details[open] summary { border-bottom:1px solid var(--line); border-radius:7px 7px 0 0; }
-.selfcheck-popup details > *:not(summary) { padding:8px 12px; font-size:0.9rem; }
-.selfcheck-popup details > p:last-child { margin-bottom:0; }
-
-/* 图片 */
-figure { margin:20px 0; text-align:center; }
-figure img { max-width:100%; height:auto; border-radius:6px; }
-figcaption { margin-top:6px; font-size:0.85rem; color:var(--ink-soft); }
-
-/* 上标引用 */
-sup { font-size:0.7em; color:var(--accent); }
-
-/* 返回顶部 */
-.back-top { position:fixed; right:24px; bottom:24px; width:40px; height:40px;
-            border-radius:50%; background:var(--accent); color:#fff; border:none;
-            font-size:1.1rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.2);
-            display:none; z-index:60; }
-.back-top.show { display:block; }
-
-/* 进度条 */
-.progress { position:fixed; top:0; left:0; height:3px; background:var(--accent);
-            width:0; z-index:100; transition:width .1s; }
-
-/* ===== 响应式 ===== */
-@media (max-width: 1024px) {
-  .layout { flex-direction:column; }
-  .sidebar { width:100%; height:auto; position:relative; max-height:none;
-             border-right:none; border-bottom:1px solid var(--line); padding:12px; }
-  .sidebar-header { margin-bottom:6px; }
-  .toc { display:none; }
-  .toc.open { display:block; max-height:60vh; overflow-y:auto; }
-  .sidebar-toggle { display:block; background:var(--accent); color:#fff; border:none;
-                    padding:8px 14px; border-radius:6px; cursor:pointer; font-size:0.95rem;
-                    margin-bottom:10px; }
-  .main { padding:24px 18px 60px; }
-}
-@media (max-width: 640px) {
-  .main { padding:16px 12px 48px; }
-  .doc-title { font-size:1.5rem; }
-  h2 { font-size:1.3rem; }
-  .doc-section { margin-bottom:36px; }
-}
-
-/* ===== 打印样式 ===== */
-@media print {
-  .sidebar, .sidebar-toggle, .back-top, .progress { display:none !important; }
-  .layout { display:block; }
-  .main { padding:0; max-width:100%; }
-  .doc-section { max-width:100%; margin:0 0 30px; page-break-after:always; }
-  .doc-section:last-child { page-break-after:auto; }
-  details { border:none; margin:8px 0; }
-  details > *:not(summary) { padding:0; }
-  details[open] summary { border-bottom:none; }
-  pre { white-space:pre-wrap; word-break:break-all; }
-  .math.display, span.math.inline { overflow:visible !important; white-space:normal !important; }
-  a { color:var(--ink); text-decoration:none; }
-  figure { page-break-inside:avoid; }
-  table { font-size:0.8rem; }
-  h2, h3, h4 { page-break-after:avoid; }
-}
-</style>
-</head>
-<body>
-<div class="progress" id="progress"></div>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sidebar-header">📚 目录 <span class="brand">· AI 四篇合集</span></div>
-    <button class="sidebar-toggle" id="tocToggle">☰ 目录</button>
-    <div class="doc-switch">
-      <button class="doc-btn" data-doc="doc-1">AI数学</button>
-      <button class="doc-btn" data-doc="doc-2">基座</button>
-      <button class="doc-btn" data-doc="doc-3">用好AI</button>
-      <button class="doc-btn" data-doc="doc-4">扩散</button>
-    </div>
-    <div class="search-box">
-      <input type="search" id="searchInput" placeholder="🔍 搜索标题…" autocomplete="off">
-    </div>
-    <nav class="toc" id="toc"></nav>
-  </aside>
-  <main class="main">
-{{BODY}}
-  </main>
-</div>
-<button class="back-top" id="backTop" title="回到顶部">↑</button>
-
-<script>
-/* ===== 构建目录 ===== */
-(function () {
-  const toc = document.getElementById('toc');
-  const sections = document.querySelectorAll('.doc-section');
-  const docBtns = document.querySelectorAll('.doc-btn');
-
-  sections.forEach(function (sec) {
-    const title = sec.dataset.title;
-    // 文档级标题
-    const headLi = document.createElement('li');
-    headLi.className = 'doc-head';
-    const headA = document.createElement('a');
-    headA.href = '#' + sec.id;
-    headA.textContent = title;
-    headLi.appendChild(headA);
-    toc.appendChild(headLi);
-
-    // 章节标题（h2 = 原 h1, h3 = 原 h2, h4 = 原 h3）
-    // 按章分组：h2 是章，其下 h3/h4 是节的子项
-    let currentChapter = null;   // 当前章的 <li>（h2 容器）
-    let currentChapterList = null; // 当前章的子项 <ul>
-    sec.querySelectorAll('h2, h3, h4').forEach(function (h) {
-      if (h.classList.contains('doc-title')) return; // 跳过文档大标题
-      if (h.textContent.trim() === title) return;   // 跳过与文档标题重复的内部 h1
-      if ((h.dataset.label || '').trim() === '目录') return; // 跳过文档内部"目录"章
-      const id = h.id;
-      if (!id) return;
-      const a = document.createElement('a');
-      a.href = '#' + id;
-      // 标题文本：优先用构建端注入的 data-label（KaTeX 渲染前的干净文本）
-      a.textContent = h.dataset.label || h.textContent;
-      if (h.tagName === 'H2') {
-        // 新章：创建组容器（默认收起）
-        currentChapter = document.createElement('li');
-        currentChapter.className = 'toc-chapter';
-        const headWrapper = document.createElement('div');
-        headWrapper.className = 'toc-chapter-head';
-        headWrapper.appendChild(a);
-        currentChapter.appendChild(headWrapper);
-        currentChapterList = document.createElement('ul');
-        currentChapterList.className = 'toc-children';
-        currentChapter.appendChild(currentChapterList);
-        toc.appendChild(currentChapter);
-        // 点击章名 toggle 展开/收起（不跳转，避免误导航）
-        // 注意：用局部变量捕获当前章，避免闭包引用外层最终值
-        (function (chapter) {
-          headWrapper.addEventListener('click', function (e) {
-            e.preventDefault();
-            chapter.classList.toggle('open');
-          });
-        })(currentChapter);
-      } else {
-        // h3/h4：挂到当前章的子列表
-        if (!currentChapterList) {
-          // 章前的小节（理论不会发生，兜底直接挂 toc）
-          const orphanLi = document.createElement('li');
-          orphanLi.className = 'lvl-' + h.tagName.toLowerCase();
-          orphanLi.appendChild(a);
-          toc.appendChild(orphanLi);
-          return;
-        }
-        const li = document.createElement('li');
-        li.className = 'lvl-' + h.tagName.toLowerCase();
-        li.appendChild(a);
-        currentChapterList.appendChild(li);
-      }
-    });
-  });
-
-  /* ===== 滚动高亮（IntersectionObserver） ===== */
-  const links = toc.querySelectorAll('a');
-  const map = new Map();
-  links.forEach(function (a) {
-    const id = a.getAttribute('href').slice(1);
-    const el = document.getElementById(id);
-    if (el) map.set(el, a);
-  });
-
-  const observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        links.forEach(function (a) { a.classList.remove('active'); });
-        const a = map.get(entry.target);
-        if (a) a.classList.add('active');
-        // 自动展开当前章（收起其他章）——动态层次随阅读位置变化
-        const chapter = a && a.closest('.toc-chapter');
-        if (chapter) {
-          toc.querySelectorAll('.toc-chapter').forEach(function (c) {
-            c.classList.toggle('open', c === chapter);
-          });
-        }
-        // 联动文档切换按钮
-        const sec = entry.target.closest('.doc-section');
-        if (sec) {
-          docBtns.forEach(function (b) {
-            b.classList.toggle('active', b.dataset.doc === sec.id);
-          });
-        }
-      }
-    });
-  }, { rootMargin: '-10% 0px -70% 0px' });
-
-  map.forEach(function (a, el) { observer.observe(el); });
-
-  /* ===== 平滑滚动（保留浏览器行为，只做移动端目录收起） ===== */
-  document.getElementById('tocToggle').addEventListener('click', function () {
-    toc.classList.toggle('open');
-  });
-  links.forEach(function (a) {
-    a.addEventListener('click', function () {
-      if (window.innerWidth <= 1024) toc.classList.remove('open');
-    });
-  });
-
-  /* ===== 文档切换 ===== */
-  docBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const id = btn.dataset.doc;
-      const sec = document.getElementById(id);
-      if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-      docBtns.forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      if (window.innerWidth <= 1024) toc.classList.remove('open');
-    });
-  });
-
-  /* ===== 搜索（过滤 TOC 标题） ===== */
-  const searchInput = document.getElementById('searchInput');
-  const allTocItems = toc.querySelectorAll('li');
-  searchInput.addEventListener('input', function () {
-    const q = searchInput.value.trim().toLowerCase();
-    // 先收集原始结构（doc-head 始终显示，章节按匹配过滤）
-    let matched = 0;
-    allTocItems.forEach(function (li) {
-      if (li.classList.contains('doc-head')) return; // 文档头始终显示
-      const txt = li.textContent.toLowerCase();
-      const show = !q || txt.includes(q);
-      li.style.display = show ? '' : 'none';
-      if (show) matched++;
-    });
-    // 搜索时展开所有含匹配的章（否则结果被折叠隐藏）
-    if (q) {
-      toc.querySelectorAll('.toc-chapter').forEach(function (c) {
-        const hasMatch = c.querySelectorAll('li').length > 0 &&
-          [...c.querySelectorAll('li')].some(function (li) { return li.style.display !== 'none'; });
-        c.classList.toggle('open', hasMatch);
-      });
-    }
-    // 无匹配提示
-    let hint = document.getElementById('searchHint');
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.id = 'searchHint';
-      hint.style.cssText = 'padding:8px 10px;color:var(--ink-soft);font-size:0.82rem;';
-      toc.appendChild(hint);
-    }
-    hint.style.display = q && matched === 0 ? '' : 'none';
-    hint.textContent = '无匹配标题';
-    // 窄屏时显示结果
-    if (q && window.innerWidth <= 1024) toc.classList.add('open');
-  });
-
-  /* ===== 返回顶部 + 进度条 ===== */
-  const backTop = document.getElementById('backTop');
-  const progress = document.getElementById('progress');
-  let scrollTicking = false;
-  let docScrollRange = 0;
-  function updateDocScrollRange() {
-    docScrollRange = document.documentElement.scrollHeight - window.innerHeight;
-  }
-  function updateScrollUI() {
-    const st = window.scrollY;
-    backTop.classList.toggle('show', st > 600);
-    progress.style.width = (docScrollRange > 0 ? (st / docScrollRange) * 100 : 0) + '%';
-    scrollTicking = false;
-  }
-  updateDocScrollRange();
-  window.addEventListener('resize', updateDocScrollRange);
-  window.addEventListener('load', updateDocScrollRange);
-  window.addEventListener('scroll', function () {
-    if (!scrollTicking) {
-      requestAnimationFrame(updateScrollUI);
-      scrollTicking = true;
-    }
-  }, { passive: true });
-  backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
-})();
-
-/* ===== 代码高亮 ===== */
-(function () {
-  if (window.hljs) { hljs.highlightAll(); }
-})();
-
-/* ===== KaTeX 渲染（同步脚本已就绪，直接执行） ===== */
-(function () {
-  if (window.renderMathInElement) {
-    renderMathInElement(document.body, {
-      delimiters: [
-        { left: '\\(', right: '\\)', display: false },
-        { left: '\\[', right: '\\]', display: true }
-      ],
-      output: 'html',
-      ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-      throwOnError: false
-    });
-  }
-})();
-</script>
-</body>
-</html>
-"""
+TEMPLATE = _load_template()
 
 if __name__ == "__main__":
     main()

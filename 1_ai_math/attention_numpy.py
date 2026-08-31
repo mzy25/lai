@@ -11,6 +11,7 @@
 - 公式4: O = AV                               （加权输出）
 - 公式5: MultiHead = Concat(head_1,...,head_h) W_O  （多头融合）
 - 反向传播: 链式法则逐层求导（含RoPE梯度传递）
+- 训练循环: 前向→交叉熵→反传→Adam更新（对应第5.10节动手小节）
 """
 
 import numpy as np
@@ -249,6 +250,60 @@ def multi_head_attention(X, W_Q_list, W_K_list, W_V_list, W_O, thetas_list=None)
 
 
 # ============================================
+# 训练一步（对应第5.10节动手小节）
+# 四个章节的公式装进同一个循环：
+#   Ch3 交叉熵损失与"梯度奇迹" p - y
+#   Ch4 链式法则（线性层梯度）
+#   Ch5 单头注意力前向与手推反传（复用上文函数）
+#   Ch1 Adam 更新
+# ============================================
+
+def cross_entropy_loss(z, target):
+    """
+    交叉熵损失（对应第3章公式3）。
+
+    数学公式: L = -log(softmax(z)[target])
+    数值稳定性技巧与第4.6节相同：先减最大值再取指数。
+    """
+    z_shift = z - z.max()
+    log_prob = z_shift - np.log(np.exp(z_shift).sum())
+    return -log_prob[target]
+
+
+def ce_softmax_gradient(z, target):
+    """
+    交叉熵对 logits 的梯度——第3章"梯度奇迹"。
+
+    数学公式: dL/dz = softmax(z) - onehot(target) = p - y
+
+    返回 (梯度, 概率p)。
+    """
+    z_shift = z - z.max()
+    p = np.exp(z_shift) / np.exp(z_shift).sum()
+    y = np.zeros_like(p)
+    y[target] = 1.0
+    return p - y, p
+
+
+def adam_step(param, grad, m, v, t, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8):
+    """
+    Adam 单步更新（对应第1.5节完整公式）。
+
+    m     = b1*m + (1-b1)*g        一阶矩（梯度的滑动平均）
+    v     = b2*v + (1-b2)*g^2      二阶矩（梯度平方的滑动平均）
+    m_hat = m / (1 - b1^t)         偏差修正（前期步数小，除以放大因子）
+    v_hat = v / (1 - b2^t)
+    param = param - lr * m_hat / (sqrt(v_hat) + eps)
+    """
+    m_new = beta1 * m + (1 - beta1) * grad
+    v_new = beta2 * v + (1 - beta2) * grad ** 2
+    m_hat = m_new / (1 - beta1 ** t)
+    v_hat = v_new / (1 - beta2 ** t)
+    param -= lr * m_hat / (np.sqrt(v_hat) + eps)
+    return param, m_new, v_new
+
+
+# ============================================
 # 主程序：数字演示（与第5章手算结果对比）
 # ============================================
 
@@ -445,6 +500,99 @@ if __name__ == "__main__":
     print(f"注意力权重 (第2头):\n{np.round(block_A[1], 4)}")
 
     # ========================================
+    # Part 6: 训练一步（第5.10节动手小节）
+    # ========================================
+    print("\n" + "=" * 60)
+    print("【Part 6】训练一步：四个章节的公式装进同一个循环")
+    print("=" * 60)
+
+    # 本地重播种：本部分数字自包含，不受前面各部分随机消耗的影响，
+    # 保证与文档中引用的数值永远一致。
+    rng6 = np.random.default_rng(1)
+
+    # 任务：语料"猫吃鱼。猫吃鱼。"——看前两个字符，预测第三个。
+    vocab = {"猫": 0, "吃": 1, "鱼": 2, "。": 3}
+    corpus = "猫吃鱼。猫吃鱼。"
+    pairs = [(corpus[i:i + 2], corpus[i + 2]) for i in range(len(corpus) - 2)]
+    V, d6, dk6 = len(vocab), 4, 4
+
+    E = rng6.standard_normal((V, d6)) * 0.8      # Embedding 查表（本演示冻结不更新）
+    params = [
+        rng6.standard_normal((d6, dk6)) * 0.4,  # W_Q
+        rng6.standard_normal((d6, dk6)) * 0.4,  # W_K
+        rng6.standard_normal((d6, dk6)) * 0.4,  # W_V
+        rng6.standard_normal((dk6, V)) * 0.3,   # W_head 小随机初始化：初始预测接近均匀分布
+    ]
+
+    def forward_p(ps, idx):
+        """§5.10 流水线的最小实现：查表 -> 单头注意力 -> 取最后位置 -> LM Head"""
+        X = E[idx]                                          # 公式1: Embedding 查表
+        O, A, cache6 = single_head_attention(X, ps[0], ps[1], ps[2])
+        z = O[-1] @ ps[3]                                   # 公式4: LM Head 打分
+        return X, O, cache6, z
+
+    def grads_of(ps, idx, tgt):
+        """损失对一个训练对的梯度：Ch3 梯度奇迹 -> Ch4 链式法则 -> Ch5 手推反传"""
+        X, O, cache6, z = forward_p(ps, idx)
+        dz, p = ce_softmax_gradient(z, tgt)                 # Ch3: dL/dz = p - y
+        dWh = np.outer(O[-1], dz)                           # Ch4: dL/dW_head = O^T (p-y)
+        dO = np.zeros_like(O)
+        dO[-1] = dz @ ps[3].T                               # Ch4: 链式法则穿过 LM Head
+        g = single_head_attention_backward(dO, cache6)      # Ch5: 手推反传
+        dWq = X.T @ g["dL_dQ"]                              # Ch4: dL/dW_Q = X^T dL/dQ
+        dWk = X.T @ g["dL_dK"]
+        dWv = X.T @ g["dL_dV"]
+        return [dWq, dWk, dWv, dWh], p
+
+    def loss_of(ps, idx, tgt):
+        X, O, _, z = forward_p(ps, idx)
+        return cross_entropy_loss(z, tgt)
+
+    # 解析梯度 vs 差分近似（抽查每个参数矩阵的 [0,0] 元）
+    params0 = [w.copy() for w in params]
+    print("\n解析梯度 vs 差分近似（各抽查 [0,0] 元）:")
+    for name, pi in [("W_Q", 0), ("W_K", 1), ("W_V", 2), ("W_head", 3)]:
+        ga = grads_of(params0, [vocab["猫"], vocab["吃"]], vocab["鱼"])[0][pi][0, 0]
+        eps6 = 1e-5
+        up = [w.copy() for w in params0]; up[pi][0, 0] += eps6
+        dn = [w.copy() for w in params0]; dn[pi][0, 0] -= eps6
+        fd = (loss_of(up, [vocab["猫"], vocab["吃"]], vocab["鱼"])
+              - loss_of(dn, [vocab["猫"], vocab["吃"]], vocab["鱼"])) / (2 * eps6)
+        ok6 = abs(ga - fd) < 1e-6
+        print(f"  {name}: 解析={ga:+.6f}  差分={fd:+.6f}  {'✓' if ok6 else '✗'}")
+        assert ok6, f"{name} 解析梯度与差分不符"
+
+    # 训练循环：Ch1 的 Adam 更新全部四个矩阵
+    moms = [np.zeros_like(w) for w in params]
+    vels = [np.zeros_like(w) for w in params]
+    lr6, n_steps = 0.15, 120
+    history = []
+    for step in range(1, n_steps + 1):
+        ep = 0.0
+        for ctx, nxt in pairs:
+            idx = [vocab[c] for c in ctx]; tgt = vocab[nxt]
+            g6, p6 = grads_of(params, idx, tgt)
+            ep += -np.log(p6[tgt])                          # 该对的交叉熵
+            for pi in range(4):
+                params[pi], moms[pi], vels[pi] = adam_step(
+                    params[pi], g6[pi], moms[pi], vels[pi], step, lr=lr6)
+        history.append(ep / len(pairs))
+
+    print(f"\n平均交叉熵损失（Ch3 公式3）:")
+    for s6 in [0, 29, 59, 119]:
+        print(f"  第{s6+1:3d}步: {history[s6]:.4f}")
+    print(f"\n初始损失应接近 ln4={np.log(4):.4f}（均匀猜测），训练后趋近 0（全部答对）")
+
+    # 用训好的模型自回归生成（greedy）：公式4 推理时的那半段
+    inv_vocab = {v: k for k, v in vocab.items()}
+    seq6 = "猫吃"
+    for _ in range(3):
+        idx6 = [vocab[c] for c in seq6[-2:]]
+        z6 = forward_p(params, idx6)[3]
+        seq6 += inv_vocab[int(np.argmax(z6))]
+    print(f"\n自回归生成（greedy，从'猫吃'出发）: {seq6}")
+
+    # ========================================
     # 总结
     # ========================================
     print("\n" + "=" * 60)
@@ -458,4 +606,5 @@ if __name__ == "__main__":
   - 只转Q和K, 不碰V
 ✓ Part 4: 多头注意力 — h个头并行→Concat→线性融合
 ✓ Part 5: Transformer Block — Attention+FFN+残差+LayerNorm
+✓ Part 6: 训练一步 — 前向→交叉熵→反传→Adam更新, loss 从 ln4 降到≈0
 """)

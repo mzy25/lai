@@ -6,8 +6,9 @@ __pycache__/
 .DS_Store
 .opencode/node_modules/
 
-# 发布仓库剔除的内部目录（磁盘保留，私有不共享）
+# 发布仓库剔除的内部目录与参考资料（磁盘保留，私有不共享）
 .opencode/
 archive/
 internal/
 vendor/
+references/

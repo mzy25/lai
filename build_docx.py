@@ -38,12 +38,13 @@ class Chapter:
     self_check_marker: str = ""
 
 
-# Output: intermediate raw docx in chapter folder, reference docx in docx/
+# Output: intermediate raw docx in chapter folder, reference docx in docs/
 CHAPTERS = [
-    Chapter("1_ai_math", "1_ai_math", "AI数学_从起步到前沿.md", "AI数学_从起步到前沿_raw.docx", str(ROOT / "docx" / "AI数学_从起步到前沿.docx"), "AI数学：从起步到前沿", "# 附录：自检问题与答案"),
-    Chapter("1a_diffusion", "1a_diffusion", "扩散_从噪声生成.md", "扩散_从噪声生成_raw.docx", str(ROOT / "docx" / "扩散_从噪声生成.docx"), "扩散：从噪声生成", "## B. 自检问题与答案"),
-    Chapter("2_foundation", "2_foundation", "基座模型_从咿呀到行动.md", "基座模型_从咿呀到行动_raw.docx", str(ROOT / "docx" / "基座模型_从咿呀到行动.docx"), "基座模型：从咿呀到行动", "## 附录：自检问题与答案"),
-    Chapter("3_use_ai", "3_use_ai", "用好AI_从有用到好用.md", "用好AI_从有用到好用_raw.docx", str(ROOT / "docx" / "用好AI_从有用到好用.docx"), "用好AI：从有用到好用", "## 附录：自检问题与答案"),
+    Chapter("1_ai_math", "1_ai_math", "AI数学_从起步到前沿.md", "AI数学_从起步到前沿_raw.docx", str(ROOT / "docs" / "AI数学_从起步到前沿.docx"), "AI数学：从起步到前沿", "# 附录：自检问题与答案"),
+    Chapter("1a_diffusion", "1a_diffusion", "扩散_从噪声生成.md", "扩散_从噪声生成_raw.docx", str(ROOT / "docs" / "扩散_从噪声生成.docx"), "扩散：从噪声生成", "# 附录：自检问题与答案"),
+    Chapter("2_foundation", "2_foundation", "基座模型_从咿呀到行动.md", "基座模型_从咿呀到行动_raw.docx", str(ROOT / "docs" / "基座模型_从咿呀到行动.docx"), "基座模型：从咿呀到行动", "# 附录：自检问题与答案"),
+    Chapter("3_use_ai", "3_use_ai", "用好AI_从有用到好用.md", "用好AI_从有用到好用_raw.docx", str(ROOT / "docs" / "用好AI_从有用到好用.docx"), "用好AI：从有用到好用", "# 附录：自检问题与答案"),
+    Chapter("4_ai_law", "4_ai_law", "AI_law_从现象到规律.md", "AI_law_从现象到规律_raw.docx", str(ROOT / "docs" / "AI_law_从现象到规律.docx"), "AI law：从现象到规律", "# 附录：自检问题与答案"),
 ]
 
 
@@ -51,7 +52,7 @@ def preprocess_self_check(text: str, split_marker: str) -> str:
     """Extract <details> answer blocks into a separate section with page break.
 
     Only <details> blocks in the self-check section (after the per-chapter
-    ``split_marker``, e.g. "## B. 自检问题") are extracted to the answer
+    ``split_marker``, e.g. "# 附录：自检问题与答案") are extracted to the answer
     appendix.  <details> blocks in chapter bodies are expanded inline
     (bold title + content) so they render properly in docx.
     """
@@ -89,6 +90,10 @@ def preprocess_self_check(text: str, split_marker: str) -> str:
         summary = m.group(1).strip()
         if "提示" in summary:
             return m.group(0)  # 支架保留在题目区
+        # "把知识连成网"是附录收束的连接练习（含题目与示范答案），
+        # 与 HTML 管线一致保留在题目区，不编号为自检答案。
+        if summary.startswith("把知识连成网"):
+            return m.group(0)
         q_num += 1
         content = m.group(2).strip()
         answers.append(f"**A{q_num}**：{content}")
