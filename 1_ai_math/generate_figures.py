@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """AI数学：从起步到前沿 —— 配图生成脚本
-生成20张dpi=200的教学配图
+生成21张dpi=200的教学配图
 
 使用方法:
     python3 generate_figures.py
 
-输出: figures/目录下的20张PNG图片
+输出: figures/目录下的21张PNG图片
 """
 
 import sys
@@ -17,15 +17,123 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import fig_common  # noqa: E402  (sys.path 就绪后再导入共享模块)
 from fig_common import CJK_FONT_NAME, setup_rc  # noqa: E402
+# 语义色板（改图/新图一律从本表取色，禁止表外独点色）
+from fig_common import (  # noqa: E402
+    ROLE_DANGER, ROLE_SUCCESS, ROLE_WARNING, ROLE_PRIMARY,
+    BLUE, RED, GREEN, ORANGE, GRAY, INK, WHITE,
+)
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "figures"
 
 
 def save(fig, name):
-    fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200)
+    """保存并返回路径。
+
+    必须 return —— run_all() 靠返回值判断这张图是否真的落盘，
+    不返回会让"生成成功"的统计形同虚设。
+    """
+    return fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200)
 
 
-setup = lambda: (setup_rc(dpi=200), print(f"输出目录: {OUTPUT_DIR}"), print("开始生成20张配图..."))
+setup = lambda: (setup_rc(dpi=200), print(f"输出目录: {OUTPUT_DIR}"), print("开始生成21张配图..."))
+
+# ============================================================
+# Ch0 - 1张图
+# ============================================================
+
+def fig_ch0_ai_panorama():
+    """图0: AI 全景——训练回路（左）与损失之山（右）
+
+    与正文第0章严格对应：
+      左：输入 x → 带旋钮的函数 f(x; θ) → 预测 ŷ → 与训练数据里的真实答案 y 比一比
+          → 损失 L → 损失回头告诉旋钮"往哪边拧、拧多少"（闭环反复跑）。
+      右：损失随旋钮 θ₀ 变化——本例钉死 θ₁=3、真实房价 y=330 万，
+          L = (ŷ - y)² = (θ₀ - 120)²，是一条开口向上的抛物线；
+          红点是从 θ₀=100 出发、一步步走到碗底 θ₀=120 的调整轨迹。
+    """
+    from matplotlib.patches import FancyBboxPatch
+
+    fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.2))
+
+    # ============ 左：训练回路 ============
+    ax = axes[0]
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+
+    def box(xc, yc, w, h, text, fc, tc=INK, fs=11.5, bold=False):
+        ax.add_patch(FancyBboxPatch(
+            (xc - w / 2, yc - h / 2), w, h,
+            boxstyle="round,pad=0.06,rounding_size=0.18",
+            linewidth=1.5, edgecolor=GRAY["d"], facecolor=fc, zorder=2))
+        ax.text(xc, yc, text, ha='center', va='center', fontsize=fs, color=tc,
+                fontproperties=CJK_FONT_NAME,
+                fontweight='bold' if bold else 'normal', zorder=3)
+
+    box(1.15, 4.5, 1.9, 1.0, '输入 $x$\n（面积 70m²）', BLUE["l"])
+    box(4.35, 4.5, 3.3, 1.0, '带旋钮的函数\n$\\hat{y}=f(x;\\ \\theta)$', GREEN["l"], bold=True)
+    box(7.85, 4.5, 1.9, 1.0, '预测 $\\hat{y}$\n（猜 310 万）', ORANGE["l"])
+    box(7.85, 2.1, 3.4, 1.2, '比一比：$\\hat{y}$ 与真实 $y$ 差多少\n'
+                             '损失 $L=(\\hat{y}-y)^2$', ORANGE["l"], bold=True)
+    box(1.35, 2.1, 2.3, 1.0, '训练数据\n真实答案 $y$=330 万', GRAY["l"])
+
+    def arrow(xy, xytext, color, rad=0.0, lw=1.8, ls='-'):
+        ax.annotate('', xy=xy, xytext=xytext, zorder=4,
+                    arrowprops=dict(arrowstyle='->', color=color, lw=lw,
+                                    linestyle=ls,
+                                    connectionstyle=f"arc3,rad={rad}"))
+
+    arrow((2.75, 4.5), (2.15, 4.5), GRAY["d"])          # 输入 → 函数
+    arrow((6.85, 4.5), (6.05, 4.5), GRAY["d"])          # 函数 → 预测
+    arrow((7.85, 3.6), (7.85, 2.75), GRAY["d"])         # 预测 → 比一比
+    arrow((2.45, 2.1), (3.05, 2.1), GRAY["d"])          # 真实答案 → 比一比
+    arrow((2.95, 4.15), (6.05, 2.4), ROLE_DANGER, rad=0.42, lw=2.0)  # 损失 → 旋钮（反馈）
+
+    ax.text(1.55, 1.05, '损失回头告诉旋钮："往哪边拧、拧多少"',
+            fontsize=10.5, color=ROLE_DANGER, fontproperties=CJK_FONT_NAME,
+            ha='center')
+    ax.text(5.0, 5.75, '这个回路要反复跑成千上万遍', fontsize=12,
+            color=INK, fontproperties=CJK_FONT_NAME, ha='center',
+            fontweight='bold')
+    ax.set_title('左：训练回路', fontsize=13, fontproperties=CJK_FONT_NAME,
+                 loc='left', y=-0.02)
+
+    # ============ 右：损失之山 ============
+    ax = axes[1]
+    th = np.linspace(100, 140, 400)
+    ax.plot(th, (th - 120) ** 2, color=BLUE["m"], lw=2.6,
+            label=r'损失 $L=(\theta_0-120)^2$')
+
+    # 红点轨迹：从 θ₀=100 出发，每步朝碗底走一截（一次次调整旋钮）
+    path = [100.0]
+    for _ in range(7):
+        path.append(path[-1] + 0.5 * (120 - path[-1]))
+    path.append(120.0)
+    ax.plot(path, [(p - 120) ** 2 for p in path], 'o-', color=ROLE_DANGER,
+            ms=7, lw=1.8, zorder=5, label='一次次调整旋钮的轨迹')
+
+    ax.plot(120, 0, '*', color='gold', ms=22, mec=INK, mew=1.2, zorder=6)
+    ax.annotate('碗底 = 损失最小\n最优旋钮 $\\theta_0^*=120$', xy=(120, 0),
+                xytext=(121.5, 95), fontsize=10.5, color=GREEN["d"],
+                fontproperties=CJK_FONT_NAME,
+                arrowprops=dict(arrowstyle='->', color=GREEN["d"], lw=1.6))
+    ax.annotate('起点：随便猜的旋钮\n$\\theta_0=100$，损失 400',
+                xy=(100, 400), xytext=(101.2, 300), fontsize=10.5,
+                color=ROLE_DANGER, fontproperties=CJK_FONT_NAME,
+                arrowprops=dict(arrowstyle='->', color=ROLE_DANGER, lw=1.6))
+
+    ax.set_xlabel('旋钮 $\\theta_0$（本节钉死 $\\theta_1=3$ 不动）', fontsize=12,
+                  fontproperties=CJK_FONT_NAME)
+    ax.set_ylabel('损失 $L$', fontsize=12)
+    ax.set_title('右：损失之山——山高 = 错得多离谱', fontsize=13,
+                 fontproperties=CJK_FONT_NAME)
+    ax.set_ylim(-45, 480)
+    ax.grid(alpha=0.25)
+    ax.legend(fontsize=9.5, loc='upper right', prop=CJK_FONT_NAME)
+
+    plt.tight_layout()
+    return save(fig, 'fig_ch0_ai_panorama.png')
+
 
 # ============================================================
 # Ch1 - 5张图
@@ -69,120 +177,264 @@ def fig_ch1_gradient_path():
     ax2.set_title('x converges quickly', fontsize=13)
     ax2.set_xticks(iters); ax2.grid(True, alpha=0.3)
     
-    save(fig, 'fig_ch1_gradient_path.png')
+    return save(fig, 'fig_ch1_gradient_path.png')
 
 def fig_ch1_learning_rate():
-    """图2: 三种学习率对比"""
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4.2))
-    
+    """图2: 三种学习率对比
+
+    与正文 §1.4 严格对应（同一把尺子：损失降到初始值的千分之一）：
+      eta=1.0  震荡，永远降不下去
+      eta=0.3  4 步达标
+      eta=0.01 171 步才达标（x 每步只收缩 2%）
+    """
+    fig, axes = plt.subplots(1, 4, figsize=(17.5, 4.1))
+
     def gd_path(x0, eta, n):
         pts = [x0]
         for _ in range(n):
             pts.append(pts[-1] - eta * 2 * pts[-1])
         return pts
-    
+
     x = np.linspace(-4, 4, 200)
-    
-    # eta=1.0 震荡
+
+    # ---------- eta=1.0 震荡 ----------
     ax = axes[0]
     pts = gd_path(3.0, 1.0, 6)
-    ax.plot(x, x**2, 'b-', lw=1.5, alpha=0.4)
-    ax.plot(pts, [p**2 for p in pts], 'ro-', ms=5)
-    for i in range(len(pts)-1):
-        ax.annotate('', xy=(pts[i+1], pts[i+1]**2), xytext=(pts[i], pts[i]**2),
-                    arrowprops=dict(arrowstyle='->', color='red', lw=1))
-    ax.set_title('eta=1.0: oscillation', fontsize=11); ax.set_xlabel('x'); ax.set_ylabel('f(x)')
-    ax.set_xlim(-4,4); ax.set_ylim(-1,17); ax.grid(True, alpha=0.3)
-    
-    # eta=0.3 收敛
+    ax.plot(x, x**2, color=BLUE["m"], lw=1.5, alpha=0.4)
+    ax.plot(pts, [p**2 for p in pts], 'o-', color=ROLE_DANGER, ms=5)
+    for i in range(len(pts) - 1):
+        ax.annotate('', xy=(pts[i + 1], pts[i + 1]**2), xytext=(pts[i], pts[i]**2),
+                    arrowprops=dict(arrowstyle='->', color=ROLE_DANGER, lw=1))
+    ax.set_title(r'$\eta=1.0$  震荡', fontsize=12, fontproperties=CJK_FONT_NAME)
+    ax.set_xlabel('x'); ax.set_ylabel('f(x)')
+    ax.set_xlim(-4, 4); ax.set_ylim(-1, 17); ax.grid(True, alpha=0.3)
+
+    # ---------- eta=0.3 收敛 ----------
     ax = axes[1]
     pts = gd_path(3.0, 0.3, 6)
-    ax.plot(x, x**2, 'b-', lw=1.5, alpha=0.4)
-    ax.plot(pts, [p**2 for p in pts], 'go-', ms=5)
-    for i in range(len(pts)-1):
-        ax.annotate('', xy=(pts[i+1], pts[i+1]**2), xytext=(pts[i], pts[i]**2),
-                    arrowprops=dict(arrowstyle='->', color='green', lw=1))
-    ax.set_title('eta=0.3: converges in 4 steps', fontsize=11); ax.set_xlabel('x'); ax.set_ylabel('f(x)')
-    ax.set_xlim(-4,4); ax.set_ylim(-1,17); ax.grid(True, alpha=0.3)
-    
-    # eta=0.01 极慢
-    ax = axes[2]
-    pts = gd_path(3.0, 0.01, 100)
-    ax.plot(x, x**2, 'b-', lw=1.5, alpha=0.4, label='f(x)=x^2')
-    sample = pts[::10]
-    ax.plot(sample, [p**2 for p in sample], 'mo-', ms=4, lw=1)
-    for i in range(len(sample)-1):
-        ax.annotate('', xy=(sample[i+1], sample[i+1]**2), xytext=(sample[i], sample[i]**2),
-                    arrowprops=dict(arrowstyle='->', color='purple', lw=0.8))
-    ax.plot(pts[0], pts[0]**2, 'g>', ms=8, label='start')
-    ax.plot(pts[-1], pts[-1]**2, 'r*', ms=10, label='end (100 steps)')
-    ax.set_title('eta=0.01: 100 steps, barely moves', fontsize=11)
+    ax.plot(x, x**2, color=BLUE["m"], lw=1.5, alpha=0.4)
+    ax.plot(pts, [p**2 for p in pts], 'o-', color=GREEN["m"], ms=5)
+    for i in range(len(pts) - 1):
+        ax.annotate('', xy=(pts[i + 1], pts[i + 1]**2), xytext=(pts[i], pts[i]**2),
+                    arrowprops=dict(arrowstyle='->', color=GREEN["m"], lw=1))
+    ax.set_title(r'$\eta=0.3$  4 步降至千分之一', fontsize=12,
+                 fontproperties=CJK_FONT_NAME)
     ax.set_xlabel('x'); ax.set_ylabel('f(x)')
-    ax.set_xlim(-4,4); ax.set_ylim(-1,17); ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8)
-    
-    plt.suptitle('Learning Rate: too big / just right / too small', fontsize=14, y=1.02)
-    save(fig, 'fig_ch1_learning_rate.png')
+    ax.set_xlim(-4, 4); ax.set_ylim(-1, 17); ax.grid(True, alpha=0.3)
+
+    # ---------- eta=0.01 极慢 ----------
+    ax = axes[2]
+    N_SLOW = 171                      # 正文：降到同样千分之一所需步数
+    pts = gd_path(3.0, 0.01, N_SLOW)
+    ax.plot(x, x**2, color=BLUE["m"], lw=1.5, alpha=0.4, label=r'$f(x)=x^2$')
+    sample = pts[::15]
+    ax.plot(sample, [p**2 for p in sample], 'o-', color=ORANGE["m"], ms=4, lw=1)
+    for i in range(len(sample) - 1):
+        ax.annotate('', xy=(sample[i + 1], sample[i + 1]**2),
+                    xytext=(sample[i], sample[i]**2),
+                    arrowprops=dict(arrowstyle='->', color=ORANGE["m"],
+                                    lw=0.8, alpha=0.8))
+    ax.plot(pts[0], pts[0]**2, '>', color=GREEN["d"], ms=8, label='起点 $x_0=3$')
+    ax.plot(pts[-1], pts[-1]**2, '*', color=ROLE_DANGER, ms=12,
+            label=f'第 {N_SLOW} 步')
+    ax.set_title(rf'$\eta=0.01$  需 {N_SLOW} 步才到同样位置', fontsize=12,
+                 fontproperties=CJK_FONT_NAME)
+    ax.set_xlabel('x'); ax.set_ylabel('f(x)')
+    ax.set_xlim(-4, 4); ax.set_ylim(-1, 17); ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8, prop=CJK_FONT_NAME)
+
+    # ---------- 同一把尺子：f/f0 的对数衰减 ----------
+    ax = axes[3]
+    steps = np.arange(0, 201)
+    f0 = 9.0
+    def ratio(eta):
+        xx = 3.0
+        out = []
+        for _ in steps:
+            out.append(xx * xx / f0)
+            xx = xx - eta * 2 * xx
+        return np.array(out)
+
+    r_big, r_ok, r_small = ratio(1.0), ratio(0.3), ratio(0.01)
+    ax.semilogy(steps, r_big,   color=ROLE_DANGER, lw=2,   label=r'$\eta=1.0$  震荡')
+    ax.semilogy(steps, r_ok,    color=GREEN["m"],  lw=2,   label=r'$\eta=0.3$')
+    ax.semilogy(steps, r_small, color=ORANGE["m"], lw=2,   label=r'$\eta=0.01$')
+    ax.axhline(1e-3, color=GRAY["d"], ls='--', lw=1.4)
+    ax.text(120, 1.5e-3, '千分之一（同一把尺子）', fontsize=9,
+            color=GRAY["d"], fontproperties=CJK_FONT_NAME)
+
+    def mark_at(arr, thr=1e-3):
+        idx = np.argmax(arr < thr)
+        return idx if arr[idx] < thr else None
+
+    k_ok = mark_at(r_ok)
+    k_sm = mark_at(r_small)
+    if k_ok:
+        ax.plot([k_ok], [r_ok[k_ok]], 'o', color=GREEN["d"], ms=8, zorder=5)
+        ax.annotate(f'{k_ok} 步', xy=(k_ok, r_ok[k_ok]), xytext=(k_ok + 12, 3e-2),
+                    fontsize=10, color=GREEN["d"], fontweight='bold',
+                    arrowprops=dict(arrowstyle='->', color=GREEN["d"], lw=1.3))
+    if k_sm:
+        ax.plot([k_sm], [r_small[k_sm]], 'o', color=ORANGE["d"], ms=8, zorder=5)
+        ax.annotate(f'{k_sm} 步', xy=(k_sm, r_small[k_sm]), xytext=(k_sm - 62, 4e-3),
+                    fontsize=10, color=ORANGE["d"], fontweight='bold',
+                    arrowprops=dict(arrowstyle='->', color=ORANGE["d"], lw=1.3))
+
+    ax.set_xlabel('步数', fontsize=12, fontproperties=CJK_FONT_NAME)
+    ax.set_ylabel(r'$f/f_0$（对数刻度）', fontsize=12)
+    ax.set_title('同一把尺子：4 步 vs 171 步', fontsize=12,
+                 fontproperties=CJK_FONT_NAME)
+    ax.set_ylim(1e-10, 3)
+    ax.set_xlim(0, 200)
+    ax.grid(True, which='both', alpha=0.25)
+    ax.legend(fontsize=8.5, loc='lower left', prop=CJK_FONT_NAME)
+
+    plt.suptitle('学习率：太大震荡 / 刚好 4 步 / 太小 171 步', fontsize=14, y=1.03,
+                 fontproperties=CJK_FONT_NAME)
+    plt.tight_layout()
+    return save(fig, 'fig_ch1_learning_rate.png')
+
 
 def fig_ch1_local_minimum():
-    """图4: 局部最小值 vs 鞍点"""
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
-    
-    # 左：局部最小值（双井势函数）
+    """图4: 局部最小值（非对称双井）vs 鞍点
+
+    与正文 §1.6 严格对应：
+      左：f(x)=x^4-4x^2+4x —— 浅坑 x=1 (f=1) 与深谷 x=-phi (f=-10.09) 深浅悬殊，
+          从 x0=2 出发的梯度下降必定困在浅坑。
+      右：鞍点 f(x,y)=x^2-y^2 —— 存在下坡方向，但停在原点时梯度为零、更新量为零，
+          确定性轨迹精确停在原地；起点偏一丝或被噪声踢一下，才会沿下坡方向离开。
+          （更新为 -η∇f = (-0.1x, +0.1y)，y 分量按 1.1^n 放大，故子图固定 ±2 视窗。）
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.0))
+
+    # ============ 左：局部最小值（非对称双井） ============
     ax = axes[0]
-    x = np.linspace(-3, 3, 400)
-    f = x**4 - 4*x**2 + 2
-    ax.plot(x, f, 'b-', lw=2, alpha=0.7)
-    
-    # 双井势的两个极小值和一个极大值
-    sqrt2 = np.sqrt(2)
-    cps = [-sqrt2, 0, sqrt2]
-    labels = ['local min', 'local max', 'local min']
-    colors = ['red', 'orange', 'red']
-    for cp, lb, cl in zip(cps, labels, colors):
-        ax.plot(cp, cp**4 - 4*cp**2 + 2, 'o', color=cl, ms=10, zorder=5, label=lb)
-    
-    # 从右侧出发的梯度下降轨迹——困在右边的山谷
-    x_traj = [2.5]
-    for _ in range(100):
-        grad = 4*x_traj[-1]**3 - 8*x_traj[-1]
-        x_new = x_traj[-1] - 0.05 * grad
-        x_traj.append(x_new)
-        if abs(x_traj[-1] - x_traj[-2]) < 1e-4: break
-    ax.plot(x_traj, [xi**4 - 4*xi**2 + 2 for xi in x_traj], 'g--', lw=1.5, alpha=0.7)
-    ax.plot(x_traj[0], x_traj[0]**4 - 4*x_traj[0]**2 + 2, 'g>', ms=10, label='start')
-    ax.plot(x_traj[-1], x_traj[-1]**4 - 4*x_traj[-1]**2 + 2, 'gs', ms=8, label='stuck (right valley)')
-    
-    # 箭头指向左边的山谷
-    ax.annotate('', xy=(-sqrt2, (-sqrt2)**4-4*(-sqrt2)**2+2), xytext=(sqrt2, (sqrt2)**4-4*(sqrt2)**2+2),
-                arrowprops=dict(arrowstyle='->', color='purple', lw=2, ls='--'))
-    ax.text(-2.2, 1.5, 'other valley\n(same depth)', fontsize=9, color='purple')
-    
-    ax.set_title('Local minimum: GD stuck in one valley', fontsize=12)
-    ax.set_xlabel('x'); ax.set_ylabel('f(x)')
-    ax.legend(loc='upper center', fontsize=9)
-    ax.set_xlim(-3,3); ax.grid(True, alpha=0.3)
-    
-    # 右：鞍点
+    f  = lambda x: x**4 - 4 * x**2 + 4 * x
+    df = lambda x: 4 * x**3 - 8 * x + 4
+
+    xs = np.linspace(-2.4, 2.4, 600)
+    ax.plot(xs, f(xs), color=INK, lw=2, label=r'$f(x)=x^4-4x^2+4x$')
+
+    phi = (1 + np.sqrt(5)) / 2
+    x_deep, x_hill, x_shallow = -phi, 1 / phi, 1.0
+
+    # 深谷
+    ax.plot(x_deep, f(x_deep), 'o', color=ROLE_DANGER, ms=11, zorder=5)
+    ax.annotate('深谷  ' + r'$x\approx-1.618$' + '\n' + r'$f\approx-10.09$',
+                xy=(x_deep, f(x_deep)), xytext=(-2.32, -6.6),
+                fontsize=10.5, color=ROLE_DANGER, va='top',
+                arrowprops=dict(arrowstyle='->', color=ROLE_DANGER, lw=1.6))
+    # 山丘
+    ax.plot(x_hill, f(x_hill), 'o', color=GRAY["m"], ms=9, zorder=5)
+    ax.annotate('山丘  ' + r'$x\approx0.618$' + '\n' + r'$f\approx1.09$',
+                xy=(x_hill, f(x_hill)), xytext=(0.62, 6.6),
+                fontsize=10.5, color=GRAY["d"],
+                arrowprops=dict(arrowstyle='->', color=GRAY["m"], lw=1.6))
+    # 浅坑
+    ax.plot(x_shallow, f(x_shallow), 'o', color=ORANGE["m"], ms=11, zorder=5)
+    ax.annotate('浅坑  ' + r'$x=1$' + '\n' + r'$f=1.00$',
+                xy=(x_shallow, f(x_shallow)), xytext=(1.42, 3.6),
+                fontsize=10.5, color=ORANGE["d"],
+                arrowprops=dict(arrowstyle='->', color=ORANGE["m"], lw=1.6))
+
+    # 梯度下降轨迹：从 x0=2 出发，困在浅坑
+    eta, xt = 0.03, 2.0
+    traj = [xt]
+    for _ in range(60):
+        xt = xt - eta * df(xt)
+        traj.append(xt)
+    traj = np.array(traj)
+    ax.plot(traj, f(traj), '--', color=GREEN["m"], lw=2,
+            label=r'梯度下降路径  $\eta=0.03$')
+    ax.plot(traj[0], f(traj[0]), 's', color=GREEN["d"], ms=10, label=r'起点  $x_0=2$')
+    for i in [0, 3, 8, 20, 59]:
+        if i + 1 < len(traj):
+            ax.annotate('', xy=(traj[i + 1], f(traj[i + 1])),
+                        xytext=(traj[i], f(traj[i])),
+                        arrowprops=dict(arrowstyle='->', color=GREEN["m"],
+                                        lw=1.3, alpha=0.85))
+
+    ax.axhline(0, color=GRAY["m"], lw=0.6, alpha=0.5)
+    ax.set_xlabel('x', fontsize=12)
+    ax.set_ylabel('f(x)', fontsize=12)
+    ax.set_title('局部最小值困境：滑进浅坑，到不了深谷', fontsize=13,
+                 fontproperties=CJK_FONT_NAME)
+    ax.legend(fontsize=9.5, loc='upper right', prop=CJK_FONT_NAME)
+    ax.grid(alpha=0.25)
+    ax.set_ylim(-12, 9)
+
+    # ============ 右：鞍点 ============
     ax = axes[1]
-    x2d = np.linspace(-3, 3, 100)
-    y2d = np.linspace(-3, 3, 100)
-    X, Y = np.meshgrid(x2d, y2d)
+    g = np.linspace(-2, 2, 400)
+    X, Y = np.meshgrid(g, g)
     Z = X**2 - Y**2
-    contour = ax.contour(X, Y, Z, levels=15, cmap='coolwarm', linewidths=1.5)
-    ax.clabel(contour, inline=True, fontsize=8)
-    ax.plot(0, 0, 'ko', ms=12, zorder=5, label='saddle point')
-    ax.annotate('flat in x, downhill in y', xy=(0,0), xytext=(1.5, 2), fontsize=10,
-                arrowprops=dict(arrowstyle='->', color='black', lw=1.5))
-    t_y = np.linspace(-2, 2.5, 30)
-    ax.plot(np.zeros_like(t_y), t_y, 'g--', lw=2, alpha=0.7, label='GD escapes along y')
-    ax.plot(0, -2, 'g>', ms=10)
-    ax.set_title('Saddle point: GD can escape some directions', fontsize=12)
-    ax.set_xlabel('x'); ax.set_ylabel('y')
-    ax.legend(loc='lower right')
-    ax.set_aspect('equal'); ax.grid(True, alpha=0.3)
-    
-    save(fig, 'fig_ch1_local_minimum.png')
+    ax.contourf(X, Y, Z, levels=22, cmap='RdBu_r', alpha=0.55)
+    ax.contour(X, Y, Z, levels=12, colors=GRAY["d"], linewidths=0.6, alpha=0.5)
+
+    # 确定性梯度下降：-η∇f = (-0.1x, +0.1y)。
+    # 起点严格落在 y=0 的水平轴上 → y 恒为 0、x 按 0.9^n 收缩到 0，
+    # 最终精确停在原点：梯度为零，更新量为零，一步也迈不出去。
+    for i, x0 in enumerate((1.8, 1.1, -1.1, -1.8)):
+        p = np.array([x0, 0.0], dtype=float)
+        tr = [p.copy()]
+        for _ in range(80):
+            p = p - 0.05 * np.array([2 * p[0], -2 * p[1]])
+            tr.append(p.copy())
+        tr = np.array(tr)
+        ax.plot(tr[:, 0], tr[:, 1], '-', color=ROLE_DANGER, lw=1.9, alpha=0.9,
+                label='确定性轨迹（$y_0=0$）：停在鞍点' if i == 0 else None)
+        ax.plot(tr[0, 0], tr[0, 1], 'o', color=ROLE_DANGER, ms=7)
+
+    # 起点只要偏离一丝（y₀=0.02），确定性轨迹最终仍会沿下坡的 y 方向溜走——
+    # 说明"存在下坡方向"和"算法自己会走过去"是两件事：停在鞍点上的轨迹不会
+    # 自己启动，能被启动的只有"被扰动过"的轨迹（噪声、动量、显式扰动）。
+    p = np.array([1.8, 0.02], dtype=float)
+    tr = [p.copy()]
+    for _ in range(80):
+        p = p - 0.05 * np.array([2 * p[0], -2 * p[1]])
+        tr.append(p.copy())
+    tr = np.array(tr)
+    ax.plot(tr[:, 0], tr[:, 1], '--', color=ORANGE["m"], lw=2.0,
+            label=r'起点偏一丝 $y_0=0.02$：终究沿下坡溜走')
+    ax.plot(tr[0, 0], tr[0, 1], 'o', color=ORANGE["m"], ms=7)
+
+    # 加噪声：从同一个 y=0 的起点出发，噪声不断把轨迹踢出水平轴，离开得快得多
+    np.random.seed(0)
+    p = np.array([1.8, 0.0], dtype=float)
+    tr = [p.copy()]
+    for _ in range(160):
+        grad = np.array([2 * p[0], -2 * p[1]])
+        p = p - 0.05 * grad + 0.06 * np.random.randn(2)
+        tr.append(p.copy())
+    tr = np.array(tr)
+    ax.plot(tr[:, 0], tr[:, 1], '-', color=GREEN["d"], lw=2.2,
+            label='加噪声：从同一处出发，很快离开')
+    ax.plot(tr[0, 0], tr[0, 1], 'o', color=GREEN["d"], ms=7)
+
+    ax.plot(0, 0, '*', color='gold', ms=22, mec=INK, mew=1.2, zorder=6)
+    ax.annotate('鞍点：梯度 = 0\n更新量 = 0，原地不动', xy=(0, 0),
+                xytext=(-1.98, 1.28), fontsize=10.5,
+                fontproperties=CJK_FONT_NAME,
+                arrowprops=dict(arrowstyle='->', color=INK, lw=1.5))
+    ax.annotate('下坡方向（y 轴）', xy=(0, -1.95), xytext=(-1.98, -1.30),
+                fontsize=10.5, color=GREEN["d"], fontproperties=CJK_FONT_NAME,
+                arrowprops=dict(arrowstyle='->', color=GREEN["d"], lw=1.6))
+    ax.annotate('上坡方向（x 轴）', xy=(1.95, 0), xytext=(0.60, 1.72),
+                fontsize=10.5, color=ROLE_DANGER, fontproperties=CJK_FONT_NAME,
+                arrowprops=dict(arrowstyle='->', color=ROLE_DANGER, lw=1.6))
+
+    ax.set_xlabel('x', fontsize=12)
+    ax.set_ylabel('y', fontsize=12)
+    ax.set_title(r'鞍点 $f(x,y)=x^2-y^2$：有下坡路，但梯度为零走不动',
+                 fontsize=13, fontproperties=CJK_FONT_NAME)
+    ax.set_xlim(-2, 2)          # y 分量按 1.1^n 增长，必须锁死视窗，否则画面被撑爆
+    ax.set_ylim(-2, 2)
+    ax.legend(fontsize=9, loc='lower right', prop=CJK_FONT_NAME, framealpha=0.9)
+    ax.set_aspect('equal')
+
+    plt.tight_layout()
+    return save(fig, 'fig_ch1_local_minimum.png')
+
 
 def fig_ch1_adam_vs_gd():
     """图3: Adam vs 朴素梯度下降 (f=w1²+10w2², init(3,2))"""
@@ -257,7 +509,7 @@ def fig_ch1_adam_vs_gd():
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    save(fig, 'fig_ch1_adam_vs_gd.png')
+    return save(fig, 'fig_ch1_adam_vs_gd.png')
 
 def fig_ch2_lagrange():
     """图5: 拉格朗日乘子法——等高线相切 (f=x²+y, 单位圆)"""
@@ -304,7 +556,7 @@ def fig_ch2_lagrange():
                  fontproperties=CJK_FONT_NAME)
     ax.set_xlabel('x'); ax.set_ylabel('y'); ax.grid(True, alpha=0.2)
     
-    save(fig, 'fig_ch2_lagrange.png')
+    return save(fig, 'fig_ch2_lagrange.png')
 
 def fig_ch2_gradient_field():
     """图6: ∇f 在约束圆上的切线分量，P 点恰好为零"""
@@ -382,7 +634,7 @@ def fig_ch2_gradient_field():
     ax.legend(loc='upper right', fontsize=9)
     ax.grid(True, alpha=0.2)
     
-    save(fig, 'fig_ch2_gradient_field.png')
+    return save(fig, 'fig_ch2_gradient_field.png')
 
 def fig_ch2_complementary_slackness():
     """图7: 互补松弛性——为什么最优解必须在边界上"""
@@ -427,7 +679,7 @@ def fig_ch2_complementary_slackness():
     ax.set_xlabel('x'); ax.set_ylabel('y')
     ax.legend(loc='lower right', fontsize=9); ax.grid(True, alpha=0.2)
     
-    save(fig, 'fig_ch2_complementary_slackness.png')
+    return save(fig, 'fig_ch2_complementary_slackness.png')
 
 # ============================================================
 # Ch3 - 5张图
@@ -485,7 +737,7 @@ def fig_ch3_entropy_softmax():
     ax.legend(); ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    save(fig, 'fig_ch3_entropy_softmax.png')
+    return save(fig, 'fig_ch3_entropy_softmax.png')
 
 def fig_ch3_crossentropy():
     """图9: 交叉熵损失"""
@@ -512,7 +764,7 @@ def fig_ch3_crossentropy():
     ax.set_title('Cross-Entropy: confident mistakes are punished heavily', fontsize=13, fontweight='bold')
     ax.set_xlim(0, 1); ax.set_ylim(-0.5, 5.5); ax.grid(True, alpha=0.3)
     
-    save(fig, 'fig_ch3_crossentropy.png')
+    return save(fig, 'fig_ch3_crossentropy.png')
 
 def fig_ch3_diffusion_demo():
     """图10: 扩散模型前向加噪与反向去噪数值演示 (N(2,1))"""
@@ -576,7 +828,7 @@ def fig_ch3_diffusion_demo():
     ax.legend(loc='upper right'); ax.set_xlim(0, n_rev); ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    save(fig, 'fig_ch3_diffusion_demo.png')
+    return save(fig, 'fig_ch3_diffusion_demo.png')
 
 # ============================================================
 # Ch4 - 4张图
@@ -633,7 +885,7 @@ def fig_ch4_backprop():
     ax.text(5, 0.1, 'Backward: red dashed arrows (gradients)', fontsize=10, color='red', fontweight='bold')
     
     ax.set_title('MLP Forward & Backward Propagation', fontsize=14, fontweight='bold')
-    save(fig, 'fig_ch4_backprop.png')
+    return save(fig, 'fig_ch4_backprop.png')
 
 def fig_ch4_activations():
     """图14: 激活函数形状对比"""
@@ -682,7 +934,7 @@ def fig_ch4_activations():
     ax.set_xlim(-5,5); ax.set_ylim(-1,5); ax.grid(True, alpha=0.2)
     
     plt.suptitle('Activation Functions: from hard-cut to smooth gating', fontsize=14, y=1.05)
-    save(fig, 'fig_ch4_activations.png')
+    return save(fig, 'fig_ch4_activations.png')
 
 def fig_ch4_swiglu():
     """图13: SwiGLU结构示意图"""
@@ -762,7 +1014,7 @@ def fig_ch4_swiglu():
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    save(fig, 'fig_ch4_swiglu.png')
+    return save(fig, 'fig_ch4_swiglu.png')
 
 def fig_ch4_gradient_decay():
     """图12: 梯度随深度衰减"""
@@ -803,7 +1055,7 @@ def fig_ch4_gradient_decay():
     ax.legend(loc='upper right'); ax.grid(True, alpha=0.2)
     
     plt.tight_layout()
-    save(fig, 'fig_ch4_gradient_decay.png')
+    return save(fig, 'fig_ch4_gradient_decay.png')
 
 # ============================================================
 # Ch5 — 3张图
@@ -849,7 +1101,7 @@ def fig_ch5_attention_heatmap():
     plt.colorbar(im, ax=ax)
     
     plt.tight_layout()
-    save(fig, 'fig_ch5_attention_heatmap.png')
+    return save(fig, 'fig_ch5_attention_heatmap.png')
 
 def fig_ch5_attention_qkv():
     """图16: Q/K/V投影与加权输出（含注意力权重矩阵A）"""
@@ -900,7 +1152,7 @@ def fig_ch5_attention_qkv():
     
     plt.suptitle('Q/K → 注意力权重 A → 加权求和 V → 输出 O', fontsize=13, y=1.02, fontproperties=CJK_FONT_NAME)
     plt.tight_layout()
-    save(fig, 'fig_ch5_attention_qkv.png')
+    return save(fig, 'fig_ch5_attention_qkv.png')
 
 def fig_ch5_llm_pipeline():
     """图18: LLM Pipeline -- from text to text"""
@@ -1039,7 +1291,7 @@ def fig_ch5_llm_pipeline():
     ax.text(lx + 0.1, ly - 0.1, 'residual', fontsize=8, va='center', color='#555')
 
     plt.tight_layout()
-    save(fig, 'fig_ch5_llm_pipeline.png')
+    return save(fig, 'fig_ch5_llm_pipeline.png')
 
 def fig_ch5_rope():
     """图17: RoPE旋转位置编码"""
@@ -1090,7 +1342,7 @@ def fig_ch5_rope():
                 ha='center', bbox=dict(boxstyle='round,pad=0.2', facecolor='lightyellow', edgecolor='red', alpha=0.7))
 
     plt.tight_layout()
-    save(fig, 'fig_ch5_rope.png')
+    return save(fig, 'fig_ch5_rope.png')
 
 # ============================================================
 # Ch6 — 2张图
@@ -1142,7 +1394,7 @@ def fig_ch6_lora():
     ax.set_title('Parameter efficiency comparison', fontsize=12, fontweight='bold')
     
     plt.tight_layout()
-    save(fig, 'fig_ch6_lora.png')
+    return save(fig, 'fig_ch6_lora.png')
 
 def fig_ch6_svd():
     """图19: SVD低秩分解 + 低秩截断"""
@@ -1253,17 +1505,20 @@ def fig_ch6_svd():
     
     plt.suptitle(r'SVD: $A = U\Sigma V^T$  (rotate -> stretch -> rotate)  +  low-rank truncation keeps main info', fontsize=14, y=1.02)
     plt.tight_layout()
-    save(fig, 'fig_ch6_svd.png')
+    return save(fig, 'fig_ch6_svd.png')
 
 # ============================================================
 # 主入口
 # ============================================================
 
-def main():
+def main() -> int:
+    """生成全部配图。返回失败张数（0 = 全部成功），供退出码使用。"""
     from fig_common import run_all
 
     setup()
     funcs = [
+        # Ch0 AI 全景 (1张)
+        fig_ch0_ai_panorama,
         # Ch1 梯度下降 (4张)
         fig_ch1_gradient_path, fig_ch1_learning_rate, fig_ch1_local_minimum,
         fig_ch1_adam_vs_gd,
@@ -1281,7 +1536,8 @@ def main():
         # Ch6 低秩 (2张)
         fig_ch6_lora, fig_ch6_svd,
     ]
-    run_all(funcs, "AI数学：从起步到前沿", expected=20)
+    return run_all(funcs, "AI数学：从起步到前沿", expected=21)
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())  # 失败张数作为退出码，CI 才能真的拦住

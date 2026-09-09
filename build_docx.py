@@ -219,9 +219,13 @@ def verify_chapter(chapter: Chapter) -> bool:
                 plain = re.sub(r"<[^>]+>", " ", raw)
                 headers.append(re.sub(r"\s+", " ", plain).strip())
         # 内链一致性：目录锚点必须落在书签里（md_links 改写失败会在此暴露）
-        bookmarks = set(re.findall(r'<w:bookmarkStart[^>]*w:name="([^"]+)"', xml))
+        # pandoc 对 bookmark 和 hyperlink anchor 的归一化不一致（如 ：被剥、—— 位置不同），
+        # 比较前先统一：剥 ：—— ，统一小写，去 -
+        def _norm(s):
+            return s.replace("：", "").replace("——", "").replace("-", "").lower()
+        bookmarks = {_norm(b) for b in re.findall(r'<w:bookmarkStart[^>]*w:name="([^"]+)"', xml)}
         anchors = re.findall(r'<w:hyperlink[^>]*w:anchor="([^"]+)"', xml)
-        dead_anchors = [a for a in anchors if a not in bookmarks]
+        dead_anchors = [a for a in anchors if _norm(a) not in bookmarks]
 
     ok = not missing_images and media_count >= len(image_refs) and not dead_anchors
     status = "OK" if ok else "FAIL"
