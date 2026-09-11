@@ -2,6 +2,6 @@ matplotlib>=3.8
 numpy>=1.26
 python-docx>=1.1
 lxml>=4.9
-# .opencode/skills 脚本依赖
+# 附加：部分辅助脚本使用（文本解析/图像处理）
 markdown-it-py>=3.0
 Pillow>=10.0

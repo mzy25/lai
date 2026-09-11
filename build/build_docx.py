@@ -2,9 +2,9 @@
 """Build Markdown chapters into styled DOCX reference files.
 
 Usage:
-    python3 build_docx.py           # build all chapters
-    python3 build_docx.py 1a_diffusion
-    python3 build_docx.py --verify-only
+    python3 build/build_docx.py           # build all chapters
+    python3 build/build_docx.py 1a_diffusion
+    python3 build/build_docx.py --verify-only
 """
 
 from __future__ import annotations
@@ -21,7 +21,8 @@ from pathlib import Path
 import md_links
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
+HERE = Path(__file__).resolve().parent
 
 
 @dataclass(frozen=True)
@@ -41,10 +42,10 @@ class Chapter:
 # Output: intermediate raw docx in chapter folder, reference docx in docs/
 CHAPTERS = [
     Chapter("1_ai_math", "1_ai_math", "AI数学_从起步到前沿.md", "AI数学_从起步到前沿_raw.docx", str(ROOT / "docs" / "AI数学_从起步到前沿.docx"), "AI数学：从起步到前沿", "# 附录：自检问题与答案"),
-    Chapter("1a_diffusion", "1a_diffusion", "扩散_从噪声生成.md", "扩散_从噪声生成_raw.docx", str(ROOT / "docs" / "扩散_从噪声生成.docx"), "扩散：从噪声生成", "# 附录：自检问题与答案"),
+    Chapter("1a_diffusion", "1a_diffusion", "扩散_从噪声到生成.md", "扩散_从噪声到生成_raw.docx", str(ROOT / "docs" / "扩散_从噪声到生成.docx"), "扩散：从噪声到生成", "# 附录：自检问题与答案"),
     Chapter("2_foundation", "2_foundation", "基座模型_从咿呀到行动.md", "基座模型_从咿呀到行动_raw.docx", str(ROOT / "docs" / "基座模型_从咿呀到行动.docx"), "基座模型：从咿呀到行动", "# 附录：自检问题与答案"),
-    Chapter("3_use_ai", "3_use_ai", "用好AI_从有用到好用.md", "用好AI_从有用到好用_raw.docx", str(ROOT / "docs" / "用好AI_从有用到好用.docx"), "用好AI：从有用到好用", "# 附录：自检问题与答案"),
-    Chapter("4_ai_law", "4_ai_law", "AI_law_从现象到规律.md", "AI_law_从现象到规律_raw.docx", str(ROOT / "docs" / "AI_law_从现象到规律.docx"), "AI law：从现象到规律", "# 附录：自检问题与答案"),
+    Chapter("3_use_ai", "3_use_ai", "用好AI_从有用到驾驭.md", "用好AI_从有用到驾驭_raw.docx", str(ROOT / "docs" / "用好AI_从有用到驾驭.docx"), "用好AI：从有用到驾驭", "# 附录：自检问题与答案"),
+    Chapter("4_ai_law", "4_ai_law", "AI规律_从现象到预见.md", "AI规律_从现象到预见_raw.docx", str(ROOT / "docs" / "AI规律_从现象到预见.docx"), "AI规律：从现象到预见", "# 附录：自检问题与答案"),
 ]
 
 
@@ -147,6 +148,7 @@ def build_chapter(chapter: Chapter) -> None:
 
     # Preprocess: separate self-check questions and answers with page break
     processed = preprocess_self_check(md_text, chapter.self_check_marker)
+    processed = md_links.normalize_citations(processed)
     # 内链修复：目录锚点 → pandoc 实际 id（与 HTML 管线共用，保证书签/链接一致）
     processed, link_warnings, _ = md_links.fix_internal_links(
         processed, cwd, md_links.FROM_FLAGS)
@@ -172,7 +174,7 @@ def build_chapter(chapter: Chapter) -> None:
         ], cwd)
         run([
             sys.executable,
-            str(ROOT / "style_docx.py"),
+            str(HERE / "style_docx.py"),
             "--input",
             str(cwd / chapter.raw_docx),
             "--output",

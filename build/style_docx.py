@@ -16,7 +16,7 @@ build_docx.py 自动调用本脚本，无需手动运行。
   - 图片最大宽度限制
 
 Usage:
-    python3 style_docx.py --input INPUT_raw.docx --output OUTPUT.docx --fallback-title 文档标题
+    python3 build/style_docx.py --input INPUT_raw.docx --output OUTPUT.docx --fallback-title 文档标题
 """
 
 from __future__ import annotations

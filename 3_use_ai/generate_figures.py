@@ -1,4 +1,4 @@
-"""《用好AI：从有用到好用》配套可视化图表
+"""《用好AI：从有用到驾驭》配套可视化图表
 18张图：POMDP循环 / Harness六层 / Agent Loop运行时剖面 / 规划四诊断 / ReAct循环 / 工具五步管道
         / 四类失效映射 / 成熟度梯度 / 上下文窗口 / 约束硬度梯度 / 数字vs具身 / 多Agent拓扑
         / AgentFail分类 / 自演化三路线 / 后训练阶段图谱 / 训练时vs推理时
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, Circle, Polygon, FancyArrowPatch
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
 import fig_common  # noqa: E402  (sys.path 就绪后再导入共享模块)
 from fig_common import setup_rc  # noqa: E402
 
@@ -960,7 +960,7 @@ def fig_ch6_tool_pipeline():
     steps = [
         ('1. 声明', 'JSON Schema\n(MCP 格式)', '失效二前提', p['secondary']),
         ('2. 校验', '类型·范围\n文件存在性', '失效二', p['tertiary']),
-        ('3. 执行', '超时/沙箱\n约束下运行', '失效一', p['primary']),
+        ('3. 执行', '超时/沙箱\n约束下运行', '未授权工具', p['primary']),
         ('4. 格式化', '截断·分类\n返回码', '失效三', p['warm']),
         ('5. 注入', '回写上下文\n触发下轮', '失效四', p['success']),
     ]

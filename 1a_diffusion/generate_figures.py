@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""扩散：从噪声生成 - 全部可视化图表
+"""扩散：从噪声到生成 - 全部可视化图表
 生成 41 张插图，覆盖从数学原理到工程实践的全部关键概念。
 依赖: numpy, matplotlib
 运行: python generate_figures.py
@@ -16,7 +16,7 @@ from matplotlib.patches import (
     FancyArrowPatch, Circle, FancyBboxPatch, Rectangle, Polygon, Ellipse
 )
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
 import fig_common  # noqa: E402  (sys.path 就绪后再导入共享模块)
 from fig_common import CJK_FONT_NAME, setup_rc  # noqa: E402
 
@@ -2246,7 +2246,7 @@ def fig_ch6_cfg_extrapolation():
             color='#4C72B0', rotation=-27)
 
     # 内插/外推分区说明（左对齐，压在底部空白区）
-    ax.text(-0.05, -0.62, '$w\\leq 1$：内插（两点连线之间）', fontsize=9.5, color='#666')
+    ax.text(-0.05, -0.62, '$w\\leq 1$：内插（两点连线之间）', fontsize=9.5, color='#444')
     ax.text(-0.05, -0.80, '$w>1$：外推（冲出连线之外）——CFG 的关键', fontsize=9.5, color='#C44E52', fontweight='bold')
     ax.text(-0.05, -0.98, '$w$ 过大 → 拉出典型分布区 → 模式坍塌', fontsize=9.5, color='#C62828')
 
@@ -2353,7 +2353,7 @@ def fig_ch6_clip_conditioning():
 
 def main():
     print("=" * 60)
-    print("扩散：从噪声生成 - 生成全部 41 张插图")
+    print("扩散：从噪声到生成 - 生成全部 41 张插图")
     print("=" * 60)
 
     # Ch1: 前向过程

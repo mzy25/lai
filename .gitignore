@@ -1,14 +1,16 @@
+# Python
 __pycache__/
-*_raw.docx
 *.py[cod]
 *$py.class
-~$*.docx
-.DS_Store
-.opencode/node_modules/
+.venv/
 
-# 发布仓库剔除的内部目录与参考资料（磁盘保留，私有不共享）
-.opencode/
-archive/
-internal/
+# 构建中间产物
+*_raw.docx
+~$*.docx
+
+# 本地构建依赖与第三方参考资料（不随仓库分发）
 vendor/
 references/
+
+# 系统
+.DS_Store

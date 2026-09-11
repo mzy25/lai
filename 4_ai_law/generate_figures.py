@@ -1,4 +1,4 @@
-"""《AI law：从现象到规律》配图生成脚本（Phase 3）
+"""《AI规律：从现象到预见》配图生成脚本（Phase 3）
 
 全书 14 张图（含两张新示意图）。风格与四篇一致：轻填充、粗边框、低饱和度、高清晰度、CJK 字体。
 每张图的数据要么来自一次性真实模拟（脚本内重放），要么内嵌正文表格（这些表格本身
@@ -14,13 +14,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
 import fig_common  # noqa: E402
 from fig_common import setup_rc  # noqa: E402
 
 
 def save(fig, name):
-    fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor='white')
+    """保存并返回路径——run_all() 靠返回值判断这张图是否真的落盘，必须 return。"""
+    return fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor='white')
 
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "figures"
@@ -71,7 +72,7 @@ def fig_ch1_bias_variance():
     ax.set_ylim(0, max(tot) * 1.05); ax.grid(True, alpha=0.3)
     ax.legend(fontsize=9)
     ax.set_title("偏差-方差 U 形：容量太少欠拟合、太多过拟合", fontsize=12)
-    save(fig, "fig_ch1_bias_variance.png")
+    return save(fig, "fig_ch1_bias_variance.png")
 
 
 def fig_ch1_double_descent():
@@ -106,7 +107,7 @@ def fig_ch1_double_descent():
     ax.grid(True, alpha=0.3, which="both")
     ax.legend(fontsize=9)
     ax.set_title("双下降：插值阈值尖峰 → 骤降 → 平台", fontsize=12)
-    save(fig, "fig_ch1_double_descent.png")
+    return save(fig, "fig_ch1_double_descent.png")
 
 
 def fig_ch2_saddle_escape():
@@ -135,7 +136,7 @@ def fig_ch2_saddle_escape():
         ax.set_title(lab, fontsize=12)
         ax.grid(True, alpha=0.3); ax.legend(fontsize=9)
         ax.text(1, ys_[-1], f"60 步 y={ys_[-1]:.3f}", fontsize=9, color=c)
-    save(fig, "fig_ch2_saddle_escape.png")
+    return save(fig, "fig_ch2_saddle_escape.png")
 
 
 def fig_ch2_edge_of_stability():
@@ -161,7 +162,7 @@ def fig_ch2_edge_of_stability():
     axes[1].set_xlabel("训练步数"); axes[1].set_ylabel("锐度 $\\lambda_{\\max}$")
     axes[1].set_title("锐度：推到 $2/\\eta$ 后开始振荡", fontsize=12)
     axes[1].set_ylim(0, 9.5); axes[1].grid(True, alpha=0.3); axes[1].legend(fontsize=9)
-    save(fig, "fig_ch2_edge_of_stability.png")
+    return save(fig, "fig_ch2_edge_of_stability.png")
 
 
 def fig_ch3_grokking():
@@ -186,7 +187,7 @@ def fig_ch3_grokking():
     h1, l1 = ax.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
     ax.legend(h1 + h2, l1 + l2, fontsize=9, loc="center right")
     ax.set_title("grokking：训练早饱和、测试长滞后、随后陡升（表示在平台期仍变）", fontsize=11)
-    save(fig, "fig_ch3_grokking.png")
+    return save(fig, "fig_ch3_grokking.png")
 
 
 def fig_ch5_lazy_rich():
@@ -206,7 +207,7 @@ def fig_ch5_lazy_rich():
                 arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.2), fontsize=9, color=ORANGE)
     ax.legend(fontsize=9)
     ax.set_title("lazy 与 rich：同样是学会，表示动不动差 350 倍", fontsize=11)
-    save(fig, "fig_ch5_lazy_rich.png")
+    return save(fig, "fig_ch5_lazy_rich.png")
 
 
 def fig_ch5_mup_heatmap():
@@ -237,7 +238,7 @@ def fig_ch5_mup_heatmap():
         ax.set_title(title, fontsize=12)
     fig.colorbar(im, ax=axes, fraction=0.03)
     fig.suptitle("最优学习率随宽度的走向：SP 下滑（右下），μP 平坦（最右列=发散前的稳定区）", y=1.04, fontsize=12)
-    save(fig, "fig_ch5_mup_heatmap.png")
+    return save(fig, "fig_ch5_mup_heatmap.png")
 
 
 def fig_ch4_powerlaw():
@@ -259,7 +260,7 @@ def fig_ch4_powerlaw():
     ax.text(120, 0.145, "外推误差 ≤ 2.5%", fontsize=10, color=ORANGE)
     ax.legend(fontsize=9)
     ax.set_title("参数-损失幂律：小规模拟合，大规模外推几乎重合", fontsize=11)
-    save(fig, "fig_ch4_powerlaw.png")
+    return save(fig, "fig_ch4_powerlaw.png")
 
 
 def fig_ch4_allocation():
@@ -279,7 +280,7 @@ def fig_ch4_allocation():
     ax.annotate("参数太多：过拟合 +75%", xy=(512, 0.351), xytext=(330, 0.37),
                 arrowprops=dict(arrowstyle="->", color=RED, lw=1.2), fontsize=9, color=RED)
     ax.set_title("数据受限下的最优配比：U 形谷底", fontsize=12)
-    save(fig, "fig_ch4_allocation.png")
+    return save(fig, "fig_ch4_allocation.png")
 
 
 def fig_ch6_superposition():
@@ -298,11 +299,11 @@ def fig_ch6_superposition():
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=9)
     ax.set_title("叠加几何：维度越低、特征越挤，平均重叠越高", fontsize=11)
-    save(fig, "fig_ch6_superposition.png")
+    return save(fig, "fig_ch6_superposition.png")
 
 
 def fig_ch6_sparse_recovery():
-    """图12 稀疏恢复相位转变（演示⑪-② 实测）"""
+    """图12 稀疏恢复相变（演示⑪-② 实测）"""
     s = [1, 2, 3, 5, 8]
     acc = [1.00, 0.89, 0.56, 0.08, 0.00]
     corr = [1.00, 0.94, 0.78, 0.55, 0.46]
@@ -310,13 +311,13 @@ def fig_ch6_sparse_recovery():
     ax.plot(s, acc, "-o", color=ORANGE, lw=2.6, ms=7, label="支撑+符号恢复率")
     ax.plot(s, corr, "--s", color=BLUE, lw=2, ms=6, label="平均恢复相关")
     ax.axvspan(4, 9, color=BLUE_LL, alpha=0.6)
-    ax.text(4.2, 0.9, "相位转变：$s\\geq 4$ 后崩溃", fontsize=9, color="gray")
+    ax.text(4.2, 0.9, "相变：$s\\geq 4$ 后崩溃", fontsize=9, color="gray")
     ax.set_xlabel("每个观察含的特征数 $s$（稀疏度，越小越稀疏）")
     ax.set_ylabel("恢复指标"); ax.set_ylim(-0.05, 1.1)
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=9)
     ax.set_title("稀疏恢复：特征越稀疏越可恢复，超过临界点崩溃", fontsize=11)
-    save(fig, "fig_ch6_sparse_recovery.png")
+    return save(fig, "fig_ch6_sparse_recovery.png")
 
 
 def fig_ch7_skills():
@@ -340,7 +341,7 @@ def fig_ch7_skills():
     ax.grid(True, axis="y", alpha=0.3)
     ax.set_title("总分：只差 0.013，几乎并列", fontsize=11)
     fig.suptitle("基准→技能：SVD 前 3 奇异值占能量 93.5%——总分背后有 3 个技能维度", y=1.03, fontsize=11)
-    save(fig, "fig_ch7_skills.png")
+    return save(fig, "fig_ch7_skills.png")
 
 
 
@@ -360,7 +361,7 @@ def fig_ch2_singular_order():
     ax.set_ylim(0, 1.75); ax.grid(True, alpha=0.3)
     ax.legend(fontsize=9, title="大奇异值先学")
     ax.set_title("顺序学习：奇异值按大小逐级追平（Saxe 2014）", fontsize=12)
-    save(fig, "fig_ch2_singular_order.png")
+    return save(fig, "fig_ch2_singular_order.png")
 
 def fig_ch6_induction_circuit():
     import matplotlib.patches as mpatches
@@ -387,7 +388,7 @@ def fig_ch6_induction_circuit():
     ax.text(7.1, 1.0, "复制 (V)", fontsize=9, color=ORANGE)
     ax.text(9.2, 1.0, "输出 C", ha="center", fontsize=12, color="#8a5a00", fontweight="bold")
     ax.set_title("induction head：匹配前文相同 token，复制其后随 token（演示⑫）", fontsize=12)
-    save(fig, "fig_ch6_induction_circuit.png")
+    return save(fig, "fig_ch6_induction_circuit.png")
 
 def main():
     setup_rc(dpi=200)
@@ -401,8 +402,8 @@ def main():
         fig_ch2_singular_order, fig_ch6_induction_circuit,
     ]
     from fig_common import run_all
-    run_all(funcs, "AI law：从现象到规律", expected=14)
+    return run_all(funcs, "AI规律：从现象到预见", expected=14)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())  # 失败张数作为退出码，CI 才能真的拦住

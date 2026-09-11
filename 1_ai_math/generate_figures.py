@@ -14,7 +14,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
 import fig_common  # noqa: E402  (sys.path 就绪后再导入共享模块)
 from fig_common import CJK_FONT_NAME, setup_rc  # noqa: E402
 # 语义色板（改图/新图一律从本表取色，禁止表外独点色）
@@ -85,9 +85,9 @@ def fig_ch0_ai_panorama():
 
     arrow((2.75, 4.5), (2.15, 4.5), GRAY["d"])          # 输入 → 函数
     arrow((6.85, 4.5), (6.05, 4.5), GRAY["d"])          # 函数 → 预测
-    arrow((7.85, 3.6), (7.85, 2.75), GRAY["d"])         # 预测 → 比一比
-    arrow((2.45, 2.1), (3.05, 2.1), GRAY["d"])          # 真实答案 → 比一比
-    arrow((2.95, 4.15), (6.05, 2.4), ROLE_DANGER, rad=0.42, lw=2.0)  # 损失 → 旋钮（反馈）
+    arrow((7.85, 2.8), (7.85, 3.9), GRAY["d"])         # 预测 → 比一比（头在比一比方，向下）
+    arrow((6.1, 2.1), (2.55, 2.1), GRAY["d"])          # 真实答案 → 比一比（跨空隙，头在比一比方）
+    arrow((4.35, 4.0), (6.05, 2.4), ROLE_DANGER, rad=0.35, lw=2.0)  # 损失 → 旋钮（反馈，头落在函数盒下缘、指向盒内）
 
     ax.text(1.55, 1.05, '损失回头告诉旋钮："往哪边拧、拧多少"',
             fontsize=10.5, color=ROLE_DANGER, fontproperties=CJK_FONT_NAME,
@@ -359,7 +359,7 @@ def fig_ch1_local_minimum():
     ax.set_ylabel('f(x)', fontsize=12)
     ax.set_title('局部最小值困境：滑进浅坑，到不了深谷', fontsize=13,
                  fontproperties=CJK_FONT_NAME)
-    ax.legend(fontsize=9.5, loc='upper right', prop=CJK_FONT_NAME)
+    ax.legend(fontsize=9.5, loc='lower right', prop=CJK_FONT_NAME)  # 右上被曲线右支占据，右下为空区
     ax.grid(alpha=0.25)
     ax.set_ylim(-12, 9)
 
@@ -628,7 +628,7 @@ def fig_ch2_gradient_field():
     
     ax.set_xlim(-2.1, 1.7); ax.set_ylim(-1.5, 1.3)
     ax.set_aspect('equal')
-    ax.set_title(r'Tangent component of $\nabla f$ vanishes only at P',
+    ax.set_title(r'Tangent component of $\nabla f$ vanishes at P and $(0,\pm 1)$',
                  fontsize=12, fontweight='bold')
     ax.set_xlabel('x'); ax.set_ylabel('y')
     ax.legend(loc='upper right', fontsize=9)
@@ -1220,11 +1220,11 @@ def fig_ch5_llm_pipeline():
     ax.annotate('', xy=(5.4, 5.85), xytext=(5.4, 7.72),
                 arrowprops=dict(arrowstyle='->', color='#AAA', lw=1.5,
                                 ls=':', connectionstyle='arc3,rad=0'))
-    ax.text(5.65, 6.8, 'expand', fontsize=8, color='#999', va='center',
+    ax.text(5.65, 6.8, 'expand', fontsize=8, color='#555', va='center',
             style='italic')
 
     ax.text(7.25, 5.8, 'One Transformer Block (repeated N times)', fontsize=12,
-            fontweight='bold', ha='center', va='center', color='#555')
+            fontweight='bold', ha='center', va='center', color='#333')
 
     block = [
         (0.6,  'h',                BLUE_F,  'c'),
@@ -1272,23 +1272,23 @@ def fig_ch5_llm_pipeline():
     formulas = [
         (0.6,  r'$x = \mathrm{Embed}[i]$', 'lookup', BLUE),
         (4.8,  r'$\mathrm{Attn}(\mathrm{RMSNorm}(h))+h$',   'Pre-Norm + residual', AMBER),
-        (9.2,  r'$\mathrm{FFN}(\mathrm{RMSNorm}(h\,'')) + h''$', 'Pre-Norm + residual', AMBER),
-        (10.6, r'$p = \mathrm{Softmax}(h_f W_{hd})$', 'probability', BLUE),
+        (8.5,  r'$\mathrm{FFN}(\mathrm{RMSNorm}(h\,'')) + h''$', 'Pre-Norm + residual', AMBER),
+        (12.3, r'$p = \mathrm{Softmax}(h_f W_{hd})$', 'probability', BLUE),
     ]
     for x, formula, note, color in formulas:
         ax.text(x, y_f + 0.25, formula, fontsize=9, ha='center', va='center',
                 color=color)
         ax.text(x, y_f - 0.25, note, fontsize=8, ha='center', va='center',
-                color='#888', style='italic')
+                color='#555', style='italic')
 
     # ── legend (bottom-right, compact) ──
     lx, ly = 12.8, 0.35
     ax.plot([lx - 0.4, lx], [ly + 0.5, ly + 0.5], color=BLUE, lw=2)
-    ax.text(lx + 0.1, ly + 0.5, 'forward', fontsize=8, va='center', color='#555')
+    ax.text(lx + 0.1, ly + 0.5, 'forward', fontsize=8, va='center', color='#444')
     ax.plot([lx - 0.4, lx], [ly + 0.2, ly + 0.2], color=GREEN, lw=2, ls='--')
-    ax.text(lx + 0.1, ly + 0.2, 'autoregressive', fontsize=8, va='center', color='#555')
+    ax.text(lx + 0.1, ly + 0.2, 'autoregressive', fontsize=8, va='center', color='#444')
     ax.plot([lx - 0.4, lx], [ly - 0.1, ly - 0.1], color=AMBER, lw=1.5, ls='--')
-    ax.text(lx + 0.1, ly - 0.1, 'residual', fontsize=8, va='center', color='#555')
+    ax.text(lx + 0.1, ly - 0.1, 'residual', fontsize=8, va='center', color='#444')
 
     plt.tight_layout()
     return save(fig, 'fig_ch5_llm_pipeline.png')

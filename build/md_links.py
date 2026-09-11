@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """md 内链修复：把 `](#anchor)` 改写为 pandoc 实际会生成的标题 id。
+另含 `normalize_citations`：统一引用标记（`^[N]^` / `<sup>[N]</sup>`）为版本无关的转义上标。
 
 HTML/DOCX 两条构建管线共用。源稿里的目录锚点按 GitHub slug 习惯手写
 （保留 ——、省略空格连字符），与 pandoc gfm_auto_identifiers 生成的
@@ -13,7 +14,8 @@ pandoc 自身（与真实转换**相同的 reader 参数**）只读转一遍 har
   内链是内容正确性的一部分，静默降级会产出"看起来正常、点不动"的成品。
 - 单个锚点解析不了 → 保留原文 + warning，不中止构建（一个断链不应
   阻塞其他内容构建；但构建日志必须可见，标题改名后即刻暴露）。
-- 两个标题 id 规范化后撞车 → 弃用该映射 + warning（宁可留断链，不猜）。
+- 两个标题 id 规范化后撞车 → 保留文档序第一个映射 + warning（章节正文
+  标题总在自检附录的复述标题之前，锚点指向的必是前者，非猜测）。
 
 用法:
     text, warnings, id_set = fix_internal_links(md_text, cwd, from_flags)
@@ -36,8 +38,24 @@ _FENCE = re.compile(r'^\s*(```|~~~)')
 
 # pandoc reader 参数：harvest 与两条管线的真实转换共用，保证 id 一字不差。
 # gfm_auto_identifiers 让标题 id 按 GitHub slug 规则生成（与源稿目录锚点同源）。
-FROM_FLAGS = ("markdown+gfm_auto_identifiers+tex_math_dollars"
+FROM_FLAGS = ("markdown+mark+gfm_auto_identifiers+tex_math_dollars"
               "+raw_tex-yaml_metadata_block")
+
+# 引用标记两种写法：^[N]^ 与 <sup>[N]</sup>。前者在 pandoc 版本间有歧义
+# （3.11 起优先按行内脚注解析，产物出现真脚注 + 跨篇重复 fn id）；后者在
+# DOCX 下被剥成纯文本、丢失上标。统一转义为 ^\[N\]^：两版 pandoc、两条
+# 管线都按上标渲染，且与版本无关。相邻引用（如 [81][82] 组）显式折叠成
+# ^\[81\]\[82\]^ 一个上标 token，不依赖 pandoc 的隐式合并行为。
+_CITATION = re.compile(r'\^\[(\d+)\]\^|<sup>\[(\d+)\]</sup>')
+_ADJACENT = re.compile(r'\^\\\[\d+\\\]\^(?:\^\\\[\d+\\\]\^)+')
+
+
+def normalize_citations(text: str) -> str:
+    """把 ^[N]^ / <sup>[N]</sup> 统一成转义形式 ^\\[N\\]^；相邻组折叠为 ^\\[81\\]\\[82\\]^。"""
+    text = _CITATION.sub(lambda m: '^\\[' + (m.group(1) or m.group(2)) + '\\]^', text)
+    return _ADJACENT.sub(
+        lambda m: '^' + ''.join('\\[' + n + '\\]' for n in re.findall(r'\d+', m.group(0))) + '^',
+        text)
 
 
 def canon(s: str) -> str:
@@ -94,19 +112,17 @@ def fix_internal_links(md_text: str, cwd: Path,
     warnings: list[str] = []
     raw_ids = harvest_ids(md_text, cwd, from_flags)
 
-    # canon → id 映射；撞车的 canon 弃用（不猜）
+    # canon → id 映射；撞车时保留文档序第一个 id（章节正文标题总在自检附录的
+    # 复述标题之前，锚点指向的必是前者），仍告警以便发现异常重复标题。
     cmap: dict[str, str] = {}
-    collided: set[str] = set()
+    seen: set[str] = set()
     for rid in raw_ids:
         c = canon(rid)
-        if c in collided:
+        if c in seen:
+            warnings.append(f"标题 id 规范化撞车，保留首个映射：{rid}")
             continue
-        if c in cmap:
-            collided.add(c)
-            del cmap[c]
-            warnings.append(f"标题 id 规范化撞车，弃用映射：{rid}")
-        else:
-            cmap[c] = rid
+        seen.add(c)
+        cmap[c] = rid
 
     # 围栏感知：只改写围栏外的段落（代码块里的 ](#... 是字面内容）
     lines = md_text.split("\n")

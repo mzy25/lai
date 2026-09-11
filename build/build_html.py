@@ -2,7 +2,7 @@
 r"""把五篇技术文档 md 合体构建为单个响应式 HTML（动态侧边目录 + KaTeX 公式）。
 
 用法:
-    python3 build_html.py [--out html/index.html]
+    python3 build/build_html.py [--out html/index.html]
 
 每篇处理流水线（render_doc）:
     1. 自检附录数据抽取（转交互弹窗）与自检区裁剪/保留
@@ -30,21 +30,22 @@ FROM_FLAGS = md_links.FROM_FLAGS
 
 NL = chr(10)  # 行分隔符（模板/正文拼接用）
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
+HERE = Path(__file__).resolve().parent
 HTML_DIR = ROOT / "html"
 FIG_SRC = [ROOT / "1_ai_math" / "figures", ROOT / "2_foundation" / "figures",
            ROOT / "3_use_ai" / "figures", ROOT / "1a_diffusion" / "figures",
            ROOT / "4_ai_law" / "figures"]
 
 # 五篇：(md路径相对ROOT, 显示标题, doc-id)
-DOC_LABELS = ["AI数学", "基座", "用好AI", "扩散", "AI law"]
+DOC_LABELS = ["AI数学", "基座", "用好AI", "扩散", "AI规律"]
 
 DOCS = [
     ("1_ai_math/AI数学_从起步到前沿.md", "AI数学：从起步到前沿", "doc-1"),
     ("2_foundation/基座模型_从咿呀到行动.md", "基座模型：从咿呀到行动", "doc-2"),
-    ("3_use_ai/用好AI_从有用到好用.md", "用好AI：从有用到好用", "doc-3"),
-    ("1a_diffusion/扩散_从噪声生成.md", "扩散：从噪声生成", "doc-4"),
-    ("4_ai_law/AI_law_从现象到规律.md", "AI law：从现象到规律", "doc-5"),
+    ("3_use_ai/用好AI_从有用到驾驭.md", "用好AI：从有用到驾驭", "doc-3"),
+    ("1a_diffusion/扩散_从噪声到生成.md", "扩散：从噪声到生成", "doc-4"),
+    ("4_ai_law/AI规律_从现象到预见.md", "AI规律：从现象到预见", "doc-5"),
 ]
 
 # 图片重名冲突：不同子目录可能有同名 fig_*.png
@@ -62,7 +63,7 @@ BOOK_ALIAS = {
     "1a_diffusion": "扩散",
     "2_foundation": "基座模型",
     "3_use_ai": "用好AI",
-    "4_ai_law": "AI law",
+    "4_ai_law": "AI规律",
 }
 
 # 跨篇引用索引：{书名: {编号(normalized): 目标标题 id}}
@@ -142,6 +143,7 @@ def preprocess_md(text: str) -> str:
 
 def pandoc_to_html(md_text: str, cwd: Path) -> str:
     """单篇 md → HTML 片段（pandoc）。用 tempfile 避免残留临时文件。"""
+    md_text = md_links.normalize_citations(md_text)
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".md", delete=False) as f:
         f.write(md_text)
         tmp_path = f.name
@@ -168,6 +170,9 @@ SELFCHECK_MARKERS = [
 ]
 
 SELFCHECK_END_MARKERS = [
+    # AI数学 的“前沿优化器选读”附录插在自检与逻辑链之间，是正文选读内容，
+    # 必须作为自检附录的结束边界，否则会被一并裁掉（内链随之全部失效）。
+    "# 附录：前沿优化器选读",
     "# 附录：逻辑链",
     "> **全书完**",
 ]
@@ -436,7 +441,7 @@ def collect_body_slots(region: str):
                 start_content = None
 
     p_slots = []
-    for m in re.finditer(r'<p><strong>\s*(\d+)\s*[.、．]', region):
+    for m in re.finditer(r'<p><strong>\s*(\d+)(?:（[^）]*）)?\s*[.、．]', region):  # 题号可带（标签）：**4（反事实・边界情况）.**
         start = m.start()
         end = region.find('</p>', m.end())
         if end == -1:
@@ -472,16 +477,82 @@ def collect_body_slots(region: str):
     return result
 
 
+CIRCLED_DIGITS = '①②③④⑤⑥⑦⑧⑨⑩'
+# 答案中受控的自评引导语：出现即独立成段
+SELFASSESS_LEADINS = ('你的答案至少应包含', '核对你的答案', '自评标准：')
+# 拆分点：圈码编号项或受控引导语之前（由常量统一生成，避免两处脱节）
+_BUBBLE_SPLIT_RE = re.compile(
+    '(?=[%s]|%s)' % (CIRCLED_DIGITS, '|'.join(re.escape(x) for x in SELFASSESS_LEADINS))
+)
+
+
+def _tags_balanced(fragment):
+    """段内常用行内标签开闭是否配对（防拆段把标签拦腰截断）。"""
+    for t in ('strong', 'em', 'code', 'a', 'span', 'b', 'i', 'sub', 'sup'):
+        if len(re.findall(rf'<{t}\b', fragment)) != len(re.findall(rf'</{t}>', fragment)):
+            return False
+    return True
+
+
+def beautify_bubble(html):
+    """气泡内容可读性排版：裸文本补 <p>；①②③… 编号项与自评引导语拆为独立段落。
+    任一段拆出后标签不配对则整段放弃拆分（保内容正确，退化为原样）。"""
+    if not html:
+        return html
+    s = html.strip()
+    if not re.match(r'<(p|ul|ol|div|h[1-6]|blockquote|table)\b', s):
+        s = f'<p>{s}</p>'
+
+    def split_enum(m):
+        inner = m.group(1)
+        if not any(c in inner for c in CIRCLED_DIGITS) and not any(
+            lead in inner for lead in SELFASSESS_LEADINS
+        ):
+            return m.group(0)
+        parts = [p.strip() for p in _BUBBLE_SPLIT_RE.split(inner) if p.strip()]
+        if not all(_tags_balanced(p) for p in parts):
+            return m.group(0)
+        return ''.join(f'<p>{p}</p>' for p in parts)
+
+    return re.sub(r'<p>(.*?)</p>', split_enum, s, flags=re.S)
+
+
+_EXT_QA_RE = re.compile(
+    r'(<p><strong>Q\d+\..*?</strong></p>)\s*'
+    r'<details>\s*<summary>\s*卡住再看提示\s*</summary>(?P<hint>.*?)</details>\s*'
+    r'<details>\s*<summary>\s*答案\s*</summary>(?P<answer>.*?)</details>',
+    re.S,
+)
+
+
+def convert_extended_popups(html: str) -> str:
+    """把“扩展题”区的 details 提示/答案转成与其余自检一致的弹出按钮。"""
+    m = re.search(r'<h[1-6][^>]*data-label="扩展题"[^>]*>扩展题</h[1-6]>', html)
+    if not m:
+        return html
+    start = m.end()
+    nxt = re.search(r'<h1\b', html[start:])
+    end = start + nxt.start() if nxt else len(html)
+
+    def repl(qm):
+        popup = make_popup(qm.group("hint").strip(), qm.group("answer").strip())
+        return qm.group(1) + popup
+
+    return html[:start] + _EXT_QA_RE.sub(repl, html[start:end]) + html[end:]
+
+
 def make_popup(hint_html, answer_html):
-    """生成题旁的提示/答案折叠块。"""
+    """生成题旁的提示/答案按住浮现块（按住看，松开消失）。"""
     if not hint_html and not answer_html:
         return ""
-    parts = ['<div class="selfcheck-popup">']
+    parts = ['<span class="selfcheck-popup">']
     if hint_html:
-        parts.append(f'<details class="selfcheck-hint"><summary>提示</summary>{hint_html}</details>')
+        parts.append(f'<button type="button" class="selfcheck-btn selfcheck-hint" aria-expanded="false">提示</button>'
+                     f'<span class="selfcheck-bubble" hidden>{beautify_bubble(hint_html)}</span>')
     if answer_html:
-        parts.append(f'<details class="selfcheck-answer"><summary>答案</summary>{answer_html}</details>')
-    parts.append('</div>')
+        parts.append(f'<button type="button" class="selfcheck-btn selfcheck-answer" aria-expanded="false">答案</button>'
+                     f'<span class="selfcheck-bubble" hidden>{beautify_bubble(answer_html)}</span>')
+    parts.append('</span>')
     return "".join(parts)
 
 
@@ -844,11 +915,11 @@ def index_headings(html_frag: str, book: str) -> None:
     for m in pat.finditer(html_frag):
         hid, label = m.group(1), html_mod.unescape(m.group(2)).strip()
         key = None
-        cm = re.match(r'第\s*(\d+)\s*章', label)
+        cm = re.match(r'(?:[▽◇○◌]\s*)?第\s*(\d+)\s*章', label)
         if cm:
             key = cm.group(1)
         else:
-            sm = re.match(r'(\d{1,2}(?:\.\d{1,3})*)', label)
+            sm = re.match(r'(?:[▽◇○◌]\s*)?(\d{1,2}(?:\.\d{1,3})*)', label)
             if sm and sm.group(1) != label.lstrip('0'):
                 key = sm.group(1)
         if key:
@@ -856,7 +927,7 @@ def index_headings(html_frag: str, book: str) -> None:
 
 
 _XREF_PAT = re.compile(
-    r'《(AI数学|扩散|基座模型|用好AI|AI law)》\s*([§]?\s*\d{1,2}(?:\.\d{1,3})*|第\s*\d+\s*章)'
+    r'《(AI数学|扩散|基座模型|用好AI|AI规律)》\s*([§]?\s*\d{1,2}(?:\.\d{1,3})*|第\s*\d+\s*章)'
 )
 
 
@@ -903,6 +974,7 @@ def render_doc(md_rel: str, title: str, doc_id: str) -> str:
     html = bump_headings(html, doc_id)
     index_headings(html, BOOK_ALIAS[md_rel.split("/")[0]])
     html = inject_selfcheck_popups(html, qa_data)
+    html = convert_extended_popups(html)
     html = prefix_code_block_ids(html, doc_id)
     html = prefix_internal_hrefs(html, doc_id, id_set)
     html = wrap_tables(html)
@@ -944,9 +1016,8 @@ def main():
         for (_, _, doc_id), label in zip(DOCS, DOC_LABELS)
     )
     import json as _json
-    import pathlib as _pl
     _glossary = _json.dumps(
-        _json.loads((_pl.Path(__file__).resolve().parent / "tools" / "glossary.json").read_text(encoding="utf-8"))["terms"],
+        _json.loads((HERE / "glossary.json").read_text(encoding="utf-8"))["terms"],
         ensure_ascii=False)
     html_out = (
         TEMPLATE.replace("{{BODY}}", body)
@@ -954,13 +1025,13 @@ def main():
                 .replace("{{GLOSSARY}}", _glossary)
     )
     out = Path(args.out)
-    out.write_text(html_out, encoding="utf-8")
+    out.write_text(html_out, encoding="utf-8", newline="\n")
     print(f"✓ 输出 {out} ({out.stat().st_size/1024:.0f} KB)")
 
 
 def _load_template() -> str:
     """读取页面模板（与构建脚本分离的 template.html）。"""
-    path = ROOT / "template.html"
+    path = HERE / "template.html"
     if not path.exists():
         raise RuntimeError(f"缺少模板文件：{path}")
     return path.read_text(encoding="utf-8")

@@ -16,9 +16,9 @@ import numpy as np
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch
 
-# fig_common.py 与本脚本同级；显式把脚本目录加入搜索路径，
-# 不依赖"脚本所在目录自动入 sys.path"这一隐式行为（换目录执行即失效）。
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# fig_common.py 在仓库 build/ 下；显式把 build/ 加入搜索路径，
+# 不依赖 CWD 或"脚本所在目录自动入 sys.path"这类隐式行为。
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
 import fig_common  # noqa: E402  (sys.path 就绪后再导入共享模块)
 from fig_common import (  # noqa: E402
     CJK_FONT_NAME, setup_rc,
@@ -95,7 +95,7 @@ def fig_ch1_vit_patch():
     # 箭头：拉平
     ax.annotate('', xy=(4.5, 5), xytext=(2, 5),
                 arrowprops=dict(arrowstyle='->', lw=2, color=BLUE["m"]))
-    ax.text(2.0, 5.8, '拉平', fontsize=10, fontproperties=CJK_FONT_NAME, color=BLUE["m"], ha='center')
+    ax.text(2.05, 5.8, '拉平', fontsize=10, fontproperties=CJK_FONT_NAME, color=BLUE["m"], ha='left')
     # 画768维向量条
     # 用局部 rng，不用 np.random.seed()——后者是全局副作用，
     # 会污染其后所有 numpy 随机状态（含别的图函数）。
@@ -780,8 +780,8 @@ def fig_ch1_clip_space():
         ax.plot([x - 0.15, x + 0.15], [y, y - 0.15], '--', color=color, alpha=0.5, lw=1)
 
     # 区域标注
-    ax.text(-2.5, 2.2, '动物区域', fontsize=10, fontproperties=CJK_FONT_NAME, color='gray', alpha=0.6)
-    ax.text(1.5, 2.2, '物体区域', fontsize=10, fontproperties=CJK_FONT_NAME, color='gray', alpha=0.6)
+    ax.text(-2.5, 2.2, '动物区域', fontsize=10, fontproperties=CJK_FONT_NAME, color='#555')
+    ax.text(1.5, 2.2, '物体区域', fontsize=10, fontproperties=CJK_FONT_NAME, color='#555')
     ax.axvline(x=0, color='gray', ls=':', alpha=0.3)
 
     # 图例
@@ -1455,7 +1455,7 @@ def fig_ch6_world_model_factions():
     # 轴标签
     ax.text(0.35, 5.6, '方法轴\n怎么学', fontsize=9.5, fontproperties=CJK_FONT_NAME,
             ha='center', va='center', color=PURPLE["d"], fontweight='bold')
-    ax.text(0.35, 2.2, '目标轴\n学什么/产出什么', fontsize=9.5, fontproperties=CJK_FONT_NAME,
+    ax.text(0.0, 2.2, '目标轴\n学什么/产出什么', fontsize=9.5, fontproperties=CJK_FONT_NAME,
             ha='center', va='center', color=PURPLE["d"], fontweight='bold')
 
     for row_y, items in ((5.6, method_axis), (2.2, goal_axis)):
@@ -1479,8 +1479,8 @@ def fig_ch6_world_model_factions():
                     ha='center', color=(GREEN["d"] if can else RED["d"]), fontweight='bold')
 
     # 两轴之间的分隔（虚线，仅表示"不是同一维度，不可横向排位"）
-    ax.axhline(y=3.9, color=PURPLE["d"], ls='--', alpha=0.35, lw=1.2)
-    ax.text(7, 4.05, '两轴不可互相排位：正文明确「六派不在同一维度」',
+    ax.axhline(y=3.80, color=PURPLE["d"], ls='--', alpha=0.35, lw=1.2)
+    ax.text(7, 3.86, '两轴不可互相排位：正文明确「六派不在同一维度」',
             fontsize=8.5, fontproperties=CJK_FONT_NAME, ha='center',
             color=PURPLE["d"], style='italic')
 
@@ -1528,7 +1528,7 @@ def fig_ch2_three_capabilities():
     ax.annotate('', xy=(1.5,-1.35), xytext=(-1.5,-1.35), arrowprops=dict(arrowstyle='->', color='#666', lw=1.5))
     for x, label, c in [(-1.0,'写作 (2019)',BLUE["alt"]),(0,'编程 (2021)',GREEN["alt"]),(1.0,'思考 (2024)',PURPLE["alt"])]:
         ax.text(x, -1.25, label, ha='center', va='bottom', fontsize=9, color=c, fontweight='bold', fontproperties=CJK_FONT_NAME)
-    ax.text(0, -1.5, '潜空间塑形深度递增 →', ha='center', va='top', fontsize=9, color='#999', style='italic', fontproperties=CJK_FONT_NAME)
+    ax.text(0, -1.5, '潜空间塑形深度递增 →', ha='center', va='top', fontsize=9, color='#555', style='italic', fontproperties=CJK_FONT_NAME)
     return save(fig, 'fig_ch2_three_capabilities.png')
 
 
@@ -1575,7 +1575,7 @@ def fig_ch4_delegation_architecture():
     ax.text(0.7, 5.2, 'GPT-Live（交互层）', fontsize=11, fontweight='bold', color=BLUE["alt"], fontproperties=CJK_FONT_NAME)
     ax.text(0.7, 2.5, 'GPT-5.5（推理层）', fontsize=11, fontweight='bold', color=ORANGE["alt"], fontproperties=CJK_FONT_NAME)
     ax.annotate('', xy=(11.5,0.3), xytext=(0.5,0.3), arrowprops=dict(arrowstyle='->', color='#999', lw=1))
-    ax.text(11.3, 0.1, '时间', fontsize=9, color='#999', fontproperties=CJK_FONT_NAME)
+    ax.text(11.3, 0.1, '时间', fontsize=9, color='#555', fontproperties=CJK_FONT_NAME)
 
     for x, label, c in [(1.5,'用户提问','#333'),(2.5,'"好的，我查一下"\n<500ms',BLUE["alt"]),
                          (5.0,'"你主要关注\n哪个方向？"\n(继续闲聊)',BLUE["alt"]),
