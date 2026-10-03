@@ -41,10 +41,8 @@ jobs:
   artifacts:
     name: 产物新鲜度
     runs-on: ubuntu-24.04
-    # TODO(ci): 首轮跑通后去掉 continue-on-error，转为硬门禁。
-    # 之所以先"咨询态"：pandoc / KaTeX / Python 版本与本机不完全一致时会产生
-    # **假红**（内容其实没变）。在 GitHub 上亲眼见到一次全绿后再收紧。
-    continue-on-error: true
+    # 2026-10-03 首轮全绿（apt pandoc 对齐本机后），已从 continue-on-error
+    # 咨询态转为硬门禁：重建后与 HEAD 不一致即红。
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
