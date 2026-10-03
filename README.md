@@ -104,6 +104,9 @@ AI 没有唯一本质，不同学科各取一个视角，合起来用三个互�
 ├── build/               # 构建管线（HTML/DOCX/配图共享模块）
 │   ├── build_html.py    # Markdown → HTML 构建脚本（含 lint 与产物校验）
 │   ├── build_docx.py    # Markdown → DOCX 构建脚本（含标题/答案完整性校验）
+│   ├── build_cards.py   # 学习卡构建（cards.html + Anki TSV；读 glossary.json 与 overrides）
+│   ├── check_cards.py   # 卡片产物一致性/清晰度报告
+│   ├── check_artifact_fresh.py # 产物新鲜度门禁（html/cards 逐字节、docx 逐 zip 条目）
 │   ├── style_docx.py    # DOCX 样式统一
 │   ├── fig_common.py    # 配图脚本共享模块（CJK 字体/统一保存/rcParams）
 │   ├── books.py         # 书册注册表（路径/书名/doc-id/图前缀/跨篇别名，单源）
@@ -113,10 +116,11 @@ AI 没有唯一本质，不同学科各取一个视角，合起来用三个互�
 │   ├── heading_check.py # 标题完整性核对（md ↔ HTML / DOCX）
 │   ├── check_html.py    # HTML 产物校验（id/锚点/图片/引用数/标题/popup 数）
 │   ├── md_links.py      # 内链修复 + 引用标记归一（两条管线共用）
-│   ├── template.html    # HTML 页面模板（主题/字号/目录/自检气泡）
+│   ├── template.html / template_common.py # HTML 页面模板与共享样式 tokens
+│   ├── cards_template.html / cards_overrides.json / cards_review.json # 卡片模板与覆盖/审校白名单
 │   ├── glossary.json    # 术语卡数据（HTML 附录构建输入）
 │   ├── MD_CONVENTIONS.md# md 源稿结构约定（构建契约，改稿前先读）
-│   └── requirements.txt # Python 依赖（numpy、matplotlib、python-docx、lxml 等）
+│   └── requirements.txt # Python 依赖（numpy、matplotlib、python-docx、lxml 等；CI 精确 pin 见 workflows）
 ```
 
 文件夹编号（1、1a、2、3、4）是写作次序，不是阅读次序；推荐阅读顺序以「五篇文档 & 推荐阅读顺序」一节为准。
