@@ -80,5 +80,16 @@ jobs:
           python3 build/build_cards.py
           python3 build/check_cards.py
       # 与 HEAD 比对：html/cards 逐字节；docx 逐 zip 条目但跳过 docProps（pandoc 写时间戳）。
+      # 失败时把逐行报告转成 check-run annotation，便于无 token 环境远程诊断。
       - name: 产物新鲜度门禁
-        run: python3 build/check_artifact_fresh.py
+        run: |
+          set +e
+          out=$(python3 build/check_artifact_fresh.py 2>&1)
+          rc=$?
+          printf '%s\n' "$out"
+          if [ "$rc" -ne 0 ]; then
+            printf '%s\n' "$out" | while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error title=freshness::$line"
+            done
+          fi
+          exit "$rc"
