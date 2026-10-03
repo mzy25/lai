@@ -12,5 +12,10 @@ __pycache__/
 vendor/
 references/
 
+# 临时草稿与运行输出
+tmp*.md
+tmp*/
+*.tmp
+
 # 系统
 .DS_Store

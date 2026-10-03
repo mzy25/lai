@@ -24,6 +24,7 @@ pandoc 自身（与真实转换**相同的 reader 参数**）只读转一遍 har
 """
 from __future__ import annotations
 
+import html as H
 import re
 import subprocess
 import tempfile
@@ -33,6 +34,11 @@ from pathlib import Path
 # 其余（标点、——、-、空格、$、_ 等）一律丢弃。
 _CANON = re.compile(r'[^0-9a-z\u4e00-\u9fff\u3400-\u4dbf]')
 _HEADING_ID = re.compile(r'<h[1-6][^>]*\bid="([^"]+)"')
+# 标题文字：id 之外的第二把钥匙。pandoc 把 `{#sec-…}`／`{#ch-N}` 放进 id 属性后，
+# 源稿里手写的文本型锚点（如 `#第1章后训练从有用到可用`）会失去对应关系；
+# 2026-09-28 五篇共 39 处篇首问题链锚点因此不可达。按标题文字兜底可让内链
+# 对任意 id 方案都健壮，而不是每次改 id 规则就去改 39 处锚点。
+_HEADING_BLOCK = re.compile(r'<h[1-6][^>]*\bid="([^"]+)"[^>]*>(.*?)</h[1-6]>', re.S)
 _LINK = re.compile(r'\]\(#([^)\s]+)\)')
 _FENCE = re.compile(r'^\s*(```|~~~)')
 
@@ -47,11 +53,17 @@ FROM_FLAGS = ("markdown+mark+gfm_auto_identifiers+tex_math_dollars"
 # 管线都按上标渲染，且与版本无关。相邻引用（如 [81][82] 组）显式折叠成
 # ^\[81\]\[82\]^ 一个上标 token，不依赖 pandoc 的隐式合并行为。
 _CITATION = re.compile(r'\^\[(\d+)\]\^|<sup>\[(\d+)\]</sup>')
+_MULTI_SUP = re.compile(r'<sup>((?:\[\d+\])+)</sup>')
 _ADJACENT = re.compile(r'\^\\\[\d+\\\]\^(?:\^\\\[\d+\\\]\^)+')
 
 
 def normalize_citations(text: str) -> str:
-    """把 ^[N]^ / <sup>[N]</sup> 统一成转义形式 ^\\[N\\]^；相邻组折叠为 ^\\[81\\]\\[82\\]^。"""
+    """把 ^[N]^ / <sup>[N]</sup> 统一成转义形式 ^\\[N\\]^；相邻组折叠为 ^\\[81\\]\\[82\\]^。
+
+    2026-10-02 补 <sup>[81][82]</sup> 多号形（此前漏网，产物会留字面 [82]）。"""
+    def _multi(m):
+        return '^' + ''.join('\\[' + n + '\\]' for n in re.findall(r'\d+', m.group(1))) + '^'
+    text = _MULTI_SUP.sub(_multi, text)
     text = _CITATION.sub(lambda m: '^\\[' + (m.group(1) or m.group(2)) + '\\]^', text)
     return _ADJACENT.sub(
         lambda m: '^' + ''.join('\\[' + n + '\\]' for n in re.findall(r'\d+', m.group(0))) + '^',
@@ -62,8 +74,8 @@ def canon(s: str) -> str:
     return _CANON.sub('', s.lower())
 
 
-def harvest_ids(md_text: str, cwd: Path, from_flags: str) -> list[str]:
-    """用 pandoc（与真实转换同参数）只读转一遍，harvest 标题 id（文档序）。"""
+def _pandoc_html(md_text: str, cwd: Path, from_flags: str) -> str:
+    """用 pandoc（与真实转换同参数）只读转一遍 HTML 片段。"""
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8",
                                      suffix=".md", delete=False) as f:
         f.write(md_text)
@@ -83,7 +95,21 @@ def harvest_ids(md_text: str, cwd: Path, from_flags: str) -> list[str]:
         raise RuntimeError(
             f"md_links: pandoc harvest 失败（退出码 {r.returncode}）: "
             f"{r.stderr[:500]}")
-    return _HEADING_ID.findall(r.stdout)
+    return r.stdout
+
+
+def harvest_ids(md_text: str, cwd: Path, from_flags: str) -> list[str]:
+    """harvest 标题 id（文档序）。"""
+    return _HEADING_ID.findall(_pandoc_html(md_text, cwd, from_flags))
+
+
+def harvest_id_text(md_text: str, cwd: Path, from_flags: str) -> list[tuple[str, str]]:
+    """harvest 标题的 (id, 文字) 对（文档序），供 fix_internal_links 建兜底映射。"""
+    out = []
+    for hid, inner in _HEADING_BLOCK.findall(_pandoc_html(md_text, cwd, from_flags)):
+        text = H.unescape(re.sub(r'<[^>]+>', '', inner)).strip()
+        out.append((hid, text))
+    return out
 
 
 def _rewrite_segment(text: str, cmap: dict[str, str],
@@ -110,19 +136,31 @@ def fix_internal_links(md_text: str, cwd: Path,
     保证 harvest 出的 id 与成品里的 id 一字不差。
     """
     warnings: list[str] = []
-    raw_ids = harvest_ids(md_text, cwd, from_flags)
+    pairs = harvest_id_text(md_text, cwd, from_flags)
 
     # canon → id 映射；撞车时保留文档序第一个 id（章节正文标题总在自检附录的
     # 复述标题之前，锚点指向的必是前者），仍告警以便发现异常重复标题。
+    # 键有两把：id 自身（显式 `{#…}` 或 auto id）与标题文字（id 变了也能解析）。
     cmap: dict[str, str] = {}
-    seen: set[str] = set()
-    for rid in raw_ids:
-        c = canon(rid)
-        if c in seen:
-            warnings.append(f"标题 id 规范化撞车，保留首个映射：{rid}")
-            continue
-        seen.add(c)
-        cmap[c] = rid
+    seen: set[str] = set()      # 任何键占位（先到先得）
+    seen_id: set[str] = set()   # id 键专属：只有两个 id 撞车才值得告警
+    for rid, text in pairs:
+        ck = canon(rid)
+        keys = [ck] if canon(text) == ck else [ck, canon(text)]
+        for c in keys:
+            if not c:
+                continue
+            if c in seen:
+                # 标题文字天然重复（每章都有「常见误解」、附录复述章标题），
+                # 撞了就取首个（文档序靠前者是正文标题，锚点指向的必是它）。
+                # 只有 id 键互撞才是真问题——那意味着两个标题的 id 规范化后相同。
+                if c == ck and c in seen_id:
+                    warnings.append(f"标题 id 规范化撞车，保留首个映射：{rid}")
+                continue
+            seen.add(c)
+            if c == ck:
+                seen_id.add(c)
+            cmap[c] = rid
 
     # 围栏感知：只改写围栏外的段落（代码块里的 ](#... 是字面内容）
     lines = md_text.split("\n")
@@ -142,4 +180,4 @@ def fix_internal_links(md_text: str, cwd: Path,
             buf.append(line)
     out.append(_rewrite_segment("\n".join(buf), cmap, warnings))
 
-    return "\n".join(out), warnings, set(raw_ids)
+    return "\n".join(out), warnings, {rid for rid, _ in pairs}

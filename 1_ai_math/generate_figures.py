@@ -42,7 +42,7 @@ setup = lambda: (setup_rc(dpi=200), print(f"输出目录: {OUTPUT_DIR}"), print(
 # ============================================================
 
 def fig_ch0_ai_panorama():
-    """图0: AI 全景——训练回路（左）与损失之山（右）
+    """图0: AI 全景——训练回路（左）与损失地形（右）
 
     与正文第0章严格对应：
       左：输入 x → 带旋钮的函数 f(x; θ) → 预测 ŷ → 与训练数据里的真实答案 y 比一比
@@ -98,7 +98,7 @@ def fig_ch0_ai_panorama():
     ax.set_title('左：训练回路', fontsize=13, fontproperties=CJK_FONT_NAME,
                  loc='left', y=-0.02)
 
-    # ============ 右：损失之山 ============
+    # ============ 右：损失地形 ============
     ax = axes[1]
     th = np.linspace(100, 140, 400)
     ax.plot(th, (th - 120) ** 2, color=BLUE["m"], lw=2.6,
@@ -125,7 +125,7 @@ def fig_ch0_ai_panorama():
     ax.set_xlabel('旋钮 $\\theta_0$（本节钉死 $\\theta_1=3$ 不动）', fontsize=12,
                   fontproperties=CJK_FONT_NAME)
     ax.set_ylabel('损失 $L$', fontsize=12)
-    ax.set_title('右：损失之山——山高 = 错得多离谱', fontsize=13,
+    ax.set_title('右：损失地形——山高 = 错得多离谱', fontsize=13,
                  fontproperties=CJK_FONT_NAME)
     ax.set_ylim(-45, 480)
     ax.grid(alpha=0.25)
@@ -136,7 +136,7 @@ def fig_ch0_ai_panorama():
 
 
 # ============================================================
-# Ch1 - 5张图
+# Ch1 - 4张图
 # ============================================================
 
 def fig_ch1_gradient_path():
@@ -156,7 +156,9 @@ def fig_ch1_gradient_path():
     
     ax1.scatter(px, py, c='red', s=60, zorder=5)
     for i in range(len(px)):
-        ax1.annotate(f'$x_{i}$', (px[i], py[i]), textcoords="offset points", xytext=(8,8), fontsize=11)
+        # x3..x6 挤在原点附近，标签扇形错开防叠
+        off = (8, 8) if i < 2 else (10 + 15 * (i - 2), 6 + 12 * (i - 2))
+        ax1.annotate(f'$x_{i}$', (px[i], py[i]), textcoords="offset points", xytext=off, fontsize=11)
     for i in range(len(px)-1):
         ax1.annotate('', xy=(px[i+1], py[i+1]), xytext=(px[i], py[i]),
                     arrowprops=dict(arrowstyle='->', color='red', lw=1.5))
@@ -260,7 +262,7 @@ def fig_ch1_learning_rate():
     ax.semilogy(steps, r_ok,    color=GREEN["m"],  lw=2,   label=r'$\eta=0.3$')
     ax.semilogy(steps, r_small, color=ORANGE["m"], lw=2,   label=r'$\eta=0.01$')
     ax.axhline(1e-3, color=GRAY["d"], ls='--', lw=1.4)
-    ax.text(120, 1.5e-3, '千分之一（同一把尺子）', fontsize=9,
+    ax.text(8, 1.5e-3, '千分之一（同一把尺子）', fontsize=9, ha='left',
             color=GRAY["d"], fontproperties=CJK_FONT_NAME)
 
     def mark_at(arr, thr=1e-3):
@@ -327,13 +329,13 @@ def fig_ch1_local_minimum():
     # 山丘
     ax.plot(x_hill, f(x_hill), 'o', color=GRAY["m"], ms=9, zorder=5)
     ax.annotate('山丘  ' + r'$x\approx0.618$' + '\n' + r'$f\approx1.09$',
-                xy=(x_hill, f(x_hill)), xytext=(0.62, 6.6),
+                xy=(x_hill, f(x_hill)), xytext=(0.25, 7.4),
                 fontsize=10.5, color=GRAY["d"],
                 arrowprops=dict(arrowstyle='->', color=GRAY["m"], lw=1.6))
     # 浅坑
     ax.plot(x_shallow, f(x_shallow), 'o', color=ORANGE["m"], ms=11, zorder=5)
     ax.annotate('浅坑  ' + r'$x=1$' + '\n' + r'$f=1.00$',
-                xy=(x_shallow, f(x_shallow)), xytext=(1.42, 3.6),
+                xy=(x_shallow, f(x_shallow)), xytext=(1.55, 3.1),
                 fontsize=10.5, color=ORANGE["d"],
                 arrowprops=dict(arrowstyle='->', color=ORANGE["m"], lw=1.6))
 
@@ -344,9 +346,9 @@ def fig_ch1_local_minimum():
         xt = xt - eta * df(xt)
         traj.append(xt)
     traj = np.array(traj)
-    ax.plot(traj, f(traj), '--', color=GREEN["m"], lw=2,
+    ax.plot(traj, f(traj), '--', color=ROLE_DANGER, lw=2,
             label=r'梯度下降路径  $\eta=0.03$')
-    ax.plot(traj[0], f(traj[0]), 's', color=GREEN["d"], ms=10, label=r'起点  $x_0=2$')
+    ax.plot(traj[0], f(traj[0]), 's', color=ROLE_DANGER, ms=10, label=r'起点  $x_0=2$')
     for i in [0, 3, 8, 20, 59]:
         if i + 1 < len(traj):
             ax.annotate('', xy=(traj[i + 1], f(traj[i + 1])),
@@ -416,7 +418,7 @@ def fig_ch1_local_minimum():
                 xytext=(-1.98, 1.28), fontsize=10.5,
                 fontproperties=CJK_FONT_NAME,
                 arrowprops=dict(arrowstyle='->', color=INK, lw=1.5))
-    ax.annotate('下坡方向（y 轴）', xy=(0, -1.95), xytext=(-1.98, -1.30),
+    ax.annotate('下坡方向（y 轴）', xy=(0, -1.95), xytext=(-2.15, -0.55),
                 fontsize=10.5, color=GREEN["d"], fontproperties=CJK_FONT_NAME,
                 arrowprops=dict(arrowstyle='->', color=GREEN["d"], lw=1.6))
     ax.annotate('上坡方向（x 轴）', xy=(1.95, 0), xytext=(0.60, 1.72),
@@ -429,7 +431,8 @@ def fig_ch1_local_minimum():
                  fontsize=13, fontproperties=CJK_FONT_NAME)
     ax.set_xlim(-2, 2)          # y 分量按 1.1^n 增长，必须锁死视窗，否则画面被撑爆
     ax.set_ylim(-2, 2)
-    ax.legend(fontsize=9, loc='lower right', prop=CJK_FONT_NAME, framealpha=0.9)
+    ax.legend(fontsize=8.5, loc='upper center', bbox_to_anchor=(0.5, -0.10),
+              prop=CJK_FONT_NAME, framealpha=0.9)
     ax.set_aspect('equal')
 
     plt.tight_layout()
@@ -539,6 +542,7 @@ def fig_ch2_lagrange():
     ax.plot(x_opt, y_opt, 'ro', ms=12, zorder=5)
     ax.plot(-x_opt, y_opt, 'ro', ms=8, zorder=5)
     ax.text(x_opt+0.05, y_opt+0.08, f'P(√3/2, 1/2)\n≈(0.866, 0.5)', fontsize=9, color='darkred')
+    ax.text(-x_opt-0.75, y_opt+0.08, '对称最优点\n≈(-0.866, 0.5)', fontsize=9, color='darkred')
     
     scale = 0.15
     ax.annotate('', xy=(x_opt + scale*np.sqrt(3), y_opt + scale*1),
@@ -682,7 +686,7 @@ def fig_ch2_complementary_slackness():
     return save(fig, 'fig_ch2_complementary_slackness.png')
 
 # ============================================================
-# Ch3 - 5张图
+# Ch3 - 3张图
 # ============================================================
 
 def fig_ch3_entropy_softmax():
@@ -759,8 +763,8 @@ def fig_ch3_crossentropy():
         ax.text(qv, cv + 0.3, txt, fontsize=9, ha='center', color=color, fontweight='bold')
     
     ax.fill_between(q, 0, ce, alpha=0.1, color='blue')
-    ax.set_xlabel('predicted probability $q_1$', fontsize=12)
-    ax.set_ylabel('cross entropy $H = -\\ln(q_1)$', fontsize=12)
+    ax.set_xlabel('predicted probability $p_1$', fontsize=12)
+    ax.set_ylabel('cross entropy $H = -\\ln(p_1)$', fontsize=12)
     ax.set_title('Cross-Entropy: confident mistakes are punished heavily', fontsize=13, fontweight='bold')
     ax.set_xlim(0, 1); ax.set_ylim(-0.5, 5.5); ax.grid(True, alpha=0.3)
     
@@ -942,7 +946,7 @@ def fig_ch4_swiglu():
 
     # Left: SwiGLU data flow diagram
     ax = axes[0]
-    ax.set_xlim(0, 10); ax.set_ylim(0, 7); ax.axis('off')
+    ax.set_xlim(0, 10); ax.set_ylim(0, 7.9); ax.axis('off')
     ax.set_title('SwiGLU = Swish($xW_1$) $\\odot$ ($xW_2$)', fontsize=13, fontweight='bold')
 
     # Boxes
@@ -983,7 +987,7 @@ def fig_ch4_swiglu():
     ax.annotate('', xy=(8.8, 5.5), xytext=(8.3, 5.5), arrowprops=dict(arrowstyle='->', lw=1.5))
 
     # Labels for branches
-    ax.text(5.5, 7.2, 'gate (learned switch)', fontsize=8, ha='center', color='orange', style='italic')
+    ax.text(5.5, 7.15, 'gate (learned switch)', fontsize=8, ha='center', color='orange', style='italic')
     ax.text(5.5, 3.8, 'value (linear transform)', fontsize=8, ha='center', color='blue', style='italic')
 
     # Right: Swish vs ReLU comparison in gating context
@@ -1035,7 +1039,7 @@ def fig_ch4_gradient_decay():
     ax.set_title('Gradient decay vs network depth', fontsize=13, fontweight='bold')
     ax.set_xlabel('network depth (number of layers)')
     ax.set_ylabel('gradient magnitude (log scale)')
-    ax.set_xlim(1,50); ax.set_ylim(1e-12, 2)
+    ax.set_xlim(1,50); ax.set_ylim(1e-20, 2)
     ax.legend(loc='upper right'); ax.grid(True, alpha=0.3, which='both')
     
     # 右：导数形状
@@ -1058,7 +1062,7 @@ def fig_ch4_gradient_decay():
     return save(fig, 'fig_ch4_gradient_decay.png')
 
 # ============================================================
-# Ch5 — 3张图
+# Ch5 — 4张图
 # ============================================================
 
 def fig_ch5_attention_heatmap():
@@ -1368,7 +1372,7 @@ def fig_ch6_lora():
     ax.set_aspect('equal')
     ax.set_title(f'LoRA: low-rank update (r={r})', fontsize=12, fontweight='bold')
     ax.set_xlabel('dimension'); ax.set_ylabel('dimension')
-    ax.legend(loc='upper left', fontsize=9)
+    ax.legend(loc='lower right', fontsize=9)
     ax.grid(True, alpha=0.2)
     
     # 右：参数量对比表

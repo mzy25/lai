@@ -1,0 +1,29 @@
+{
+  "accepted": {
+    "short_back": [
+      "quiz-1_ai_math-1-知识点-2",
+      "myth-2_foundation-24",
+      "myth-2_foundation-26",
+      "myth-2_foundation-27"
+    ],
+    "deictic_echo_ok": [
+      "myth-2_foundation-10",
+      "myth-2_foundation-29",
+      "myth-2_foundation-31",
+      "myth-1a_diffusion-1",
+      "myth-1a_diffusion-3",
+      "myth-1a_diffusion-5",
+      "myth-1a_diffusion-6",
+      "myth-1a_diffusion-9",
+      "myth-1a_diffusion-12",
+      "myth-1a_diffusion-17",
+      "myth-1a_diffusion-18",
+      "myth-1a_diffusion-20",
+      "myth-4_ai_law-19"
+    ]
+  },
+  "notes": {
+    "short_back": "均为完整但简短的答案/纠正：问答答案句已含（§1.4）回看锚点；基座 6.4 三条纠正短句配回显后语义完整（myth-27 已补主语）。",
+    "deictic_echo_ok": "纠正以「两者/它们/它」开头，但卡片背面固定回显误解句（防断章取义设计），人工抽检 13/13 指代对象均为回显句（含 myth-4_ai_law-19：它=SAE）。"
+  }
+}

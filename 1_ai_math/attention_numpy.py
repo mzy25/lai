@@ -16,7 +16,7 @@
 
 import numpy as np
 
-# 固定随机种子：主程序含随机演示（RoPE 打乱验证、Transformer Block 权重），
+# 固定随机种子：主程序含随机环节（RoPE 打乱验证、Transformer Block 权重），
 # 种子固定后每次运行输出一致，便于与文档手算结果对照。
 RNG = np.random.default_rng(42)
 
@@ -304,7 +304,7 @@ def adam_step(param, grad, m, v, t, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8):
 
 
 # ============================================
-# 主程序：数字演示（与第5章手算结果对比）
+# 主程序：数值算例（与第5章手算结果对比）
 # ============================================
 
 if __name__ == "__main__":
@@ -356,20 +356,20 @@ if __name__ == "__main__":
     print(f"\n注意: dL/dQ中出现了K的值, dL/dK中出现了Q的值——联动调节")
 
     # ========================================
-    # Part 3: RoPE演示（第5章位置编码小节）
+    # Part 3: RoPE 验证（第5章位置编码小节）
     # ========================================
     print("\n" + "=" * 60)
     print("【Part 3】RoPE旋转位置编码")
     print("=" * 60)
 
-    d_k = 8  # 用d_k=8做演示（4对维度）
+    d_k = 8  # 用 d_k=8 做验证（4对维度）
     thetas = rope_frequencies(d_k)
     print(f"\nd_k={d_k}, 4个频率对:")
     for i, t in enumerate(thetas):
         eff_range = np.pi / (2 * t)
         print(f"  pair {i}: θ={t:.4f} rad/pos, 有效范围≈{eff_range:.0f}位置")
 
-    # 演示RoPE对注意力分数的影响
+    # 展示 RoPE 对注意力分数的影响
     X_rope = RNG.standard_normal((5, d_k)) * 0.5  # 5个token, 8维
     W_Q_r = np.eye(d_k)  # identity, 不改变向量
     W_K_r = np.eye(d_k)
@@ -480,7 +480,7 @@ if __name__ == "__main__":
 
         return x2, attn_A
 
-    # 用小规模参数演示
+    # 用小规模参数示范
     d = 4
     d_ff = 8
     W1 = RNG.standard_normal((d, d_ff)) * 0.3
@@ -516,7 +516,7 @@ if __name__ == "__main__":
     pairs = [(corpus[i:i + 2], corpus[i + 2]) for i in range(len(corpus) - 2)]
     V, d6, dk6 = len(vocab), 4, 4
 
-    E = rng6.standard_normal((V, d6)) * 0.8      # Embedding 查表（本演示冻结不更新）
+    E = rng6.standard_normal((V, d6)) * 0.8      # Embedding 查表（本算例冻结不更新）
     params = [
         rng6.standard_normal((d6, dk6)) * 0.4,  # W_Q
         rng6.standard_normal((d6, dk6)) * 0.4,  # W_K

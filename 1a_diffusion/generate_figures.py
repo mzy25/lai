@@ -31,9 +31,10 @@ plt.rcParams['axes.labelsize'] = 11
 
 
 def save(fig, name):
-    """统一保存函数（与其余四本一致，均经 fig_common.save_fig）"""
-    fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor='white')
-    print(f"[OK] {OUTPUT_DIR / name}")
+    """统一保存并返回路径（与其余四本一致，run_all 靠返回值判断落盘）"""
+    path = fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor='white')
+    print(f"[OK] {path}")
+    return path
 
 # =============================================================================
 # Ch1 前向过程——信号衰减与噪声增长
@@ -64,7 +65,10 @@ def fig_ch1_forward_process():
     np.random.seed(42)
     x0 = 2.0
     t_demo = [0, 10, 50, 100, 200, 500, 1000]
-    alpha_bar_demo = np.array([1.0, 0.8, 0.5, 0.25, 0.1, 0.01, 0.0001])
+    # 与左图同一线性 β 调度：ᾱ_t = cumprod(1-β)[t]，与 §1.6 的 ᾱ₃₄₀≈0.3 口径一致
+    _beta = np.linspace(0.0001, 0.02, 1000)
+    _abar = np.concatenate([[1.0], np.cumprod(1 - _beta)])  # index 0..1000
+    alpha_bar_demo = np.array([_abar[tt] for tt in t_demo])
     colors = plt.cm.Blues(np.linspace(0.3, 0.9, len(t_demo)))
     for i, (ti, ab) in enumerate(zip(t_demo, alpha_bar_demo)):
         x_vals = np.sqrt(ab) * x0 + np.sqrt(1-ab) * np.random.randn(1000)
@@ -88,10 +92,10 @@ def fig_ch1_forward_process():
                 arrowprops=dict(arrowstyle='->', color='red', lw=2))
     ax.text(0.85, 0.40, '逐步加噪\nO(t)', ha='center', fontsize=10, color='red')
     ax.text(0.5, 0.15, '闭式公式免去逐步加噪', 
-            ha='center', fontsize=10, style='italic')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic')
     ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis('off')
 
-    save(fig, 'fig_ch1_forward_process.png')
+    return save(fig, 'fig_ch1_forward_process.png')
 
 
 # =============================================================================
@@ -138,10 +142,10 @@ def fig_ch3_reverse_process():
             ha='center', fontsize=11, 
             bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.3))
     ax.text(5, 2, '未知 $p(x_t)$（归一化常数）→ 用神经网络近似', 
-            ha='center', fontsize=10, style='italic')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic')
     ax.axis('off'); ax.set_title('贝叶斯反向过程')
 
-    save(fig, 'fig_ch3_reverse_process.png')
+    return save(fig, 'fig_ch3_reverse_process.png')
 
 
 # =============================================================================
@@ -160,7 +164,7 @@ def fig_ch2_score_function():
     # 左图: 等高线与分数向量
     ax = axes[0]
     contour = ax.contour(X, Y, Z, levels=8, colors='black', alpha=0.3, linewidths=0.5)
-    ax.clabel(contour, inline=True, fontsize=8)
+    # clabel 数字在峰间过密互叠，去掉——密度由 quiver 箭头表达
     step = 5
     ax.quiver(X[::step, ::step], Y[::step, ::step], 
               dx[::step, ::step], dy[::step, ::step],
@@ -198,27 +202,27 @@ def fig_ch2_score_function():
     box1 = FancyBboxPatch((0.5, 6), 3.5, 2.5, boxstyle="round,pad=0.1", 
                            facecolor='lightblue', edgecolor='blue', linewidth=2)
     ax.add_patch(box1)
-    ax.text(2.25, 7.8, '第1章 梯度下降', ha='center', fontsize=11, fontweight='bold')
+    ax.text(2.25, 7.8, '梯度下降（数学篇 Ch1）', ha='center', fontsize=9.5, fontweight='bold')
     ax.text(2.25, 7.2, r'$-\nabla_\theta L$', ha='center', fontsize=14, family='monospace')
     ax.text(2.25, 6.6, '优化对象：模型参数', ha='center', fontsize=9)
 
     box2 = FancyBboxPatch((5.5, 6), 3.5, 2.5, boxstyle="round,pad=0.1", 
                            facecolor='lightcoral', edgecolor='red', linewidth=2)
     ax.add_patch(box2)
-    ax.text(7.25, 7.8, '第3章 分数函数', ha='center', fontsize=11, fontweight='bold')
+    ax.text(7.25, 7.8, '分数函数（本篇 Ch2）', ha='center', fontsize=9.5, fontweight='bold')
     ax.text(7.25, 7.2, r'$+\nabla_x \log p(x)$', ha='center', fontsize=14, family='monospace')
     ax.text(7.25, 6.6, '优化对象：数据样本', ha='center', fontsize=9)
 
     ax.annotate('', xy=(5.3, 7.25), xytext=(4.2, 7.25),
                 arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
-    ax.text(4.75, 7.6, '同一套数学\n作用于不同对象', ha='center', fontsize=9, color='purple')
-    ax.text(5, 4, '两者都沿某个函数的斜率走', ha='center', fontsize=11, style='italic')
-    ax.text(5, 3, '第1章：参数空间 → 最小化损失', ha='center', fontsize=10)
-    ax.text(5, 2.2, '第3章：数据空间 → 最大化密度', ha='center', fontsize=10)
+    ax.text(4.75, 7.05, '同一套数学\n作用于不同对象', ha='center', fontsize=9, color='purple')
+    ax.text(5, 4, '两者都沿某个函数的斜率走', fontproperties=CJK_FONT_NAME, ha='center', fontsize=11, style='italic')
+    ax.text(5, 3, '数学篇 Ch1：参数空间 → 最小化损失', ha='center', fontsize=9)
+    ax.text(5, 2.2, '本篇 Ch2：数据空间 → 最大化密度', ha='center', fontsize=9)
     ax.axis('off')
     ax.set_title('梯度下降 vs 分数函数')
 
-    save(fig, 'fig_ch2_score_function.png')
+    return save(fig, 'fig_ch2_score_function.png')
 
 
 # =============================================================================
@@ -257,7 +261,7 @@ def fig_ch4_training_objective():
             ha='center', fontsize=12,
             bbox=dict(boxstyle='round', facecolor='lightyellow', edgecolor='orange'))
     ax.text(5, 2.5, '不预测图片，而是预测噪声！', 
-            ha='center', fontsize=10, style='italic', color='red')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='red')
     ax.axis('off')
     ax.set_title('训练：噪声预测任务')
 
@@ -296,11 +300,11 @@ def fig_ch4_training_objective():
                 arrowprops=dict(arrowstyle='->', color='green', lw=1.5, linestyle='--'))
     ax.text(1.5, 5, '跳跃\n连接', ha='center', va='center', fontsize=8, color='green')
     ax.text(5, 0.5, '反向传播：链式法则穿过 U-Net（第4章）', 
-            ha='center', fontsize=10, style='italic')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic')
     ax.axis('off')
     ax.set_title('扩散 U-Net 中的反向传播')
 
-    save(fig, 'fig_ch4_training_objective.png')
+    return save(fig, 'fig_ch4_training_objective.png')
 
 
 # =============================================================================
@@ -364,7 +368,7 @@ def fig_ch5_sampling_strategies():
                    label='噪声起点 ~N(0,1)' if k == 0 else None)
         ax.scatter([0], [y_data], c='green', s=70, zorder=5,
                    label='数据终点（流形）' if k == 0 else None)
-    ax.text(0.5, 0.0, '轨迹互不相交\n（确定性双射）', fontsize=9,
+    ax.text(0.5, 0.0, '轨迹互不相交\n（确定性双射）', fontproperties=CJK_FONT_NAME, fontsize=9,
             ha='center', va='center', color='#444', style='italic')
     ax.set_xlabel('时间 t（噪声 → 数据）'); ax.set_ylabel('数据值')
     ax.set_title('概率流 ODE：确定性轨迹\n（DDIM = ODE 离散化）')
@@ -373,7 +377,7 @@ def fig_ch5_sampling_strategies():
     ax.set_ylim(-2.8, 2.8)
     ax.invert_xaxis()
 
-    save(fig, 'fig_ch5_sampling_strategies.png')
+    return save(fig, 'fig_ch5_sampling_strategies.png')
 
 
 # =============================================================================
@@ -407,8 +411,9 @@ def fig_ch6_conditional_control():
     ax.annotate('', xy=(3, 2), xytext=(1, 1),
                 arrowprops=dict(arrowstyle='->', color='orange', lw=2, linestyle='--'))
     ax.text(2.2, 1.3, r'$\epsilon_{cond}-\epsilon_{unc}$', fontsize=10, color='orange')
-    ax.annotate('', xy=(5, 4), xytext=(0, 0), arrowprops=dict(arrowstyle='->', color='red', lw=3))
-    ax.text(3.0, 3.7, r'$\hat{\epsilon}$', fontsize=13, color='red', fontweight='bold')
+    # w=1.5: ε̂ = (1,1)+1.5×(3,2) = (5.5,4)，落在 ε_unc + w(ε_cond-ε_unc) 直线上
+    ax.annotate('', xy=(5.5, 4), xytext=(0, 0), arrowprops=dict(arrowstyle='->', color='red', lw=3))
+    ax.text(3.4, 3.3, r'$\hat{\epsilon}$ (w=1.5)', fontsize=12, color='red', fontweight='bold')
     ax.text(2.5, 5.5, 'CFG = 无条件 + w ×（条件偏置）', 
             ha='center', fontsize=10.5, fontweight='bold')
     ax.text(2.5, -0.7, r'$\hat{\epsilon}=\epsilon_{unc}+w(\epsilon_{cond}-\epsilon_{unc})$', 
@@ -449,11 +454,11 @@ def fig_ch6_conditional_control():
             bbox=dict(boxstyle='round', facecolor='white', edgecolor='black'))
     ax.text(5, 2.5, '低秩更新', ha='center', fontsize=10, color='orange')
     ax.text(5, 1.5, '只训练 B 和 A（小），冻结 W0（大）', 
-            ha='center', fontsize=10, style='italic', color='red')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='red')
     ax.axis('off')
     ax.set_title('LoRA：低秩适配')
 
-    save(fig, 'fig_ch6_conditional_control.png')
+    return save(fig, 'fig_ch6_conditional_control.png')
 
 
 # =============================================================================
@@ -462,7 +467,7 @@ def fig_ch6_conditional_control():
 def fig_ch9_frontier():
     """Ch9 §9.7: 前沿全景——技法×工具矩阵 + 2022→2026 时间线"""
     fig, ax = plt.subplots(figsize=(12, 8))
-    ax.set_xlim(0, 12); ax.set_ylim(0, 10); ax.axis('off')
+    ax.set_xlim(0, 12); ax.set_ylim(0, 10.8); ax.axis('off')
     ax.set_title('前沿全景：生成模型 = 技法 × 工具', fontsize=14, fontweight='bold',
                  fontproperties=CJK_FONT_NAME, pad=15)
 
@@ -506,8 +511,10 @@ def fig_ch9_frontier():
             y = y0 + (3-i)*ch
             # 有内容的格子用浅色背景
             content = models.get((i, j), '')
-            fc = '#555555' if not content else '#555555' if i == 0 else '#555555' if i == 1 else '#555555' if i == 2 else '#555555'
-            ec = '#999' if not content else '#1F5FB0' if i == 0 else '#FF6600' if i == 1 else '#2D6A3A' if i == 2 else '#9370DB'
+            # 按行族用浅底（原全 #555555 深底配 #333 字不可读）
+            _row_fc = {0: '#E3F2FD', 1: '#FFF3E0', 2: '#E8F5E9', 3: '#F3E5F5'}
+            fc = '#F5F5F5' if not content else _row_fc[i]
+            ec = '#DDDDDD' if not content else '#1F5FB0' if i == 0 else '#FF6600' if i == 1 else '#2D6A3A' if i == 2 else '#9370DB'
             lw = 1 if not content else 1.5
             box = FancyBboxPatch((x+0.05, y+0.05), cw-0.1, ch-0.1,
                                   boxstyle="round,pad=0.05", facecolor=fc, edgecolor=ec, linewidth=lw)
@@ -518,16 +525,16 @@ def fig_ch9_frontier():
 
     # 混合技法标注（跨格子）
     ax.annotate('Transfusion\n(左线描+右晕染)', xy=(x0 + 1*cw + cw/2, y0 + 3*ch + ch + 0.1),
-                xytext=(x0 + 1*cw + cw/2, y0 + 4*ch + 1.2),
+                xytext=(5.35, 9.8),
                 fontsize=8.5, ha='center', fontproperties=CJK_FONT_NAME, color='#C62828',
                 arrowprops=dict(arrowstyle='->', color='#C62828', lw=1.5),
-                bbox=dict(boxstyle='round,pad=0.2', facecolor='#555555', edgecolor='#C62828'))
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='#FFEBEE', edgecolor='#C62828'))
 
     ax.annotate('MAR\n(线描定序+晕染填内容)', xy=(x0 + 0.5*cw, y0 + 3*ch + ch/2),
                 xytext=(x0 - 0.3, y0 + 4*ch + 1.2),
                 fontsize=8.5, ha='center', fontproperties=CJK_FONT_NAME, color='#C62828',
                 arrowprops=dict(arrowstyle='->', color='#C62828', lw=1.5),
-                bbox=dict(boxstyle='round,pad=0.2', facecolor='#555555', edgecolor='#C62828'))
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='#FFEBEE', edgecolor='#C62828'))
 
     # 时间线
     ty = 1.8
@@ -548,7 +555,7 @@ def fig_ch9_frontier():
             ha='center', fontsize=10, fontproperties=CJK_FONT_NAME, fontweight='bold', color='#333',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520'))
 
-    save(fig, 'fig_ch9_frontier.png')
+    return save(fig, 'fig_ch9_frontier.png')
 
 
 # =============================================================================
@@ -595,7 +602,7 @@ def fig_ch4_time_embedding():
     ax.add_patch(box_out)
     ax.text(8.5, 7, '预测\n噪声', ha='center', fontsize=10, fontweight='bold')
     ax.text(5, 2, '关键洞见：同一网络，不同 t → 不同行为', 
-            ha='center', fontsize=10, style='italic', color='red')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='red')
     ax.axis('off')
     ax.set_title('时间嵌入注入 UNet')
 
@@ -613,7 +620,7 @@ def fig_ch4_time_embedding():
     ax.legend(loc='center right'); ax.grid(True, alpha=0.3)
     ax.set_xlim(0, 1000); ax.set_ylim(0, 1.1)
 
-    save(fig, 'fig_ch4_time_embedding.png')
+    return save(fig, 'fig_ch4_time_embedding.png')
 
 
 # =============================================================================
@@ -634,7 +641,7 @@ def fig_ch1_schedules_models_inpainting():
     alpha_bar_sigmoid = np.cumprod(1 - beta_sigmoid)
     ax.plot(t, alpha_bar_linear, 'b-', linewidth=2, label='线性调度', alpha=0.8)
     ax.plot(t, alpha_bar_cosine, 'r-', linewidth=2, label='余弦调度', alpha=0.8)
-    ax.plot(t, alpha_bar_sigmoid, 'g-', linewidth=2, label='sigmoid 调度', alpha=0.8)
+    ax.plot(t, alpha_bar_sigmoid, 'g-', linewidth=2, label='Sigmoid 调度', alpha=0.8)
     ax.axhline(y=0.01, color='gray', linestyle='--', alpha=0.5)
     ax.text(500, 0.02, '接近零区域\n（完全噪声）', fontsize=9, color='gray')
     ax.set_xlabel('时间步 t'); ax.set_ylabel(r'$\bar{\alpha}_t$（累积信号）')
@@ -662,7 +669,7 @@ def fig_ch1_schedules_models_inpainting():
     ax.annotate('', xy=(4, 2), xytext=(3.2, 2), arrowprops=dict(arrowstyle='->', color='green', lw=1.5))
     ax.text(4.5, 2, '概率式\n反向过程\n（稳定，慢→快）', ha='left', fontsize=9, color='green')
     ax.text(8.3, 5, '扩散的取舍：\n质量 > 速度\n（但 DDIM\n补上了速度）', 
-            ha='center', fontsize=9, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=9, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('生成模型：VAE vs GAN vs 扩散')
@@ -685,19 +692,19 @@ def fig_ch1_schedules_models_inpainting():
     ax.text(7, 7.5, '保留', ha='center', fontsize=8, color='white')
     ax.text(6.5, 6.4, '$x_t$', ha='center', fontsize=12)
     ax.text(6.5, 5.5, '修复 = 掩码区域加噪（待生成），\n非掩码区域保留（已知）', 
-            ha='center', fontsize=10, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('图像修复：带掩码的前向过程')
 
-    save(fig, 'fig_ch1_schedules_models_inpainting.png')
+    return save(fig, 'fig_ch1_schedules_models_inpainting.png')
 
 
 # =============================================================================
 # Ch6 ControlNet 零初始化 + CFG 演进 + 一致性模型
 # =============================================================================
 def fig_ch6_controlnet_cfg_consistency():
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
 
     # 左图: ControlNet零初始化
     ax = axes[0]
@@ -727,7 +734,7 @@ def fig_ch6_controlnet_cfg_consistency():
         ax.annotate('', xy=(7, y), xytext=(6.2, y),
                    arrowprops=dict(arrowstyle='->', color='green', lw=1, alpha=0.5))
     ax.text(5.25, 0.5, '零初始化 → 输出=0 → 起初 UNet 不变\n训练逐步"解锁"控制能力', 
-            ha='center', fontsize=10, style='italic', color='red',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='red',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.3))
     ax.axis('off')
     ax.set_title('ControlNet：零初始化保护基座模型')
@@ -740,7 +747,7 @@ def fig_ch6_controlnet_cfg_consistency():
     ax.add_patch(box_cg)
     ax.text(2.5, 8.5, '分类器引导（旧）', ha='center', fontsize=10.5, fontweight='bold', color='red')
     ax.text(2.5, 7.05, '训练独立分类器\n→ 计算 $\\nabla_x\\log p(y|x)$\n→ 加到分数上', ha='center', fontsize=8.5, linespacing=1.3)
-    ax.text(2.5, 5.95, '问题：脆弱、昂贵、\n需要标注数据', ha='center', fontsize=8.5,
+    ax.text(2.5, 5.95, '问题：脆弱、昂贵、\n需要标注数据', fontproperties=CJK_FONT_NAME, ha='center', fontsize=8.5,
             style='italic', color='darkred', linespacing=1.3)
     ax.annotate('', xy=(5, 7.1), xytext=(4.7, 7.1), arrowprops=dict(arrowstyle='->', color='black', lw=2))
     box_cfg = FancyBboxPatch((5, 5.5), 4.5, 3.3, boxstyle="round,pad=0.1",
@@ -748,43 +755,16 @@ def fig_ch6_controlnet_cfg_consistency():
     ax.add_patch(box_cfg)
     ax.text(7.25, 8.5, '无分类器引导（新）', ha='center', fontsize=10.5, fontweight='bold', color='green')
     ax.text(7.25, 7.05, '单个网络同时学\n有条件 & 无条件\n→ 线性插值', ha='center', fontsize=8.5, linespacing=1.3)
-    ax.text(7.25, 5.95, '优势：无需额外分类器，\n更稳定，端到端', ha='center', fontsize=8.5,
+    ax.text(7.25, 5.95, '优势：无需额外分类器，\n更稳定，端到端', fontproperties=CJK_FONT_NAME, ha='center', fontsize=8.5,
             style='italic', color='darkgreen', linespacing=1.3)
     ax.text(5, 4.0, 'CFG 用内部条件学习\n替代外部分类器', 
-            ha='center', fontsize=10, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('CG vs CFG：为何 CFG 胜出')
 
-    # 右图: 一致性模型
-    ax = axes[2]
-    ax.set_xlim(0, 10); ax.set_ylim(0, 10)
-    ax.text(1.5, 9, '传统扩散', ha='center', fontsize=11, fontweight='bold')
-    for i, x in enumerate([1, 2, 3, 4, 5]):
-        y = 7.5 - i * 0.8
-        circle = Circle((x, y), 0.3, color='blue', alpha=0.3 + 0.15*i)
-        ax.add_patch(circle)
-        if i > 0:
-            ax.annotate('', xy=(x, y), xytext=(x-1, y+0.8),
-                       arrowprops=dict(arrowstyle='->', color='blue', lw=1.5))
-    ax.text(3, 5.5, '1000 步', ha='center', fontsize=9, color='blue')
-    ax.text(7, 9, '一致性模型', ha='center', fontsize=11, fontweight='bold')
-    ax.add_patch(Circle((6, 7.5), 0.3, color='red', alpha=0.3))
-    ax.add_patch(Circle((9, 4.5), 0.3, color='red', alpha=0.9))
-    ax.annotate('', xy=(9, 4.5), xytext=(6, 7.5),
-                arrowprops=dict(arrowstyle='->', color='red', lw=3, linestyle='--'))
-    ax.text(7.5, 6.2, '$f(x_t,t)=f(x_{t-1},t{-}1)$\n$=\\ldots=f(x_0,0)$', 
-            ha='center', fontsize=10, color='red',
-            bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
-    ax.text(7.5, 3.5, '1-4 步！\n（实时生成）', ha='center', fontsize=10, 
-            fontweight='bold', color='red')
-    ax.text(5, 1.5, '一致性模型学习一个直接映射\n从任意噪声状态到干净输出', 
-            ha='center', fontsize=10, style='italic',
-            bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
-    ax.axis('off')
-    ax.set_title('一致性模型：单步生成')
 
-    save(fig, 'fig_ch6_controlnet_cfg_consistency.png')
+    return save(fig, 'fig_ch6_controlnet_cfg_consistency.png')
 
 
 # =============================================================================
@@ -800,21 +780,21 @@ def fig_ch9_latent_crossattention_training():
                                    facecolor='lightcoral', edgecolor='red', linewidth=2, alpha=0.5))
     ax.text(2, 8.5, '像素空间', ha='center', fontsize=12, fontweight='bold', color='red')
     ax.text(2, 7.5, '512×512×3 = 786K 维', ha='center', fontsize=9)
-    ax.text(2, 6.8, '此处扩散 = 慢', ha='center', fontsize=9, style='italic')
+    ax.text(2, 6.8, '此处扩散 = 慢', fontproperties=CJK_FONT_NAME, ha='center', fontsize=9, style='italic')
     ax.annotate('', xy=(4.5, 7.5), xytext=(3.7, 7.5), arrowprops=dict(arrowstyle='->', color='blue', lw=2))
     ax.text(4.1, 7.8, '编码器', ha='center', fontsize=9, color='blue')
     ax.add_patch(FancyBboxPatch((4.5, 6), 3, 3, boxstyle="round,pad=0.1",
                                    facecolor='lightgreen', edgecolor='green', linewidth=2))
     ax.text(6, 8.5, '潜空间', ha='center', fontsize=12, fontweight='bold', color='green')
     ax.text(6, 7.5, '64×64×4 = 16K 维', ha='center', fontsize=10)
-    ax.text(6, 6.8, '此处扩散 = 快', ha='center', fontsize=9, style='italic')
+    ax.text(6, 6.8, '此处扩散 = 快', fontproperties=CJK_FONT_NAME, ha='center', fontsize=9, style='italic')
     ax.annotate('', xy=(8.5, 7.5), xytext=(7.7, 7.5), arrowprops=dict(arrowstyle='->', color='blue', lw=2))
     ax.text(8.1, 7.8, '解码器', ha='center', fontsize=9, color='blue')
     ax.add_patch(FancyBboxPatch((8.5, 6), 1.5, 3, boxstyle="round,pad=0.1",
                                    facecolor='lightblue', edgecolor='blue', linewidth=2))
     ax.text(9.25, 8.5, '图片', ha='center', fontsize=10, fontweight='bold')
     ax.text(5, 4.5, 'Stable Diffusion 核心洞见：\n在潜空间扩散，而非像素空间', 
-            ha='center', fontsize=10, style='italic', color='red',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='red',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.text(5, 2.5, 'VAE 编码器/解码器是预训练的\n扩散模型在潜变量上运行', 
             ha='center', fontsize=10)
@@ -850,7 +830,7 @@ def fig_ch9_latent_crossattention_training():
     ax.text(9.0, 6.5, '文本引导的\n特征', ha='center', fontsize=9, 
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.text(5, 2.5, '交叉注意力 = "为匹配这段文本，\n我该关注图像的哪里？"', 
-            ha='center', fontsize=10, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('交叉注意力：文本如何引导图像生成')
@@ -875,7 +855,7 @@ def fig_ch9_latent_crossattention_training():
     ax.legend(loc='upper right', fontsize=8); ax.grid(True, alpha=0.3)
     ax.set_xlim(0, 100); ax.set_ylim(-0.5, 2.5)
 
-    save(fig, 'fig_ch9_latent_crossattention_training.png')
+    return save(fig, 'fig_ch9_latent_crossattention_training.png')
 
 
 # =============================================================================
@@ -908,7 +888,7 @@ def fig_ch3_sde_ode_samplers_multimodal():
     ax.text(8.5, 5, 'ODE\n（确定性）', ha='center', fontsize=10, color='red', fontweight='bold',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.3))
     ax.text(5, 0.3, 'SDE = 多条随机路径\nODE = 一条确定性路径（概率流）', 
-            ha='center', fontsize=10, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('SDE vs ODE：扩散的两种视角')
@@ -927,10 +907,10 @@ def fig_ch3_sde_ode_samplers_multimodal():
     ax.text(7, 6.95, 'DDIM\nDPM++ 2M\nEuler\nHeun', ha='center', fontsize=8, linespacing=1.2)
     ax.annotate('', xy=(2.5, 8.9), xytext=(5, 9.1), arrowprops=dict(arrowstyle='->', color='blue', lw=1.5))
     ax.annotate('', xy=(7, 8.9), xytext=(5, 9.1), arrowprops=dict(arrowstyle='->', color='orange', lw=1.5))
-    ax.text(2.5, 5, '• 更多样\n• 质量更高\n• 更慢', ha='center', fontsize=9, color='blue')
+    ax.text(2.5, 5, '• 轨迹含噪声\n• 难复现\n• 更慢', ha='center', fontsize=9, color='blue')
     ax.text(7, 5, '• 可复现\n• 步数更少\n• 快', ha='center', fontsize=9, color='orange')
-    ax.text(5, 2.5, '经验法则：\n重质量 → 随机（DPM++ 2S）\n重速度 → 确定性（DPM++ 2M）\n实时 → Euler', 
-            ha='center', fontsize=10, style='italic',
+    ax.text(5, 2.5, '选择：要复现/要速度 → 确定性；\n要随机探索感 → 随机\n（样本多样性由噪声起点保证）\n实时 → Euler', 
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('采样器家族：如何选择？')
@@ -953,12 +933,12 @@ def fig_ch3_sde_ode_samplers_multimodal():
         ax.text(x, y+0.75, title, ha='center', fontsize=10, fontweight='bold', color=ec)
         ax.text(x, y-0.35, examples, ha='center', fontsize=7.5, linespacing=1.3)
     ax.text(5, 1.5, '相同的数学（前向加噪 + 反向去噪）\n不同的数据表示', 
-            ha='center', fontsize=10, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.5))
     ax.axis('off')
     ax.set_title('扩散超越图像：多模态')
 
-    save(fig, 'fig_ch3_sde_ode_samplers_multimodal.png')
+    return save(fig, 'fig_ch3_sde_ode_samplers_multimodal.png')
 
 
 # =============================================================================
@@ -985,7 +965,7 @@ def fig_ch1_2d_forward_noising():
         ax.set_xlabel('x1'); ax.set_ylabel('x2')
         ax.set_title(title)
         ax.grid(True, alpha=0.2)
-    save(fig, 'fig_ch1_2d_forward_noising.png')
+    return save(fig, 'fig_ch1_2d_forward_noising.png')
 
 
 # Ch1 · ve vp comparison
@@ -1001,7 +981,7 @@ def fig_ch1_ve_vp_comparison():
     data = np.vstack([cluster1, cluster2])
 
     t_values = [0, 1.0, 3.0]
-    t_labels = ['$t=0$\\n(data)', '$t=1$', '$t=3$']
+    t_labels = ['$t=0$\n(data)', '$t=1$', '$t=3$']
     blue = '#4A90D9'
     red = '#FF4444'
 
@@ -1056,7 +1036,7 @@ def fig_ch1_ve_vp_comparison():
     fig.text(0.5, 0.02, '灰色虚线圆：VE 显示 $2\\sigma_t$ 噪声半径（增长）；VP 显示单位方差边界（固定）',
              ha='center', fontsize=9, color='#555555')
     plt.tight_layout(rect=(0.05, 0.04, 1, 1))
-    save(fig, 'fig_ch1_ve_vp_comparison.png')
+    return save(fig, 'fig_ch1_ve_vp_comparison.png')
 
 
 # Ch1 · discrete continuous bridge
@@ -1074,7 +1054,7 @@ def fig_ch1_discrete_continuous_bridge():
     ax.set_xlabel('时间步 t'); ax.set_ylabel('系数')
     ax.set_title('离散步 = 连续 SDE 的采样')
     ax.set_xlim(0, 1000); ax.set_ylim(0, 1.1); ax.grid(True, alpha=0.3); ax.legend()
-    save(fig, 'fig_ch1_discrete_continuous_bridge.png')
+    return save(fig, 'fig_ch1_discrete_continuous_bridge.png')
 
 
 # Ch2 · multiscale score field
@@ -1115,7 +1095,7 @@ def fig_ch2_multiscale_score_field():
         ax.set_title(title)
         ax.set_xlim(-4, 4); ax.set_ylim(-4, 4); ax.set_aspect('equal')
         ax.set_xlabel('x1'); ax.set_ylabel('x2')
-    save(fig, 'fig_ch2_multiscale_score_field.png')
+    return save(fig, 'fig_ch2_multiscale_score_field.png')
 
 
 # Ch2 · tweedie geometry
@@ -1149,7 +1129,7 @@ def fig_ch2_tweedie_geometry():
     ax.set_xlabel('x1'); ax.set_ylabel('x2')
     ax.set_xlim(-1, 5); ax.set_ylim(-1, 5); ax.set_aspect('equal')
     ax.grid(True, alpha=0.2); ax.legend(loc='lower right')
-    save(fig, 'fig_ch2_tweedie_geometry.png')
+    return save(fig, 'fig_ch2_tweedie_geometry.png')
 
 
 # Ch2 · epsilon score equivalence
@@ -1177,7 +1157,7 @@ def fig_ch2_epsilon_score_equivalence():
     ax.set_xlabel('x1'); ax.set_ylabel('x2')
     ax.set_xlim(-2, 2); ax.set_ylim(-2, 2); ax.set_aspect('equal')
     ax.grid(True, alpha=0.2); ax.legend()
-    save(fig, 'fig_ch2_epsilon_score_equivalence.png')
+    return save(fig, 'fig_ch2_epsilon_score_equivalence.png')
 
 
 # Ch3 · forward reverse combined
@@ -1228,7 +1208,7 @@ def fig_ch3_forward_reverse_combined():
     ax.scatter([0], [x0], c='#228b22', s=200, zorder=7, edgecolors='white', linewidths=1.5)
     ax.text(-8, x0 + 0.35, r'数据 $x_0$', ha='left', color='#228b22', fontsize=12, fontweight='bold')
     ax.scatter([T], [xT], c='#555555', s=200, zorder=7, edgecolors='white', linewidths=1.5)
-    ax.text(T, xT + 0.35, r'纯噪声 $x_T$', ha='right', color='#555555', fontsize=12, fontweight='bold')
+    ax.text(T - 20, xT - 0.55, r'纯噪声 $x_T$', ha='right', color='#555555', fontsize=12, fontweight='bold')
 
     # 方向箭头：前向 → 在上，反向 ← 在下
     ax.annotate('', xy=(940, 3.15), xytext=(60, 3.15),
@@ -1247,7 +1227,7 @@ def fig_ch3_forward_reverse_combined():
     ax.grid(True, alpha=0.25)
     for sp in ('top', 'right'):
         ax.spines[sp].set_visible(False)
-    save(fig, 'fig_ch3_forward_reverse_combined.png')
+    return save(fig, 'fig_ch3_forward_reverse_combined.png')
 
 
 # Ch3 · ddpm ncsn comparison
@@ -1291,7 +1271,7 @@ def fig_ch3_ddpm_ncsn_comparison():
         ax.grid(True, alpha=0.2); ax.legend(loc='upper left', fontsize=8)
 
     fig.suptitle('Same reverse SDE, different discretization', fontsize=11, style='italic', y=0.02)
-    save(fig, 'fig_ch3_ddpm_ncsn_comparison.png')
+    return save(fig, 'fig_ch3_ddpm_ncsn_comparison.png')
 
 
 # Ch3 · reverse sde drift decomposition
@@ -1320,7 +1300,7 @@ def fig_ch3_reverse_sde_drift_decomposition():
     ax.set_xlabel('x1'); ax.set_ylabel('x2')
     ax.set_xlim(0, 4); ax.set_ylim(0, 4); ax.set_aspect('equal')
     ax.grid(True, alpha=0.2)
-    save(fig, 'fig_ch3_reverse_sde_drift_decomposition.png')
+    return save(fig, 'fig_ch3_reverse_sde_drift_decomposition.png')
 
 
 # Ch4 · unified training
@@ -1359,10 +1339,10 @@ def fig_ch4_unified_training():
     # Connection
     ax.text(6, 4.25, 'Tweedie：$\\epsilon_\\theta = -\\sigma_t \\cdot s_\\theta$', ha='center', fontsize=13,
             bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.5))
-    ax.text(6, 4.75, '相同的总体目标，\n不同的参数化', ha='center', fontsize=10, style='italic')
+    ax.text(6, 4.75, '相同的总体目标，\n不同的参数化', fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic')
     ax.set_title('统一训练：DDPM ε-MSE = NCSN 分数匹配')
     ax.axis('off')
-    save(fig, 'fig_ch4_unified_training.png')
+    return save(fig, 'fig_ch4_unified_training.png')
 
 
 # Ch4 · training loss by t
@@ -1384,9 +1364,9 @@ def fig_ch4_training_loss_by_t():
     # 补充说明
     ax.text(500, snr[499] * 1.5,
             '高 SNR → 细节可辨 → 分数方向复杂\n低 SNR → 只剩轮廓 → 分数方向简单',
-            fontsize=9, ha='center', style='italic',
+            fontproperties=CJK_FONT_NAME, fontsize=9, ha='center', style='italic',
             bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.7))
-    save(fig, 'fig_ch4_training_loss_by_t.png')
+    return save(fig, 'fig_ch4_training_loss_by_t.png')
 
 
 # Ch5 · three error sources
@@ -1450,7 +1430,7 @@ def fig_ch5_three_error_sources():
     ax.set_ylim(0.0075, 0.16)
     ax.legend(loc='upper right', fontsize=9, prop=CJK_FONT_NAME); ax.grid(True, which='both', alpha=0.3)
 
-    save(fig, 'fig_ch5_three_error_sources.png')
+    return save(fig, 'fig_ch5_three_error_sources.png')
 
 
 # Ch5 · sde ode density match
@@ -1490,12 +1470,12 @@ def fig_ch5_sde_ode_density_match():
     axes[1].text(0, -0.3, '绿色: 确定性流线（无噪声）', fontsize=8, color='green', ha='center', alpha=0.7)
 
     for ax, title in zip(axes, ['SDE: 随机扩散 + 漂移\n（路径有噪声）',
-                                  'ODE: 确定性传输\n（路径光滑）']):
+                                  'ODE: 确定性输运\n（路径光滑）']):
         ax.set_title(title); ax.set_xlabel('x'); ax.set_ylabel('密度 $p_t(x)$')
         ax.set_xlim(-5, 5); ax.set_ylim(-0.5, 0.45); ax.grid(True, alpha=0.3); ax.legend(fontsize=8, loc='upper right')
     fig.suptitle('不同机制，同一密度演化：$p_t(x)$ 完全相同', fontsize=13, y=1.02)
     plt.tight_layout()
-    save(fig, 'fig_ch5_sde_ode_density_match.png')
+    return save(fig, 'fig_ch5_sde_ode_density_match.png')
 
 
 # Ch7 · masked diffusion process
@@ -1522,7 +1502,7 @@ def fig_ch7_masked_diffusion_process():
 
     ax.set_title('掩码扩散：token 级的前向与反向')
     ax.axis('off')
-    save(fig, 'fig_ch7_masked_diffusion_process.png')
+    return save(fig, 'fig_ch7_masked_diffusion_process.png')
 
 
 # Ch7 · continuous discrete parallel
@@ -1562,8 +1542,8 @@ def fig_ch7_continuous_discrete_parallel():
     ax.set_title('离散扩散')
     ax.set_xlim(0, 8); ax.set_ylim(0, 6); ax.axis('off')
 
-    fig.text(0.5, 0.02, '相同的贝叶斯结构，不同的状态空间', ha='center', fontsize=11, style='italic')
-    save(fig, 'fig_ch7_continuous_discrete_parallel.png')
+    fig.text(0.5, 0.02, '相同的贝叶斯结构，不同的状态空间', fontproperties=CJK_FONT_NAME, ha='center', fontsize=11, style='italic')
+    return save(fig, 'fig_ch7_continuous_discrete_parallel.png')
 
 
 # Ch8 · video worldmodel
@@ -1582,7 +1562,7 @@ def fig_ch8_video_worldmodel():
         if i < 4:
             ax.annotate('', xy=(1 + (i+1) * 2, 6.5), xytext=(2.5 + i * 2, 6.5),
                         arrowprops=dict(arrowstyle='->', color='blue', lw=1.5))
-    ax.text(6, 5.5, '一次生成所有帧（无反馈）', ha='center', fontsize=10, style='italic', color='blue')
+    ax.text(6, 5.5, '一次生成所有帧（无反馈）', fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='blue')
 
     ax.axhline(y=5, color='gray', linestyle='--', alpha=0.3)
 
@@ -1613,10 +1593,10 @@ def fig_ch8_video_worldmodel():
             ax.annotate('', xy=(x_offset + 3.5 + 0.6, 2.9), xytext=(x_offset + 3.35, 2.9),
                         arrowprops=dict(arrowstyle='->', color='green', lw=1.5, linestyle='--'))
 
-    ax.text(6, 1.5, '预测 → 行动 → 观察 → 重复', ha='center', fontsize=10, style='italic', color='green')
+    ax.text(6, 1.5, '预测 → 行动 → 观察 → 重复', fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='green')
     ax.set_title('视频生成 vs 世界模型')
     ax.axis('off')
-    save(fig, 'fig_ch8_video_worldmodel.png')
+    return save(fig, 'fig_ch8_video_worldmodel.png')
 
 
 # Ch8 · frame consistency
@@ -1644,7 +1624,7 @@ def fig_ch8_frame_consistency():
                      fontsize=10, color='blue', ha='center', va='top')
 
     plt.tight_layout()
-    save(fig, 'fig_ch8_frame_consistency.png')
+    return save(fig, 'fig_ch8_frame_consistency.png')
 
 
 # Ch8 · spacetime attention
@@ -1688,7 +1668,7 @@ def fig_ch8_spacetime_attention():
     legend_elements = [Line2D([0], [0], color='blue', alpha=0.5, label='空间注意力'),
                        Line2D([0], [0], color='orange', alpha=0.5, label='时间注意力')]
     ax.legend(handles=legend_elements, loc='upper right', fontsize=9)
-    save(fig, 'fig_ch8_spacetime_attention.png')
+    return save(fig, 'fig_ch8_spacetime_attention.png')
 
 
 # =============================================================================
@@ -1699,9 +1679,11 @@ def fig_ch8_diffusion_policy_multimodal():
 
     a = np.linspace(-3, 3, 400)
     # 三个高斯峰：从左/上/右抓取
-    p = (0.35 * np.exp(-((a + 1.6) ** 2) / (2 * 0.25))
-         + 0.35 * np.exp(-((a - 1.6) ** 2) / (2 * 0.25))
-         + 0.30 * np.exp(-(a ** 2) / (2 * 0.20)))
+    # 权重非对称（演示数据偏左抓）：均值 ≈ -0.6 落在左峰与中峰之间的谷，
+    # 否则对称三峰时 E[a|s]=0 恰在中峰顶，"平均落在错误中间"叙事不成立
+    p = (0.60 * np.exp(-((a + 1.6) ** 2) / (2 * 0.14))
+         + 0.20 * np.exp(-(a ** 2) / (2 * 0.14))
+         + 0.20 * np.exp(-((a - 1.6) ** 2) / (2 * 0.14)))
 
     # ---- 左：多峰动作分布 p(a|s) ----
     ax = axes[0]
@@ -1762,7 +1744,7 @@ def fig_ch8_diffusion_policy_multimodal():
     ax.set_yticks([])
 
     plt.tight_layout()
-    save(fig, 'fig_ch8_diffusion_policy_multimodal.png')
+    return save(fig, 'fig_ch8_diffusion_policy_multimodal.png')
 
 
 # Ch9 · inference rl
@@ -1801,7 +1783,7 @@ def fig_ch9_inference_rl():
 
     ax.set_title('推理期控制：从奖励到采样器的三条路线')
     ax.axis('off')
-    save(fig, 'fig_ch9_inference_rl.png')
+    return save(fig, 'fig_ch9_inference_rl.png')
 
 
 # Ch9 · flow matching vs diffusion
@@ -1864,7 +1846,7 @@ def fig_ch9_flow_matching_vs_diffusion():
     ax.invert_yaxis()  # t=T(噪声)在上，t=0(数据)在下——匹配"从噪声走向数据"的阅读方向
     ax.grid(True, alpha=0.2)
     ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='lower left')
-    save(fig, 'fig_ch9_flow_matching_vs_diffusion.png')
+    return save(fig, 'fig_ch9_flow_matching_vs_diffusion.png')
 
 
 # ====== Ch9 §9.2: DiT 架构（合并自 make_dit_figs.py） ======
@@ -1908,7 +1890,7 @@ def fig_ch9_dit_vs_unet():
 
     # 强归纳偏置标签
     ax.text(5, 0.5, '强归纳偏置：局部性 + 多尺度\n小数据赢，大数据变枷锁',
-            ha='center', va='center', fontsize=8, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', va='center', fontsize=8, style='italic',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.8))
 
     # === 右：DiT 结构 ===
@@ -1968,11 +1950,11 @@ def fig_ch9_dit_vs_unet():
 
     # 弱归纳偏置标签
     ax.text(5, -0.5, '弱归纳偏置：无局部性假设\n小数据吃亏，大数据大算力反而赢',
-            ha='center', va='center', fontsize=8, style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', va='center', fontsize=8, style='italic',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.8))
 
     plt.tight_layout()
-    save(fig, 'fig_ch9_dit_vs_unet.png')
+    return save(fig, 'fig_ch9_dit_vs_unet.png')
 
 
 def fig_ch9_dit_scaling_law():
@@ -2002,16 +1984,16 @@ def fig_ch9_dit_scaling_law():
     for mo, g, p, f, (ox, oy) in zip(models, gflops, params, fid, offs):
         ax.text(g * ox, f * oy, f'{mo}\n{p}M · FID {f}',
                 fontsize=8.5, color='#1f4e79', fontproperties=CJK_FONT_NAME,
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='#555555',
-                          edgecolor='#9dc3e6', alpha=0.9))
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='#E3F2FD',
+                          edgecolor='#9dc3e6', alpha=0.95))
 
     # DiT-XL/2 带 CFG 的最优点（摘要确证 FID 2.27）——单独一点，说明上限
     ax.plot([118.6], [2.27], '*', color='#2e75b6', markersize=20, zorder=6)
     ax.annotate('DiT-XL/2 + CFG\nFID 2.27（论文最优）', xy=(118.6, 2.27),
                 xytext=(20, 3.2), fontsize=8.5, color='#2e75b6', fontproperties=CJK_FONT_NAME,
                 arrowprops=dict(arrowstyle='->', color='#2e75b6', lw=1.3),
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='#555555',
-                          edgecolor='#2e75b6', alpha=0.9))
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='#E3F2FD',
+                          edgecolor='#2e75b6', alpha=0.95))
 
     ax.set_xscale('log'); ax.set_yscale('log')
     ax.set_xlabel('前向计算量 Gflops（对数轴）', fontproperties=CJK_FONT_NAME, fontsize=12)
@@ -2024,7 +2006,7 @@ def fig_ch9_dit_scaling_law():
     ax.set_ylim(1.8, 90)
 
     plt.tight_layout()
-    save(fig, 'fig_ch9_dit_scaling_law.png')
+    return save(fig, 'fig_ch9_dit_scaling_law.png')
 
 
 def fig_ch9_dit_video_spatime():
@@ -2059,7 +2041,7 @@ def fig_ch9_dit_video_spatime():
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FF4444', edgecolor='#FF4444', alpha=0.5))
 
     ax.text(5, 0, '要看到 t=0 和 t=15 的关系？\n得堆 8+ 层卷积',
-            ha='center', va='center', fontsize=8, color='#666', style='italic')
+            fontproperties=CJK_FONT_NAME, ha='center', va='center', fontsize=8, color='#666', style='italic')
 
     # === 右：DiT 自注意力全局覆盖 ===
     ax = axes[1]
@@ -2089,11 +2071,11 @@ def fig_ch9_dit_video_spatime():
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#9DC3E6', edgecolor='#1565C0', alpha=0.4))
 
     ax.text(4.3, 0, 'Sora / MovieGen / Step-Video\n全部选 DiT 不是巧合',
-            ha='center', va='center', fontsize=8, color='#666', style='italic',
+            fontproperties=CJK_FONT_NAME, ha='center', va='center', fontsize=8, color='#666', style='italic',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', edgecolor='#DAA520', alpha=0.6))
 
     plt.tight_layout()
-    save(fig, 'fig_ch9_dit_video_spatime.png')
+    return save(fig, 'fig_ch9_dit_video_spatime.png')
 
 
 # =============================================================================
@@ -2107,7 +2089,7 @@ def fig_ch2_data_manifold():
     ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.set_aspect('equal'); ax.axis('off')
     ax.add_patch(FancyBboxPatch((0.3, 0.3), 9.4, 9.4, boxstyle="round,pad=0.1",
                                 facecolor='#555555', edgecolor='#999', linewidth=1.2))
-    ax.text(0.6, 9.2, '高维像素空间（~300 万维）', ha='left', fontsize=11, fontweight='bold', color='#333')
+    ax.text(0.6, 9.2, '高维像素空间（~300 万维）', ha='left', fontsize=11, fontweight='bold', color='#EEEEEE')
     # 低维流形：一条弯曲的带
     t = np.linspace(0, 2*np.pi, 200)
     mx = 5 + 2.6*np.cos(t) + 0.5*np.cos(2*t)
@@ -2122,7 +2104,7 @@ def fig_ch2_data_manifold():
     rx = rng.uniform(1, 9, 12); ry = rng.uniform(1, 9, 12)
     ax.scatter(rx, ry, c='#C44E52', s=45, marker='x', zorder=4, label='随机像素（几乎全是噪声）')
     ax.text(5, 1.0, '真实数据只浸在低维"面"上\n其余广袤空间几乎全是垃圾图',
-            ha='center', fontsize=10, style='italic', color='#555',
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='#555',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='#FFFACD', alpha=0.7))
     ax.legend(loc='upper right', fontsize=8, prop=CJK_FONT_NAME, framealpha=0.85)
     ax.set_title('数据流形假设：真实数据 ≪ 全空间', fontsize=12)
@@ -2143,13 +2125,13 @@ def fig_ch2_data_manifold():
     ax.scatter([], [], c='#C44E52', s=55, label='噪声点（流形外）')
     ax.plot([], [], color='#4C72B0', lw=2, label='分数方向（指回流形）')
     ax.text(5, 1.0, '分数只需在流形附近有效\n远离流形的地方，指哪都无所谓',
-            ha='center', fontsize=10, style='italic', color='#555',
-            bbox=dict(boxstyle='round,pad=0.3', facecolor='#555555', alpha=0.8))
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=10, style='italic', color='#EEEEEE',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='#3A3A3A', alpha=0.95))
     ax.legend(loc='upper left', fontsize=9, prop=CJK_FONT_NAME)
     ax.set_title('去噪 = 指回流形 = 分数方向', fontsize=12)
 
     plt.tight_layout()
-    save(fig, 'fig_ch2_data_manifold.png')
+    return save(fig, 'fig_ch2_data_manifold.png')
 
 
 # =============================================================================
@@ -2198,7 +2180,7 @@ def fig_ch5_ddim_straight_line():
     ax.grid(True, alpha=0.25)
 
     plt.tight_layout()
-    save(fig, 'fig_ch5_ddim_straight_line.png')
+    return save(fig, 'fig_ch5_ddim_straight_line.png')
 
 
 # =============================================================================
@@ -2257,7 +2239,7 @@ def fig_ch6_cfg_extrapolation():
     ax.set_xlim(-0.2, 3.5); ax.set_ylim(-1.15, 0.6)
 
     plt.tight_layout()
-    save(fig, 'fig_ch6_cfg_extrapolation.png')
+    return save(fig, 'fig_ch6_cfg_extrapolation.png')
 
 
 # =============================================================================
@@ -2299,14 +2281,14 @@ def fig_ch1_gaussian_uniqueness():
     ax.fill_between(xx, conv, color='#C44E52', alpha=0.12)
     ax.text(0, 0.02, '换非高斯噪声：\n$p(x_t\\mid x_0)$ 无解析式\n→ 跳步 / Tweedie / 反向 SDE 同时崩溃',
             ha='center', fontsize=10, color='#C44E52',
-            bbox=dict(boxstyle='round,pad=0.4', facecolor='#555555', edgecolor='#C44E52', alpha=0.9))
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='#FFEBEE', edgecolor='#C44E52', alpha=0.95))
     ax.set_title('换成别的噪声：解析性崩溃\n（不是不美观，是根本算不动）', fontsize=11)
     ax.set_xlabel('$x_t$', fontsize=11); ax.set_yticks([])
     ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='upper right')
     ax.spines['top'].set_visible(False); ax.spines['right'].set_visible(False)
 
     plt.tight_layout()
-    save(fig, 'fig_ch1_gaussian_uniqueness.png')
+    return save(fig, 'fig_ch1_gaussian_uniqueness.png')
 
 
 # =============================================================================
@@ -2346,81 +2328,52 @@ def fig_ch6_clip_conditioning():
     ax.text(6, 5.6, '文生图的条件通路：文字 → CLIP → 向量 $c$ → 交叉注意力 → 条件生成',
             ha='center', fontsize=12, fontweight='bold', color='#333')
     ax.text(6, 0.3, '每一层都让图片特征"看一眼"文本：文本说画猫，这里就该是猫的轮廓',
-            ha='center', fontsize=9.5, style='italic', color='#666')
+            fontproperties=CJK_FONT_NAME, ha='center', fontsize=9.5, style='italic', color='#666')
 
-    save(fig, 'fig_ch6_clip_conditioning.png')
+    return save(fig, 'fig_ch6_clip_conditioning.png')
 
 
 def main():
-    print("=" * 60)
-    print("扩散：从噪声到生成 - 生成全部 41 张插图")
-    print("=" * 60)
+    from fig_common import run_all
 
-    # Ch1: 前向过程
-    fig_ch1_forward_process()
-    fig_ch1_2d_forward_noising()
-    fig_ch1_gaussian_uniqueness()       # 新增 §1.5 高斯噪声唯一性
-    fig_ch1_ve_vp_comparison()
-    fig_ch1_discrete_continuous_bridge()
-
-    # Ch2: 反向过程
-    fig_ch2_data_manifold()             # 新增 §2.0 数据流形假设
-    fig_ch3_reverse_process()
-    fig_ch3_forward_reverse_combined()
-
-    # Ch3: 分数函数
-    fig_ch2_score_function()
-    fig_ch2_multiscale_score_field()
-    fig_ch2_tweedie_geometry()
-    fig_ch2_epsilon_score_equivalence()
-
-    # Ch4: 训练目标
-    fig_ch4_training_objective()
-    fig_ch4_unified_training()
-    fig_ch4_training_loss_by_t()
-
-    # Ch5: 采样策略
-    fig_ch5_sampling_strategies()
-    fig_ch3_ddpm_ncsn_comparison()
-    fig_ch3_reverse_sde_drift_decomposition()
-    fig_ch5_three_error_sources()
-    fig_ch5_sde_ode_density_match()
-    fig_ch3_sde_ode_samplers_multimodal()
-    fig_ch5_ddim_straight_line()        # 新增 §5.2 DDIM 换坐标变直线
-
-    # Ch6: 条件控制
-    fig_ch6_conditional_control()
-    fig_ch1_schedules_models_inpainting()
-    fig_ch6_clip_conditioning()         # 新增 §6.2 CLIP + 交叉注意力
-    fig_ch6_cfg_extrapolation()         # 新增 §6.3 CFG 外推
-    fig_ch6_controlnet_cfg_consistency()
-    fig_ch9_latent_crossattention_training()
-
-    # Ch7: 前沿
-    fig_ch9_frontier()
-    fig_ch4_time_embedding()
-    fig_ch7_masked_diffusion_process()
-    fig_ch7_continuous_discrete_parallel()
-
-    # Ch8: 视频与世界模型
-    fig_ch8_video_worldmodel()
-    fig_ch8_frame_consistency()
-    fig_ch8_spacetime_attention()
-    fig_ch8_diffusion_policy_multimodal()
-
-    # 扩展
-    fig_ch9_inference_rl()
-    fig_ch9_flow_matching_vs_diffusion()
-
-    # Ch9 §9.2: DiT 架构
-    fig_ch9_dit_vs_unet()
-    fig_ch9_dit_scaling_law()
-    fig_ch9_dit_video_spatime()
-
-    print("=" * 60)
-    print("全部 41 张图生成完毕！")
-    print("=" * 60)
+    funcs = [
+        # Ch1 前向过程
+        fig_ch1_forward_process, fig_ch1_2d_forward_noising,
+        fig_ch1_gaussian_uniqueness, fig_ch1_ve_vp_comparison,
+        fig_ch1_discrete_continuous_bridge,
+        # 反向过程与前向-反向合并（文件名 fig_ch3_*）
+        fig_ch2_data_manifold, fig_ch3_reverse_process,
+        fig_ch3_forward_reverse_combined,
+        # 分数函数与等价关系（文件名 fig_ch2_*）
+        fig_ch2_score_function, fig_ch2_multiscale_score_field,
+        fig_ch2_tweedie_geometry, fig_ch2_epsilon_score_equivalence,
+        # 训练目标
+        fig_ch4_training_objective, fig_ch4_unified_training,
+        fig_ch4_training_loss_by_t,
+        # 采样、调度与三源误差
+        fig_ch5_sampling_strategies, fig_ch3_ddpm_ncsn_comparison,
+        fig_ch3_reverse_sde_drift_decomposition, fig_ch5_three_error_sources,
+        fig_ch5_sde_ode_density_match, fig_ch3_sde_ode_samplers_multimodal,
+        fig_ch5_ddim_straight_line,
+        # 条件控制（含调度示意与 CLIP/CFG/ControlNet）
+        fig_ch6_conditional_control, fig_ch1_schedules_models_inpainting,
+        fig_ch6_clip_conditioning, fig_ch6_cfg_extrapolation,
+        fig_ch6_controlnet_cfg_consistency,
+        fig_ch9_latent_crossattention_training,
+        # 前沿速览、时间嵌入与离散扩散
+        fig_ch9_frontier, fig_ch4_time_embedding,
+        fig_ch7_masked_diffusion_process, fig_ch7_continuous_discrete_parallel,
+        # 视频与世界模型
+        fig_ch8_video_worldmodel, fig_ch8_frame_consistency,
+        fig_ch8_spacetime_attention, fig_ch8_diffusion_policy_multimodal,
+        # 推理时控制与统一框架
+        fig_ch9_inference_rl, fig_ch9_flow_matching_vs_diffusion,
+        # DiT 架构
+        fig_ch9_dit_vs_unet, fig_ch9_dit_scaling_law,
+        fig_ch9_dit_video_spatime,
+    ]
+    return run_all(funcs, "扩散：从噪声到生成", expected=41)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())  # 失败张数作为退出码

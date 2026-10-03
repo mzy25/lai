@@ -87,8 +87,9 @@ if CJK_FONT_NAME is None:
 # ⚠️ 本表数值取自配图脚本的实际用法（Material 系为主），不是凭空设计：
 #    紫族曾长期缺失，而 #7B1FA2 是第三高频色（32 次）——色板若与实际脱节，
 #    "一律从本表取色"就只是一句空话。新增颜色请在此登记后再用。
-BLUE    = {"l": "#E3F2FD", "m": "#2196F3", "d": "#1565C0",
-           "alt": "#2166AC", "soft": "#4A90D9"}
+# 与 HTML 主题 tokens（build/template_common.py）保持同一意象；改 CSS 配色时对照本表
+BLUE    = {"l": "#E3F2FD", "xl": "#BBDEFB", "m": "#2196F3", "d": "#1565C0",
+           "alt": "#2166AC", "soft": "#4A90D9"}  # xl=Material blue-100，能力栈三档渐变用
 RED     = {"l": "#FFEBEE", "m": "#F44336", "d": "#C62828"}
 GREEN   = {"l": "#E8F5E9", "m": "#4CAF50", "d": "#2E7D32",
            "alt": "#1B7837"}
@@ -125,7 +126,17 @@ def setup_rc(*, dpi: int = 200, facecolor: str = "white") -> None:
     （此处改用 sans-serif 列表只是为了保留回退链，不是修 bug）。
     真正的关键在模块顶部的 addfont：它把 Bold 字重注册进 fontManager，
     若 Bold 字体不在系统字体目录里（便携场景），没有这步 bold 才会失效。
+
+    斜体与 CJK（2026-10-02）：generic 别名 "sans-serif" 下，斜体请求整体解析到
+    DejaVu Sans Oblique（无中文），CJK 不逐字回退，渲染成方块。含中文的斜体
+    注记必须显式传 fontproperties=CJK_FONT_NAME（见 2_foundation 既有写法）；
+    为防复发，setup_rc 同时把 "missing from font" 警告升为异常
+    （FIG_ALLOW_MISSING_GLYPHS=1 可回退为容忍，供无 CJK 字体的便携环境使用），
+    让方块问题在生成时即失败。
     """
+    import os
+    import warnings
+
     family = CJK_FONT_NAME or "sans-serif"
     plt.rcParams.update({
         "figure.dpi": dpi,
@@ -146,6 +157,8 @@ def setup_rc(*, dpi: int = 200, facecolor: str = "white") -> None:
         "legend.fontsize": 10,
         "figure.titlesize": 12,
     })
+    if os.environ.get("FIG_ALLOW_MISSING_GLYPHS") != "1":
+        warnings.filterwarnings("error", message=r".*missing from font.*")
 
 
 def save_fig(fig, name: str, output_dir: str | Path, dpi: int = 200,
@@ -220,6 +233,10 @@ def run_all(groups: list, doc_name: str, expected: int) -> int:
             if path is None:
                 print("  ❌ 未返回保存路径（save() 忘了 return？）")
                 failed.append((name, "未返回保存路径"))
+                continue
+            if not Path(path).exists():
+                print("  ❌ 返回路径不存在（save 未真正写盘？）")
+                failed.append((name, f"返回路径不存在：{path}"))
                 continue
             saved.append(Path(path))
             print(f"  ->  {Path(path).name}")

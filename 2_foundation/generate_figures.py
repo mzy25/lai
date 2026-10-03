@@ -127,6 +127,7 @@ def fig_ch1_vit_patch():
                                    boxstyle="round,pad=0.1", facecolor=color, edgecolor='gray', lw=0.5)
             ax.add_patch(rect)
     ax.text(8, 9.2, '196个图片 token', fontsize=12, fontproperties=CJK_FONT_NAME, ha='center', fontweight='bold')
+    ax.text(8, 8.5, '（示意画 7×7=49 格，实际 14×14=196）', fontsize=8, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
     ax.text(8, 0.5, '+ 位置编码 → 喂进 Transformer', fontsize=10, fontproperties=CJK_FONT_NAME, ha='center', color=ORANGE["m"])
     ax.annotate('', xy=(8, 1.2), xytext=(8, 0.9),
                 arrowprops=dict(arrowstyle='->', lw=1.5, color=ORANGE["m"]))
@@ -428,8 +429,9 @@ def fig_ch4_kv_cache():
     ax.fill_between(n_tokens, with_cache_cum, no_cache_cum, alpha=0.1, color='red')
 
     # 标注加速比
-    ax.annotate(f'~54× 加速', xy=(80, with_cache_cum[79]),
-                xytext=(60, no_cache_cum[79]*0.5),
+    _ratio100 = no_cache_cum[99] / with_cache_cum[99]
+    ax.annotate(f'~{_ratio100:.0f}× 加速 (N=100)', xy=(100, with_cache_cum[99]),
+                xytext=(60, no_cache_cum[99]*0.5),
                 fontsize=13, fontproperties=CJK_FONT_NAME, fontweight='bold', color=RED["d"],
                 arrowprops=dict(arrowstyle='->', lw=2, color=RED["d"]))
 
@@ -443,7 +445,7 @@ def fig_ch4_kv_cache():
     # --- 右图：KV Cache 显存 ---
     ax = axes[1]
     categories = ['模型参数\n(FP16)', 'KV Cache\n(batch=1)', 'KV Cache\n(batch=8)']
-    values = [14, 2.1, 17.2]
+    values = [14, 2.1, 16.8]
     colors = [BLUE["m"], GREEN["m"], RED["m"]]
 
     bars = ax.bar(categories, values, color=colors, width=0.5, edgecolor='black', lw=0.5)
@@ -455,7 +457,7 @@ def fig_ch4_kv_cache():
                 f'{val} GB', ha='center', fontsize=11, fontweight='bold')
 
     # 标注
-    ax.annotate('KV Cache > 模型参数!', xy=(2, 17.2), xytext=(1.5, 19),
+    ax.annotate('KV Cache > 模型参数!', xy=(2, 16.8), xytext=(1.5, 19),
                 fontsize=11, fontproperties=CJK_FONT_NAME, color=RED["d"], fontweight='bold',
                 arrowprops=dict(arrowstyle='->', lw=1.5, color=RED["d"]))
 
@@ -562,7 +564,7 @@ def fig_ch4_voice_generations():
                 fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color=BLUE["d"])
 
     ax.text(7, 0.5, '边听边说 | 自然应答("嗯嗯") | 委托深度任务', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color=ORANGE["d"])
-    ax.text(7, 0.0, '不需要等用户说完才回应，10Hz决策频率', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
+    ax.text(7, 0.0, '不需要等用户说完才回应（决策频率按 10Hz 量级示意）', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
 
     plt.suptitle('三代语音架构：级联 → 回合制 → 全双工', fontsize=14, y=0.98, fontproperties=CJK_FONT_NAME, fontweight='bold')
     plt.tight_layout()
@@ -669,7 +671,7 @@ def fig_ch5_vla_pipeline():
     # 延迟箭头
     ax.annotate('', xy=(17, 0.8), xytext=(1, 0.8),
                 arrowprops=dict(arrowstyle='->', lw=1, color='gray', alpha=0.5))
-    ax.text(9, 0.1, '图示 5 个主要环节合计 ~175ms；完整 10 环节（含 ISP/采样/解码/驱动/反馈）合计 ~187ms —— 见 §5.3 数字演示④', fontsize=8.5, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
+    ax.text(9, 0.1, '图示 5 个主要环节合计 ~175ms；完整 10 环节（含 ISP/采样/解码/驱动/反馈）合计 ~187ms —— 见 §5.3 的感知-决策-执行链', fontsize=8.5, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
 
     ax.set_title('VLA 架构：摄像头 → ViT → LLM → 动作 token → 机械臂', fontsize=14, fontproperties=CJK_FONT_NAME, fontweight='bold', y=1.02)
     plt.tight_layout()
@@ -842,8 +844,8 @@ def fig_ch2_latent_space():
     outputs = [
         ('写作', 11.7, 6.5, BLUE["d"]),
         ('编程', 11.7, 5.0, GREEN["d"]),
-        ('思考', 11.7, 3.5, ORANGE["d"]),
-        ('多模态', 11.7, 2.0, PURPLE["d"]),
+        ('思考', 11.7, 3.5, PURPLE["d"]),
+        ('多模态', 11.7, 2.0, ORANGE["d"]),
     ]
     for name, x, y, color in outputs:
         rect = FancyBboxPatch((x, y - 0.3), 1.8, 0.7, boxstyle="round,pad=0.1",
@@ -900,11 +902,11 @@ def fig_ch2_multimodal_arch():
 
     # 文字输入
     rect = FancyBboxPatch((4, 2.5), 2, 1, boxstyle="round,pad=0.1",
-                           facecolor=PURPLE["l"], edgecolor=PURPLE["d"], lw=1)
+                           facecolor=BLUE["l"], edgecolor=BLUE["d"], lw=1)
     ax.add_patch(rect)
-    ax.text(5, 3, '文字 token', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color=PURPLE["d"])
+    ax.text(5, 3, '文字 token', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color=BLUE["d"])
     ax.annotate('', xy=(8.5, 4.4), xytext=(5, 3.6),
-                arrowprops=dict(arrowstyle='->', lw=1.5, color=PURPLE["d"]))
+                arrowprops=dict(arrowstyle='->', lw=1.5, color=BLUE["d"]))
 
     # 标注：先训文本再接视觉
     ax.text(5, 1.5, '先训文本 → 再接视觉 (后接式)', fontsize=9, fontproperties=CJK_FONT_NAME, ha='center', color='gray')
@@ -951,7 +953,7 @@ def fig_ch2_multimodal_arch():
     return save(fig, 'fig_ch2_multimodal_arch.png')
 
 def fig_ch3_grpo_advantage():
-    """GRPO组内相对优势的数字演示"""
+    """GRPO组内相对优势的算例"""
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
     # --- 左图：8个回答的奖励和优势 ---
@@ -978,7 +980,7 @@ def fig_ch3_grpo_advantage():
     # 图例
     ax.scatter([], [], c=BLUE["soft"], marker='s', s=80, label='正确 (R=1) → 正优势 (被强化)')
     ax.scatter([], [], c=RED["d"], marker='s', s=80, label='错误 (R=0) → 负优势 (被弱化)')
-    ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='upper right')
+    ax.legend(fontsize=9, prop=CJK_FONT_NAME, loc='upper center', ncol=2)
 
     # --- 右图：GRPO vs PPO 对比 ---
     ax = axes[1]
@@ -1032,7 +1034,7 @@ def fig_ch5_sim_to_real():
 
     # 三个阶段
     stages = [
-        ('模拟器\n(MuJoCo)', 1.5, BLUE["l"], BLUE["d"], '训练\n成功率 ~100%', 5.5),
+        ('模拟器\n(MuJoCo)', 1.5, BLUE["l"], BLUE["d"], '测试\n成功率 ≈100%', 5.5),
         ('领域随机化\n(Domain Rand.)', 6.5, YELLOW["m"], ORANGE["amber"], '随机化:\n摩擦/质量/光照/相机', 3.5),
         ('真实部署\n(Franka Panda)', 11.5, GREEN["l"], GREEN["d"], '直接部署: 显著下降\n+光照/摩擦随机化: ↑\n+相机位姿随机化: ↑↑\n+光照方位/高光: 跨过可用阈值', 5.5),
     ]
@@ -1071,7 +1073,7 @@ def fig_ch5_sim_to_real():
     # 经验教训
     ax.text(1.5, 0.5, '被随机化的维度能迁移\n没被随机化的维度会失效', fontsize=8, fontproperties=CJK_FONT_NAME, ha='center', color=RED["d"])
 
-    ax.set_title('Sim-to-Real：从模拟器到现实（成功率只给变化方向，见 §5.6 数字演示⑩）', fontsize=12, fontproperties=CJK_FONT_NAME, fontweight='bold', y=1.02)
+    ax.set_title('Sim-to-Real：从模拟器到现实（成功率只给变化方向，见 §5.6 调试过程与成功率变化）', fontsize=12, fontproperties=CJK_FONT_NAME, fontweight='bold', y=1.02)
     plt.tight_layout()
     return save(fig, 'fig_ch5_sim_to_real.png')
 
@@ -1087,8 +1089,8 @@ def fig_ch6_capability_stack():
     layers = [
         # 感知-认知栈（前三章），整体垂直居中 -> y从1.5开始，蓝色系不同深浅
         ('Ch1 萃取', '把世界变成 token', BLUE["l"], BLUE["d"], 1.5, 1.8, 'left'),
-        ('Ch2 筑基', '预训练→潜空间\n能力涌现', BLUE["m"], BLUE["d"], 3.2, 1.8, 'left'),
-        ('Ch3 炼灵', 'RLHF/DPO\n选对的话', BLUE["m"], BLUE["d"], 4.9, 1.8, 'left'),
+        ('Ch2 筑基', '预训练→潜空间\n能力涌现', BLUE["xl"], BLUE["d"], 3.2, 1.8, 'left'),
+        ('Ch3 炼灵', 'RLHF/DPO\n选对的话', BLUE["m"], WHITE, 4.9, 1.8, 'left'),
         # 输出端（后两章），垂直居中对齐 -> 整体中心和左侧相同，红色系不同深浅
         ('Ch4 应变', 'KV Cache/流式\n实时交互', ORANGE["l"], ORANGE["amber"], 2.8, 1.8, 'right'),
         ('Ch5 行动', 'VLA/Sim-to-Real\n物理世界', RED["l"], RED["d"], 4.7, 1.8, 'right'),
@@ -1195,7 +1197,7 @@ def fig_ch2_scaling_law():
     ax.set_xscale('log')
     ax.set_xlabel('训练算力 (FLOPs)', fontsize=12, fontproperties=CJK_FONT_NAME)
     ax.set_ylabel('Cross-entropy Loss', fontsize=12)
-    ax.set_title('Scaling Law: Loss 随算力平滑下降\n(幂律, Kaplan 2020 / Chinchilla 2022)', fontsize=11, fontproperties=CJK_FONT_NAME)
+    ax.set_title('Scaling Law: Loss 随算力平滑下降\n(幂律示意曲线，点位为量级示意；Kaplan 2020 / Chinchilla 2022)', fontsize=11, fontproperties=CJK_FONT_NAME)
     ax.grid(True, alpha=0.3)
 
     # GPT-3 vs Chinchilla 对比标注：同算力，不同配方
@@ -1276,7 +1278,7 @@ def fig_ch3_reward_hacking():
 
     ax.set_xlabel('PPO 训练轮次', fontsize=12, fontproperties=CJK_FONT_NAME)
     ax.set_ylabel('分数', fontsize=12, fontproperties=CJK_FONT_NAME)
-    ax.set_title('奖励黑客：RM 分持续上升，人评却停在下落\n(RM 与人评的分歧 = 黑客的痕迹)', fontsize=12, fontproperties=CJK_FONT_NAME, fontweight='bold')
+    ax.set_title('奖励黑客：RM 分与人评分道扬镳\n(RM 先升后降，人评近乎停滞)', fontsize=12, fontproperties=CJK_FONT_NAME, fontweight='bold')
     ax.legend(fontsize=10, prop=CJK_FONT_NAME, loc='center left')
     ax.grid(True, alpha=0.3)
     ax.set_ylim(2, 9)
@@ -1570,10 +1572,10 @@ def fig_ch4_delegation_architecture():
     ax.set_xlim(0, 12); ax.set_ylim(0, 6); ax.axis('off')
     ax.set_title('GPT-Live 委托架构：实时交互与深度推理兼得', fontsize=14, fontweight='bold', pad=15, fontproperties=CJK_FONT_NAME)
 
-    ax.fill_between([0.5,11.5], 3.8, 5.5, alpha=0.08, color=BLUE["alt"])
-    ax.fill_between([0.5,11.5], 0.8, 2.8, alpha=0.08, color=ORANGE["alt"])
-    ax.text(0.7, 5.2, 'GPT-Live（交互层）', fontsize=11, fontweight='bold', color=BLUE["alt"], fontproperties=CJK_FONT_NAME)
-    ax.text(0.7, 2.5, 'GPT-5.5（推理层）', fontsize=11, fontweight='bold', color=ORANGE["alt"], fontproperties=CJK_FONT_NAME)
+    ax.fill_between([0.5,11.5], 3.8, 5.5, alpha=0.08, color=ORANGE["alt"])
+    ax.fill_between([0.5,11.5], 0.8, 2.8, alpha=0.08, color=BLUE["alt"])
+    ax.text(0.7, 5.2, 'GPT-Live（交互层）', fontsize=11, fontweight='bold', color=ORANGE["alt"], fontproperties=CJK_FONT_NAME)
+    ax.text(0.7, 2.5, 'GPT-5.5（推理层）', fontsize=11, fontweight='bold', color=BLUE["alt"], fontproperties=CJK_FONT_NAME)
     ax.annotate('', xy=(11.5,0.3), xytext=(0.5,0.3), arrowprops=dict(arrowstyle='->', color='#999', lw=1))
     ax.text(11.3, 0.1, '时间', fontsize=9, color='#555', fontproperties=CJK_FONT_NAME)
 

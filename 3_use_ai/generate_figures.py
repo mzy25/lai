@@ -15,7 +15,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
 import fig_common  # noqa: E402  (sys.path 就绪后再导入共享模块)
-from fig_common import setup_rc  # noqa: E402
+from fig_common import CJK_FONT_NAME, setup_rc  # noqa: E402
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "figures"
 
@@ -48,13 +48,15 @@ plt.rcParams['font.sans-serif'] = ['Noto Sans CJK SC', 'Noto Sans CJK JP', 'Deja
 
 
 def save(fig, name):
-    fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor=PALETTE['bg'])
+    """统一保存并返回路径（run_all 靠返回值判断落盘）"""
+    return fig_common.save_fig(fig, name, OUTPUT_DIR, dpi=200, facecolor=PALETTE['bg'])
 
 
 # ============================================================
 # 图3：POMDP 循环与七要素
 # ============================================================
 def fig_ch2_pomdp_cycle():
+    """POMDP 循环与七要素"""
     fig, ax = plt.subplots(figsize=(16, 9))
     ax.set_xlim(-1, 17)
     ax.set_ylim(-1, 9)
@@ -103,7 +105,7 @@ def fig_ch2_pomdp_cycle():
     ax.annotate('', xy=(1.5, 1.8), xytext=(15, 1.8),
                 arrowprops=dict(arrowstyle='->', color=p['success'], lw=2.5,
                                connectionstyle='arc3,rad=-0.15'), zorder=4)
-    ax.text(8.25, 0.8, 'L4 编排：循环反馈，进入下一轮', fontsize=9, ha='center', va='center',
+    ax.text(8.25, 0.8, 'L4 编排：循环反馈，进入下一轮', fontproperties=CJK_FONT_NAME, fontsize=9, ha='center', va='center',
             color=p['success'], style='italic')
 
     # S（真实状态）：虚线幽灵框，在 s_t 上方
@@ -149,19 +151,20 @@ def fig_ch2_pomdp_cycle():
             bbox=dict(boxstyle='round,pad=0.2', facecolor=p['warning_fill'], edgecolor=p['warning'], alpha=0.9))
 
     # MDP 退化注释
-    ax.text(1.5, 6.5, '若 $O = S$\n退化为 MDP', fontsize=8, ha='center', va='center',
+    ax.text(1.5, 6.5, '若 $O = S$\n退化为 MDP', fontproperties=CJK_FONT_NAME, fontsize=8, ha='center', va='center',
             color=p['tertiary'], style='italic',
             bbox=dict(boxstyle='round,pad=0.2', facecolor=p['white'], edgecolor=p['tertiary'], alpha=0.8))
 
     ax.text(8.25, 8.5, 'POMDP 循环：Agent 在信息不全的世界里观察、决策、行动',
             fontsize=15, fontweight='bold', ha='center', va='center', color=p['text'])
-    save(fig, 'fig_ch2_pomdp_cycle.png')
+    return save(fig, 'fig_ch2_pomdp_cycle.png')
 
 
 # ============================================================
 # 图4：六层工程栈
 # ============================================================
 def fig_ch3_six_layer_stack():
+    """Harness 六层职责栈"""
     fig, ax = plt.subplots(figsize=(12, 12))
     ax.set_xlim(-1, 11)
     ax.set_ylim(-1, 13)
@@ -169,7 +172,7 @@ def fig_ch3_six_layer_stack():
     p = PALETTE
 
     layers = [
-        ('L6', '护栏与安全', '过滤输入·授权工具·验证输出', '约束：把不安全动作从 $\\mathcal{A}$ 中删除', p['danger'], p['danger_fill']),
+        ('L6', '护栏与安全', '过滤输入·授权工具·验证输出', '约束：不安全动作在执行层被拒绝', p['danger'], p['danger_fill']),
         ('L5', '评估与可观测', '追踪轨迹·评分输出·捕捉退化', '观测 $o_t$ 的解析与奖励 $R$ 的估计', p['warning'], p['warning_fill']),
         ('L4', '编排', '组合模型调用·工具使用·控制流', '状态转移 $T$ 的工程化控制', p['primary'], p['light']),
         ('L3', '记忆与知识', '存取窗口状态·历史·偏好·领域知识', '信念状态 $b_t$ 的维护与历史压缩', p['primary'], p['light']),
@@ -205,13 +208,14 @@ def fig_ch3_six_layer_stack():
 
     ax.text(5.5, 12.5, 'Harness 六层：可靠产出的必要条件',
             fontsize=15, fontweight='bold', ha='center', va='center', color=p['text'])
-    save(fig, 'fig_ch3_six_layer_stack.png')
+    return save(fig, 'fig_ch3_six_layer_stack.png')
 
 
 # ============================================================
 # 图12：栈成熟度梯度
 # ============================================================
 def fig_ch6_maturity_gradient():
+    """Harness 六层成熟度梯度"""
     fig, ax = plt.subplots(figsize=(14, 10))
     ax.set_xlim(-1, 14)
     ax.set_ylim(-2.35, 10.4)
@@ -221,7 +225,7 @@ def fig_ch6_maturity_gradient():
     # (代码, 名称, 状态, 详情, 边框色, 填充色, 成熟条宽或None, 是否虚线)
     layers = [
         ('G',  '治理（单列）', '制度问题', '权限边界·风险分级·留痕追责', p['success'], p['success_fill'], None, True),
-        ('L6', '护栏·安全', '最不成熟最关键', '无主导框架·硬约束裁剪动作空间', p['danger'], p['danger_fill'], 1.5, False),
+        ('L6', '护栏·安全', '最不成熟最关键', '无主导框架·硬约束把关生效边界', p['danger'], p['danger_fill'], 1.5, False),
         ('L5', '评估·观测', '最大缺口', '89% 有可观测性\n仅 52% 有评估', p['warning'], p['warning_fill'], 2.5, False),
         ('L4', '编排', '重心转移中', '图管不可逆路径·规划接管探索流', p['primary'], p['light'], 4.0, False),
         ('L3', '记忆与知识', '复杂度最高', '治理＋知识备料\n运行时接口＝上下文工程', p['primary'], p['light'], 3.7, False),
@@ -245,7 +249,7 @@ def fig_ch6_maturity_gradient():
         ax.text(2.5, y-0.27, detail, fontsize=8, ha='left', va='center', color=p['subtext'], zorder=9)
 
         if bar_w is None:
-            ax.text(8.5, y, '制度维度——独立于技术栈，不参与成熟度排序', fontsize=8.5,
+            ax.text(8.5, y, '制度维度——独立于技术栈，不参与成熟度排序', fontproperties=CJK_FONT_NAME, fontsize=8.5,
                     ha='center', va='center', color=border, style='italic')
             continue
         ax.add_patch(FancyBboxPatch((5.5, y-0.18), 6.0, 0.36,
@@ -268,23 +272,24 @@ def fig_ch6_maturity_gradient():
 
     ax.text(6.5, 9.95, 'Harness 成熟度梯度：六层 ＋ 治理（G）', fontsize=15, fontweight='bold',
             ha='center', va='center', color=p['text'])
-    ax.text(6.5, 9.42, 'Harness 的薄弱层在哪里，工程重心就在哪里', fontsize=11,
+    ax.text(6.5, 9.42, 'Harness 的薄弱层在哪里，工程重心就在哪里', fontproperties=CJK_FONT_NAME, fontsize=11,
             ha='center', va='center', color=p['subtext'], style='italic')
 
-    ax.text(6.5, -1.18, '跨层课题：循环自身的失效与终止工程——Loopmaxxing · 理解债 · 多重退出条件（§7.6）',
-            fontsize=8, ha='center', color=p['subtext'], style='italic')
+    ax.text(6.5, -1.18, '跨层课题：循环自身的失效与终止工程——Loopmaxxing · 理解债 · 多重退出条件（§6.6）',
+            fontproperties=CJK_FONT_NAME, fontsize=8, ha='center', color=p['subtext'], style='italic')
     ax.text(6.5, -1.58, '学术对照：ETCLOVG 七层（E 执行·T 工具·C 上下文·L 编排·O 可观测·V 验证·G 治理）与 Harness 六层大致对应，O/V/G 更强调形式化与审计',
-            fontsize=7.5, ha='center', color=p['subtext'], style='italic')
+            fontproperties=CJK_FONT_NAME, fontsize=7.5, ha='center', color=p['subtext'], style='italic')
     ax.text(6.5, -1.98, '2026 前瞻：Provider SDK 正把记忆、工具调用与基础评估吸进单一 API——通用件被商品化，独特件（领域备料、专有评估集）除外',
-            fontsize=8, ha='center', color=p['subtext'], style='italic')
+            fontproperties=CJK_FONT_NAME, fontsize=8, ha='center', color=p['subtext'], style='italic')
 
-    save(fig, 'fig_ch6_maturity_gradient.png')
+    return save(fig, 'fig_ch6_maturity_gradient.png')
 
 
 # ============================================================
 # 图11：四种死法 → 栈缺口映射（卡片式，无填充，大字距）
 # ============================================================
 def fig_ch6_death_modes():
+    """四类失效映射到 Harness 六层缺口"""
     fig, ax = plt.subplots(figsize=(16, 12))
     ax.set_xlim(-0.5, 16)
     ax.set_ylim(-2.5, 12)
@@ -293,17 +298,17 @@ def fig_ch6_death_modes():
 
     deaths = [
         ('失效一', '跳步执行',
-         '没 pick 就 hint\n没 test 就 submit',
+         '没核对现象就下结论\n没跑测试就宣布完成',
          'L4 编排 + L6 护栏',
          '流程控制，防跳步',
          p['danger']),
-        ('失效二', '参数不匹配',
-         '语言与文件扩展名不一致\n路径不符合项目结构',
+        ('失效二', '工具调用错误',
+         '调错工具、参数错位\n误解返回值',
          'L2 工具',
          'schema 校验，类型检查',
          p['warning']),
-        ('失效三', '不分类型微调',
-         'WA 只改常数\nTLE 只改逻辑',
+        ('失效三', '不分类型的修改',
+         '构建失败、断言失败、超时\n各有各的修法，混着来越改越远',
          'L5 评估',
          '分类路由，策略匹配',
          p['warm']),
@@ -370,7 +375,7 @@ def fig_ch6_death_modes():
     ax.text(8, -1.8, '四类失效 → Harness 六层缺口 → 护栏：没有架构护栏的 Agent 在这四个环节反复翻车',
             fontsize=14, fontweight='bold', ha='center', va='center', color=p['text'],
             bbox=dict(boxstyle='round,pad=0.4', facecolor='none', edgecolor=p['primary'], alpha=0.9))
-    save(fig, 'fig_ch6_death_modes.png')
+    return save(fig, 'fig_ch6_death_modes.png')
 
 
 
@@ -378,6 +383,7 @@ def fig_ch6_death_modes():
 # 图6：控制范式四阶段——自主度递进，约束同步变硬
 # ============================================================
 def fig_ch4_control_paradigms():
+    """四种控制范式与自主度递进"""
     fig, ax = plt.subplots(figsize=(16, 9))
     ax.set_xlim(-0.5, 16.5)
     ax.set_ylim(-1.5, 9)
@@ -391,7 +397,7 @@ def fig_ch4_control_paradigms():
         ('命令控制', '人下每一步指令', '人盯', 0.9, 2.2, p['tertiary'], '#EEEEEE'),
         ('目标控制', '人给目标，Agent 自己规划', '规则查', 4.6, 3.6, p['secondary'], p['light']),
         ('意图控制', '人给模糊意图，Agent 追问补全', '追问补全', 8.3, 5.0, p['warm'], p['warm_fill']),
-        ('受约束自主', '安全边界内持续自主运行', '权限系统裁剪动作空间', 12.0, 6.4, p['primary'], p['light']),
+        ('受约束自主', '安全边界内持续自主运行\n自主发现并跟随目标（含边界内演化）', '权限系统把关生效边界', 12.0, 6.4, p['primary'], p['light']),
     ]
     box_w, box_h = 3.6, 1.9
     for name, desc, constraint, x, y, color, fill in stages:
@@ -406,25 +412,26 @@ def fig_ch4_control_paradigms():
         ax.text(x + box_w/2, y - 0.55, f'约束：{constraint}', fontsize=9.5, fontweight='bold',
                 ha='center', va='center', color=p['subtext'], zorder=9)
 
-    # 递进箭头
+    # 递进箭头：第 i 框右缘 → 第 i+1 框左缘（原 x2 恒 < x1，箭头指回）
+    stage_pos = [(0.9, 2.2), (4.6, 3.6), (8.3, 5.0), (12.0, 6.4)]
     for i in range(3):
-        x1 = 0.9 + box_w + 0.28 + i * (box_w + 0.28)
-        y1 = 2.2 + 1.4 * i
-        x2 = 4.6 + i * (box_w + 0.28)
-        y2 = 2.2 + 1.4 * (i + 1)
-        ax.annotate('', xy=(x2 - 0.1, y2 + box_h/2), xytext=(x1 + 0.05, y1 + box_h/2),
+        x_from = stage_pos[i][0] + box_w
+        y_from = stage_pos[i][1] + box_h / 2
+        x_to, y_to = stage_pos[i + 1][0], stage_pos[i + 1][1] + box_h / 2
+        ax.annotate('', xy=(x_to, y_to), xytext=(x_from, y_from),
                     arrowprops=dict(arrowstyle='-|>', color=p['primary'], lw=2.5))
 
-    ax.text(8, 0.5, '从左到右：人逐步放手，约束从软到硬——内建约束（执行前裁剪动作空间）比外挂规则（运行时检查）更硬',
+    ax.text(8, 0.5, '从左到右：人逐步放手，约束从软到硬——内建约束（写进执行层）比外挂规则（写在提示词里）更硬',
             fontsize=11, ha='center', va='center', color=p['subtext'])
 
-    save(fig, 'fig_ch4_control_paradigms.png')
+    return save(fig, 'fig_ch4_control_paradigms.png')
 
 
 # ============================================================
 # 图9：状态图示意——Agent 的状态、转移与回退
 # ============================================================
 def fig_ch5_state_diagram():
+    """任务状态机示意"""
     fig, ax = plt.subplots(figsize=(14, 9))
     ax.set_xlim(-1, 14)
     ax.set_ylim(-1, 9)
@@ -449,6 +456,7 @@ def fig_ch5_state_diagram():
     transitions = [
         (0, 1, '目标就绪', 'up'),
         (1, 2, '需要工具', 'up'),
+        (2, 1, '工具成功', 'up'),
         (2, 3, '不可逆动作', 'down'),
         (3, 1, '人类确认', 'left'),
         (2, 4, '工具失败', 'down'),
@@ -478,13 +486,14 @@ def fig_ch5_state_diagram():
 
     ax.text(6.5, 8.6, '状态图：每个状态是节点，每条边是转移条件——回退边（失败恢复→思考中）让 Agent 能回头',
             fontsize=14, fontweight='bold', ha='center', va='center', color=p['text'])
-    save(fig, 'fig_ch5_state_diagram.png')
+    return save(fig, 'fig_ch5_state_diagram.png')
 
 
 # ============================================================
 # 图15：数字 Agent vs 具身智能（雷达图）
 # ============================================================
 def fig_ch6_radar():
+    """数字 Agent 与具身智能能力对比（定性示意）"""
     fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
     p = PALETTE
 
@@ -517,13 +526,14 @@ def fig_ch6_radar():
 
     ax.set_title('数字 Agent vs 具身智能：约束对比（定性示意，非实测）',
                  fontsize=13, fontweight='bold', color=p['text'], pad=20)
-    save(fig, 'fig_ch6_radar.png')
+    return save(fig, 'fig_ch6_radar.png')
 
 
 # ============================================================
 # 图8：ReAct 循环
 # ============================================================
 def fig_ch5_react_loop():
+    """ReAct 循环与 POMDP 标签"""
     fig, ax = plt.subplots(figsize=(12, 10))
     ax.set_xlim(-6, 6)
     ax.set_ylim(-5, 7)
@@ -580,7 +590,7 @@ def fig_ch5_react_loop():
 
     ax.text(0, 6.7, 'ReAct 循环：$o_t \\to b_t \\to a_t \\to o_{t+1}$ 的最朴素实现',
             fontsize=14, fontweight='bold', ha='center', va='center', color=p['text'])
-    save(fig, 'fig_ch5_react_loop.png')
+    return save(fig, 'fig_ch5_react_loop.png')
 
 
 # ============================================================
@@ -588,6 +598,7 @@ def fig_ch5_react_loop():
 # 长程规划 / 工具鲁棒 / 校准拒绝 / 推理时精化
 # ============================================================
 def fig_ch5_planning_dimensions():
+    """规划的四个诊断维度"""
     fig, ax = plt.subplots(figsize=(16, 10))
     ax.set_xlim(-0.5, 16)
     ax.set_ylim(-1.5, 11)
@@ -666,7 +677,7 @@ def fig_ch5_planning_dimensions():
             fontsize=11.5, ha='center', va='center', color=p['text'],
             bbox=dict(boxstyle='round,pad=0.4', facecolor=p['lighter'],
                      edgecolor=p['primary'], linewidth=1.5, alpha=0.9))
-    save(fig, 'fig_ch5_planning_dimensions.png')
+    return save(fig, 'fig_ch5_planning_dimensions.png')
 
 
 # ============================================================
@@ -674,6 +685,7 @@ def fig_ch5_planning_dimensions():
 # 节点级 F1 / 结构级 F2 / 平台级 F3
 # ============================================================
 def fig_ch7_agentfail_taxonomy():
+    """AgentFail 三层十六类失败根因"""
     fig, ax = plt.subplots(figsize=(16, 11))
     ax.set_xlim(-0.5, 16)
     ax.set_ylim(-2, 12)
@@ -781,13 +793,14 @@ def fig_ch7_agentfail_taxonomy():
         ax.text(9.7, 0.7 - i*0.55, fix, fontsize=10.5,
                 ha='left', va='center', color=p['text'])
 
-    save(fig, 'fig_ch7_agentfail_taxonomy.png')
+    return save(fig, 'fig_ch7_agentfail_taxonomy.png')
 
 # ============================================================
 # 图18：自演化三路线 + 三硬边界
 # skill 演化 / workflow 演化 / topology 演化  vs  Library Drift / 统计极限 / 泛化间隙
 # ============================================================
 def fig_ch8_self_evolution():
+    """自演化三条路线与三条硬边界"""
     fig, ax = plt.subplots(figsize=(16, 11))
     ax.set_xlim(-0.5, 16)
     ax.set_ylim(-2, 11)
@@ -878,7 +891,7 @@ def fig_ch8_self_evolution():
             bbox=dict(boxstyle='round,pad=0.4', facecolor=p['lighter'],
                      edgecolor=p['primary'], linewidth=1.5, alpha=0.9))
 
-    save(fig, 'fig_ch8_self_evolution.png')
+    return save(fig, 'fig_ch8_self_evolution.png')
 
 
 
@@ -886,6 +899,7 @@ def fig_ch8_self_evolution():
 # 图5：Agent Loop 运行时剖面
 # ============================================================
 def fig_ch3_agent_loop_runtime():
+    """Agent Loop 运行时剖面"""
     fig, ax = plt.subplots(figsize=(16, 9))
     ax.set_xlim(0, 16)
     ax.set_ylim(0, 9)
@@ -930,7 +944,7 @@ def fig_ch3_agent_loop_runtime():
     ax.annotate('', xy=(2.0+1.4, 3.5), xytext=(12.5+1.4, 3.5),
                 arrowprops=dict(arrowstyle='->', color=p['success'], lw=2.5,
                                connectionstyle='arc3,rad=0.3'), zorder=4)
-    ax.text(8, 1.8, 'history.append(action, result) → 进入下一轮', fontsize=9,
+    ax.text(8, 1.8, 'history.append(action, result) → 进入下一轮', fontproperties=CJK_FONT_NAME, fontsize=9,
             ha='center', color=p['success'], style='italic', zorder=6)
 
     # 环境反馈（底部）
@@ -941,16 +955,17 @@ def fig_ch3_agent_loop_runtime():
 
     # Pi 对照注释
     ax.text(8, 0.9, 'Pi 对照：receive(o_t) → model(π) → tool(exec) → inject(history)',
-            fontsize=8.5, ha='center', color=p['subtext'], style='italic', zorder=6,
+            fontproperties=CJK_FONT_NAME, fontsize=8.5, ha='center', color=p['subtext'], style='italic', zorder=6,
             bbox=dict(boxstyle='round,pad=0.2', facecolor=p['white'], edgecolor=p['subtext'], alpha=0.7))
 
-    save(fig, 'fig_ch3_agent_loop_runtime.png')
+    return save(fig, 'fig_ch3_agent_loop_runtime.png')
 
 
 # ============================================================
 # 图10：工具调用五步管道
 # ============================================================
 def fig_ch6_tool_pipeline():
+    """工具调用五步管道"""
     fig, ax = plt.subplots(figsize=(16, 7))
     ax.set_xlim(0, 16)
     ax.set_ylim(0, 7)
@@ -996,15 +1011,16 @@ def fig_ch6_tool_pipeline():
 
     # 底部注释：错误即消息
     ax.text(8, 0.8, '第3步失败不终止管道 → 错误格式化后走第4、5步正常注入 → "错误即消息"',
-            fontsize=9, ha='center', color=p['success'], style='italic', zorder=6)
+            fontproperties=CJK_FONT_NAME, fontsize=9, ha='center', color=p['success'], style='italic', zorder=6)
 
-    save(fig, 'fig_ch6_tool_pipeline.png')
+    return save(fig, 'fig_ch6_tool_pipeline.png')
 
 
 # ============================================================
 # 图13：上下文窗口的一生
 # ============================================================
 def fig_ch6_context_lifecycle():
+    """上下文窗口的一生"""
     fig, ax = plt.subplots(figsize=(14, 7))
     p = PALETTE
 
@@ -1054,13 +1070,14 @@ def fig_ch6_context_lifecycle():
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    save(fig, 'fig_ch6_context_lifecycle.png')
+    return save(fig, 'fig_ch6_context_lifecycle.png')
 
 
 # ============================================================
 # 图16：多Agent五种拓扑
 # ============================================================
 def fig_ch7_multi_agent_topologies():
+    """五种多 Agent 编排拓扑"""
     fig, axes = plt.subplots(1, 5, figsize=(18, 5))
     p = PALETTE
     titles = ['Supervisor', 'Pipeline', 'Fan-out', 'Debate', 'Swarm']
@@ -1115,13 +1132,14 @@ def fig_ch7_multi_agent_topologies():
 
     fig.suptitle('五种多Agent编排拓扑', fontsize=13, fontweight='bold', color=p['text'], y=1.02)
     plt.tight_layout()
-    save(fig, 'fig_ch7_multi_agent_topologies.png')
+    return save(fig, 'fig_ch7_multi_agent_topologies.png')
 
 
 # ============================================================
 # 图14：约束硬度梯度
 # ============================================================
 def fig_ch6_trust_gradient():
+    """约束硬度梯度（软提示到硬裁剪）"""
     fig, ax = plt.subplots(figsize=(16, 5))
     ax.set_xlim(0, 16)
     ax.set_ylim(0, 5)
@@ -1137,7 +1155,7 @@ def fig_ch6_trust_gradient():
     # 五个锚点
     anchors = [
         ('提示词建议', '"请谨慎操作"\n模型可忽略', 2.0, p['success']),
-        ('输出过滤', 'L5 事后检查\n已太晚', 5.0, p['tertiary']),
+        ('输出过滤', '事后拦截\n已太晚', 5.0, p['tertiary']),
         ('确认弹窗', 'HITL\n人可拒绝', 8.0, p['secondary']),
         ('权限系统', 'A_safe(c)\n规则计算', 11.0, p['warm']),
         ('硬件回路', '物理Agent\n不可绕过', 14.0, p['danger']),
@@ -1160,16 +1178,17 @@ def fig_ch6_trust_gradient():
             fontweight='bold', ha='center', color=p['text'], zorder=6)
 
     # 底部判据
-    ax.text(8, 0.3, '判据：动作是否还在候选集里？在 → 软约束（可被忽略）；不在 → 硬约束（物理路障）',
-            fontsize=9, ha='center', color=p['subtext'], style='italic', zorder=6)
+    ax.text(8, 0.3, '判据：拦在提示词还是执行层？提示词劝告 → 软约束（可被忽略）；执行层拒绝 → 硬约束（物理路障）',
+            fontproperties=CJK_FONT_NAME, fontsize=9, ha='center', color=p['subtext'], style='italic', zorder=6)
 
-    save(fig, 'fig_ch6_trust_gradient.png')
+    return save(fig, 'fig_ch6_trust_gradient.png')
 
 
 # ============================================================
 # 图1：后训练阶段图谱——从毛坯到工具
 # ============================================================
 def fig_ch1_post_training_stages():
+    """后训练阶段：从毛坯到工具"""
     fig, ax = plt.subplots(figsize=(16, 9))
     ax.set_xlim(-0.5, 16.5)
     ax.set_ylim(-1.5, 9)
@@ -1208,13 +1227,14 @@ def fig_ch1_post_training_stages():
     ax.text(8, 0.8, '四种反馈 = 后训练给模型的四类信号：示范、偏好、验证、轨迹',
             fontsize=12, ha='center', va='center', color=p['subtext'])
 
-    save(fig, 'fig_ch1_post_training_stages.png')
+    return save(fig, 'fig_ch1_post_training_stages.png')
 
 
 # ============================================================
 # 图2：训练时 vs 推理时——同一个循环，两处落点
 # ============================================================
 def fig_ch1_training_vs_inference():
+    """训练时与推理时的两处落点"""
     fig, ax = plt.subplots(figsize=(16, 9.5))
     ax.set_xlim(-0.5, 16.5)
     ax.set_ylim(-1.5, 9.5)
@@ -1273,35 +1293,37 @@ def fig_ch1_training_vs_inference():
     ax.text(8, 0.2, '高频、稳定、可验证 → 烧权重；低频、临时、一次性 → 写上下文',
             fontsize=12, ha='center', va='center', color=p['subtext'])
 
-    save(fig, 'fig_ch1_training_vs_inference.png')
+    return save(fig, 'fig_ch1_training_vs_inference.png')
 
 
 # ============================================================
 # 主程序
 # ============================================================
-if __name__ == '__main__':
-    print("开始生成图表...")
-    main_funcs = [
-        (fig_ch2_pomdp_cycle, "fig1 POMDP循环与七要素"),
-        (fig_ch3_six_layer_stack, "fig2 Harness六层"),
-        (fig_ch3_agent_loop_runtime, "fig3 Agent Loop运行时剖面"),
-        (fig_ch5_planning_dimensions, "fig4 规划的四个诊断维度"),
-        (fig_ch5_react_loop, "fig5 ReAct循环"),
-        (fig_ch6_tool_pipeline, "fig6 工具调用五步管道"),
-        (fig_ch6_death_modes, "fig7 四类失效→Harness六层缺口映射"),
-        (fig_ch6_maturity_gradient, "fig8 Harness六层成熟度梯度"),
-        (fig_ch6_context_lifecycle, "fig9 上下文窗口的一生"),
-        (fig_ch6_trust_gradient, "fig10 约束硬度梯度"),
-        (fig_ch6_radar, "fig11 数字Agent vs 具身智能"),
-        (fig_ch7_multi_agent_topologies, "fig12 五种多Agent编排拓扑"),
-        (fig_ch7_agentfail_taxonomy, "fig13 AgentFail 三层十六类失败根因"),
-        (fig_ch8_self_evolution, "fig14 自演化：三条路线+三条硬边界"),
-        (fig_ch1_post_training_stages, "fig16 后训练：从毛坯到工具"),
-        (fig_ch1_training_vs_inference, "fig17 训练时vs推理时：两处落点"),
-        (fig_ch4_control_paradigms, "fig18 控制范式四阶段"),
-        (fig_ch5_state_diagram, "fig19 状态图示意"),
+def main():
+    from fig_common import run_all
+
+    funcs = [
+        fig_ch2_pomdp_cycle,
+        fig_ch3_six_layer_stack,
+        fig_ch3_agent_loop_runtime,
+        fig_ch5_planning_dimensions,
+        fig_ch5_react_loop,
+        fig_ch6_tool_pipeline,
+        fig_ch6_death_modes,
+        fig_ch6_maturity_gradient,
+        fig_ch6_context_lifecycle,
+        fig_ch6_trust_gradient,
+        fig_ch6_radar,
+        fig_ch7_multi_agent_topologies,
+        fig_ch7_agentfail_taxonomy,
+        fig_ch8_self_evolution,
+        fig_ch1_post_training_stages,
+        fig_ch1_training_vs_inference,
+        fig_ch4_control_paradigms,
+        fig_ch5_state_diagram,
     ]
-    for fn, label in main_funcs:
-        fn()
-        print(f"✓ {label} 完成")
-    print(f"\n全部 18 张图表已保存到 {OUTPUT_DIR}/")
+    return run_all(funcs, "用好AI：从有用到驾驭", expected=18)
+
+
+if __name__ == '__main__':
+    sys.exit(main())  # 失败张数作为退出码，CI 才能真的拦住

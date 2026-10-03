@@ -3,39 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{COMMON_HEAD}}
 <title>AI 五篇入门读物合集</title>
 <link rel="stylesheet" href="katex/katex.min.css">
 <link rel="stylesheet" href="highlight/github.min.css" id="hljs-theme">
 <link rel="stylesheet" href="highlight/atom-one-dark.min.css" id="hljs-theme-dark" media="(prefers-color-scheme: dark)">
-<script src="katex/katex.min.js"></script>
-<script src="katex/contrib/auto-render.min.js"></script>
-<script src="highlight/highlight.min.js"></script>
+<script src="katex/katex.min.js" defer></script>
+<script src="katex/contrib/auto-render.min.js" defer></script>
+<script src="highlight/highlight.min.js" defer></script>
 <style>
-/* ===== 基础 ===== */
-* { margin:0; padding:0; box-sizing:border-box; }
+/* ===== 基础（reset/tokens/body/链接/可访问性由模板共享片段注入） ===== */
 :root {
-  --bg: #fafaf8; --card: #ffffff; --ink: #1f2937; --ink-soft: #4b5563;
-  --line: #e5e7eb; --accent: #2563eb; --accent-soft: #eff6ff;
-  --code-bg: #f3f4f6; --sidebar-w: 300px;
+  --code-bg: #f3f4f6; --sidebar-w: 300px; --fs: 17px;
   --blockquote-bg: #fafbfc;
   --th-bg: #f3f4f6; --row-alt: #fafafa; --pre-bg: #f3f4f6; --pre-ink: #1f2937;
   --summary-bg: #f9fafb;
 }
-/* 深色模式 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111827; --card: #1f2937; --ink: #e5e7eb; --ink-soft: #9ca3af;
-    --line: #374151; --accent: #60a5fa; --accent-soft: #1e3a5f;
-    --code-bg: #273244; --blockquote-bg: #1a2332;
-    --th-bg: #273244; --row-alt: #1a2332; --pre-bg: #282c34; --pre-ink: #e5e7eb;
-    --summary-bg: #273244;
-  }
-  img { filter: brightness(0.9); }
+/* 深色模式：data-theme 为唯一开关（无存储时由 head 引导脚本按系统偏好预设） */
+:root[data-theme="dark"] {
+  --code-bg: #273244; --blockquote-bg: #1a2332;
+  --th-bg: #273244; --row-alt: #1a2332; --pre-bg: #282c34; --pre-ink: #e5e7eb;
+  --summary-bg: #273244;
 }
+:root[data-theme="dark"] img { filter: brightness(0.9); }
 html { scroll-behavior:smooth; }
-body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",system-ui,sans-serif;
-       background:var(--bg); color:var(--ink); line-height:1.9; }
-a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; word-break:break-word; }
+body { line-height:1.9; font-size:1rem; }
+a { text-decoration:none; overflow-wrap:anywhere; word-break:break-word; }
+
+/* ===== 阅读工具条（字号 / 主题） ===== */
+.tools { position:fixed; top:10px; right:12px; z-index:96; display:flex; gap:6px; }
+.tools button, .tools a { border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+  border-radius:999px; padding:4px 10px; font-size:0.8rem; cursor:pointer; line-height:1.4;
+  text-decoration:none; display:inline-block; }
+.tools button:hover, .tools a:hover { color:var(--accent); border-color:var(--accent); }
+@media (max-width: 640px) { .tools { top:6px; right:6px; gap:4px; }
+  .tools button { padding:3px 8px; font-size:0.75rem; } }
+
+/* ===== 正文版心（块级图表不受限） ===== */
+.doc-section p, .doc-section li, .doc-section blockquote { max-width:44em; }
+.table-wrap p, .table-wrap li, .selfcheck-bubble p, .selfcheck-bubble li,
+.term::after { max-width:none; }
+/* 重点短语轻微高亮（仅正文段落，避免标题/表格噪声） */
+.doc-section p strong { background:linear-gradient(transparent 62%, var(--accent-soft) 0); }
+/* 文档元信息（字数 / 阅读时长，构建端注入） */
+.doc-meta { font-size:0.86rem; color:var(--ink-soft); margin:-6px 0 26px; }
+/* ===== 阅读型 callout ===== */
+.doc-section .takeaway { background:var(--card); border:1px solid var(--line);
+  border-left:4px solid var(--accent); border-radius:12px; padding:4px 20px 8px; margin:26px 0; }
+.doc-section .takeaway h3 { margin-top:18px; border-bottom:none; padding-bottom:0; }
+.doc-section details { border-style:dashed; }
 
 /* 图片全局防溢出 */
 img { max-width:100%; height:auto; }
@@ -57,6 +73,7 @@ img { max-width:100%; height:auto; }
          transition:all .15s; border-left:2px solid transparent; }
 .toc a:hover { background:var(--accent-soft); color:var(--accent); }
 .toc a.active { background:var(--accent-soft); color:var(--accent); border-left-color:var(--accent); font-weight:600; }
+.toc .toc-chapter.has-active > .toc-chapter-head > a { color:var(--accent); }
 .toc .lvl-2 { padding-left:22px; }
 .toc .lvl-3 { padding-left:38px; font-size:0.8rem; }
 .toc .lvl-4 { padding-left:52px; font-size:0.78rem; color:#9ca3af; }
@@ -78,8 +95,9 @@ img { max-width:100%; height:auto; }
 
 /* 侧边栏折叠按钮（窄屏） */
 .sidebar-toggle { display:none; }
-/* 桌面端：侧边目录自动隐藏（下滑收起/上滑展开）+ 悬浮开关 */
-.layout.collapsed .sidebar { margin-left: calc(-1 * var(--sidebar-w)); }
+/* 桌面端：侧边目录由悬浮开关手动收起/展开（滚动不自动改变） */
+.layout.collapsed .sidebar { margin-left: calc(-1 * var(--sidebar-w));
+  visibility:hidden; transition:margin-left .3s ease, visibility 0s linear .3s; }
 .sidebar-float-toggle { position:fixed; left:calc(var(--sidebar-w) - 18px); top:14px; z-index:70; width:38px; height:38px;
   border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
   font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -146,10 +164,11 @@ figure, pre, .table-wrap, details, blockquote {
 
 /* 标题 */
 h2 { font-size:1.55rem; color:var(--ink); margin:40px 0 18px; padding-bottom:8px;
-     border-bottom:1px solid var(--line); scroll-margin-top:20px; }
-h3 { font-size:1.25rem; margin:30px 0 14px; color:var(--ink); scroll-margin-top:20px; }
-h4 { font-size:1.1rem; margin:24px 0 12px; color:var(--ink-soft); scroll-margin-top:20px; }
-h5, h6 { font-size:1rem; margin:20px 0 10px; color:var(--ink-soft); }
+     border-bottom:1px solid var(--line); scroll-margin-top:64px; }
+h3 { font-size:1.25rem; margin:30px 0 14px; color:var(--ink); scroll-margin-top:64px; }
+h4 { font-size:1.1rem; margin:24px 0 12px; color:var(--ink-soft); scroll-margin-top:64px; }
+h5, h6 { font-size:1rem; margin:20px 0 10px; color:var(--ink-soft); scroll-margin-top:64px; }
+.doc-title { scroll-margin-top:64px; }
 h2, h3, h4 { font-weight:700; }
 
 /* 正文 */
@@ -167,19 +186,14 @@ blockquote > p:last-child { margin-bottom:0; }
 .katex { font-size:1.05em; }
 .math.display { display:block; margin:18px 0; overflow-x:auto; overflow-y:hidden; padding:4px 0; max-width:100%; }
 span.math.inline { white-space:nowrap; overflow:visible; display:inline-block;
-                   vertical-align:middle; padding:1px 0; }
+                   vertical-align:baseline; padding:1px 0; }
 span.math.inline.math-long { white-space:normal; overflow:visible; }
 /* KaTeX 内部强制 nowrap，math-long 需覆盖让长公式换行 */
 span.math.inline.math-long .katex,
 span.math.inline.math-long .katex .base { white-space:normal !important; }
 span.math.inline.math-long .katex .base { width:auto !important; }
-/* 移动端：公式超宽时触摸可滚动，但隐藏滚动条（无滑动箭头干扰） */
-@media (max-width: 640px) {
-  span.math.inline { max-width:100%; overflow-x:auto; overflow-y:hidden;
-                     scrollbar-width:none; -ms-overflow-style:none; }
-  span.math.inline::-webkit-scrollbar { display:none; }
-  span.math.inline.math-long { max-width:100%; }
-}
+/* 注：行内公式不再使用滚动容器（overflow 非 visible 会把 inline-block 基线改为底边，
+   使公式整体偏离正文基线）；手机端超宽公式接受溢出。 */
 
 /* 表格 */
 .table-wrap { overflow-x:auto; margin:20px 0; }
@@ -277,7 +291,7 @@ sup { font-size:0.7em; color:var(--accent); }
 
 /* ===== 打印样式 ===== */
 @media print {
-  .sidebar, .sidebar-toggle, .sidebar-float-toggle, .back-top, .progress { display:none !important; }
+  .sidebar, .sidebar-toggle, .sidebar-float-toggle, .back-top, .progress, .tools { display:none !important; }
   .layout { display:block; }
   .main { padding:0; max-width:100%; }
   .doc-section { max-width:100%; margin:0 0 30px; page-break-after:always; }
@@ -303,9 +317,17 @@ sup { font-size:0.7em; color:var(--accent); }
 </style></noscript>
 </head>
 <body>
-<div class="progress" id="progress"></div>
+<a class="skip-link" href="#main">跳到正文</a>
+<div class="progress" id="progress" role="progressbar" aria-label="阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+<div class="tools" id="readTools">
+  <a href="cards.html" title="学习卡">学习卡</a>
+  <button id="fsDown" type="button" title="减小字号">A−</button>
+  <button id="fsReset" type="button" title="默认字号">A</button>
+  <button id="fsUp" type="button" title="增大字号">A+</button>
+  <button id="themeToggle" type="button" title="切换深浅色">◐</button>
+</div>
 <button class="sidebar-float-toggle" id="sidebarFloatToggle" title="目录"></button>
-<div class="whereami" id="whereami"></div>
+<div class="whereami" id="whereami" aria-live="polite"></div>
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-header">📚 目录 <span class="brand">· AI 五篇合集</span></div>
@@ -318,7 +340,7 @@ sup { font-size:0.7em; color:var(--accent); }
     </div>
     <nav class="toc" id="toc"></nav>
   </aside>
-  <main class="main">
+  <main class="main" id="main">
 {{BODY}}
   </main>
 </div>
@@ -362,6 +384,9 @@ sup { font-size:0.7em; color:var(--accent); }
         currentChapter.className = 'toc-chapter';
         const headWrapper = document.createElement('div');
         headWrapper.className = 'toc-chapter-head';
+        headWrapper.setAttribute('role', 'button');
+        headWrapper.setAttribute('tabindex', '0');
+        headWrapper.setAttribute('aria-expanded', 'false');
         headWrapper.appendChild(a);
         currentChapter.appendChild(headWrapper);
         currentChapterList = document.createElement('ul');
@@ -372,7 +397,11 @@ sup { font-size:0.7em; color:var(--accent); }
         // 注意：用局部变量捕获当前章，避免闭包引用外层最终值
         (function (chapter) {
           headWrapper.addEventListener('click', function () {
-            chapter.classList.toggle('open');
+            const open = chapter.classList.toggle('open');
+            headWrapper.setAttribute('aria-expanded', open ? 'true' : 'false');
+          });
+          headWrapper.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); headWrapper.click(); }
           });
         })(currentChapter);
       } else {
@@ -393,6 +422,21 @@ sup { font-size:0.7em; color:var(--accent); }
     });
   });
 
+  /* ===== 侧栏跟随：高亮项始终留在侧栏可视区（只滚侧栏，不动页面） ===== */
+  function keepTocActiveVisible(a) {
+    if (!a || window.innerWidth <= 1024) return;
+    const sb = document.querySelector('.sidebar');
+    if (!sb) return;
+    const ar = a.getBoundingClientRect();
+    const sr = sb.getBoundingClientRect();
+    const padTop = 56, padBottom = 32;
+    if (ar.top < sr.top + padTop) {
+      sb.scrollTop += ar.top - sr.top - padTop;
+    } else if (ar.bottom > sr.bottom - padBottom) {
+      sb.scrollTop += ar.bottom - sr.bottom + padBottom;
+    }
+  }
+
   /* ===== 滚动高亮（IntersectionObserver） ===== */
   const links = toc.querySelectorAll('a');
   const map = new Map();
@@ -408,13 +452,17 @@ sup { font-size:0.7em; color:var(--accent); }
         links.forEach(function (a) { a.classList.remove('active'); });
         const a = map.get(entry.target);
         if (a) a.classList.add('active');
-        // 自动展开当前章（收起其他章）——动态层次随阅读位置变化
+        // 自动展开当前章（收起其他章），父章标题同步着色——动态层次随阅读位置变化
         const chapter = a && a.closest('.toc-chapter');
         if (chapter) {
           toc.querySelectorAll('.toc-chapter').forEach(function (c) {
             c.classList.toggle('open', c === chapter);
+            c.classList.toggle('has-active', c === chapter);
+            const hd = c.querySelector('.toc-chapter-head');
+            if (hd) hd.setAttribute('aria-expanded', c.classList.contains('open') ? 'true' : 'false');
           });
         }
+        keepTocActiveVisible(a);
         // 联动文档切换按钮
         const sec = entry.target.closest('.doc-section');
         if (sec) {
@@ -481,6 +529,8 @@ sup { font-size:0.7em; color:var(--accent); }
         const hasMatch = c.querySelectorAll('li').length > 0 &&
           [...c.querySelectorAll('li')].some(function (li) { return li.style.display !== 'none'; });
         c.classList.toggle('open', hasMatch);
+        const hd = c.querySelector('.toc-chapter-head');
+        if (hd) hd.setAttribute('aria-expanded', hasMatch ? 'true' : 'false');
       });
     }
     // 无匹配提示
@@ -507,8 +557,12 @@ sup { font-size:0.7em; color:var(--accent); }
   }
   function updateScrollUI() {
     const st = window.scrollY;
+    // content-visibility 下文档高度随渲染增长：每次滚动重算并钳制 100%
+    docScrollRange = document.documentElement.scrollHeight - window.innerHeight;
     backTop.classList.toggle('show', st > 600);
-    progress.style.width = (docScrollRange > 0 ? (st / docScrollRange) * 100 : 0) + '%';
+    const pct = Math.min(100, docScrollRange > 0 ? (st / docScrollRange) * 100 : 0);
+    progress.style.width = pct + '%';
+    progress.setAttribute('aria-valuenow', Math.round(pct));
     scrollTicking = false;
   }
   updateDocScrollRange();
@@ -522,30 +576,90 @@ sup { font-size:0.7em; color:var(--accent); }
   }, { passive: true });
   backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 
-  /* ===== 侧边目录：自动隐藏（下滑收起 / 上滑展开）+ 悬浮开关 ===== */
+  /* ===== 锚点修正：content-visibility 未渲染章节按估计高度，直接跳转会落偏 ===== */
+  function settleAnchor(el) {
+    // 顶部余量：悬浮目录开关（☰）高约 52px，标题锚点落在其下方
+    var off = (el.matches && el.matches('h2, h3, h4, h5, h6, .doc-title')) ? 64 : 12;
+    for (var i = 0; i < 8; i++) {
+      var top = el.getBoundingClientRect().top;
+      if (Math.abs(top - off) < 8) break;
+      window.scrollBy(0, top - off);
+    }
+  }
+  function fixHashAnchor() {
+    if (!location.hash) return;
+    var el;
+    try { el = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) { return; }
+    if (!el) return;
+    var chapters = document.querySelectorAll('.chapter');
+    document.documentElement.style.scrollBehavior = 'auto';
+    for (var i = 0; i < chapters.length; i++) chapters[i].style.contentVisibility = 'visible';
+    void document.body.offsetHeight;              // 强制布局，让浏览器记住真实高度
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        settleAnchor(el);
+        for (var j = 0; j < chapters.length; j++) chapters[j].style.contentVisibility = '';
+        void document.body.offsetHeight;
+        requestAnimationFrame(function () {
+          settleAnchor(el);
+          document.documentElement.style.scrollBehavior = '';
+        });
+      });
+    });
+  }
+  window.addEventListener('load', fixHashAnchor);
+  window.addEventListener('hashchange', fixHashAnchor);
+
+  /* ===== 侧边目录：悬浮开关（手动收起/展开；滚动不自动改变状态） ===== */
   const sLayout = document.querySelector('.layout');
   document.getElementById('sidebarFloatToggle').addEventListener('click', function () {
     sLayout.classList.toggle('collapsed');
-  });
-  let sLastY = window.scrollY;
-  window.addEventListener('scroll', function () {
-    const st = window.scrollY;
-    if (st > sLastY + 24 && st > 320 && !sLayout.classList.contains('collapsed')) {
-      sLayout.classList.add('collapsed');
-    } else if (st < sLastY - 24 && sLayout.classList.contains('collapsed')) {
-      sLayout.classList.remove('collapsed');
+    if (!sLayout.classList.contains('collapsed')) {
+      keepTocActiveVisible(toc.querySelector('a.active'));
     }
-    sLastY = st;
-  }, { passive: true });
+  });
 })();
 
-/* ===== 代码高亮 ===== */
+/* ===== 字号 / 主题：localStorage 记忆；hljs 深色主题随 data-theme 切换 ===== */
 (function () {
+  var FS_KEY = 'ai-primer-fs';
+  var THEME_KEY = 'ai-primer-theme';
+  var SIZES = ['15px', '17px', '19px'];
+  function currentSize() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--fs').trim();
+    return SIZES.indexOf(v) === -1 ? '17px' : v;
+  }
+  function applySize(px) {
+    document.documentElement.style.setProperty('--fs', px);
+    try { localStorage.setItem(FS_KEY, px); } catch (e) {}
+  }
+  function step(dir) {
+    var i = SIZES.indexOf(currentSize());
+    i = Math.max(0, Math.min(SIZES.length - 1, i + dir));
+    applySize(SIZES[i]);
+  }
+  function applyTheme(t) {
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+    var link = document.getElementById('hljs-theme-dark');
+    if (link) link.media = (t === 'dark') ? 'all' : 'not all';
+  }
+  var down = document.getElementById('fsDown');
+  var reset = document.getElementById('fsReset');
+  var up = document.getElementById('fsUp');
+  var toggle = document.getElementById('themeToggle');
+  if (down) down.addEventListener('click', function () { step(-1); });
+  if (reset) reset.addEventListener('click', function () { applySize('17px'); });
+  if (up) up.addEventListener('click', function () { step(1); });
+  if (toggle) toggle.addEventListener('click', function () {
+    applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+})();
+
+/* ===== 代码高亮 + KaTeX 渲染（脚本 defer：在 DOMContentLoaded 后执行，T3 2026-10） ===== */
+document.addEventListener('DOMContentLoaded', function () {
   if (window.hljs) { hljs.highlightAll(); }
-})();
-
-/* ===== KaTeX 渲染（同步脚本已就绪，直接执行） ===== */
-(function () {
   if (window.renderMathInElement) {
     renderMathInElement(document.body, {
       delimiters: [
@@ -557,7 +671,7 @@ sup { font-size:0.7em; color:var(--accent); }
       throwOnError: false
     });
   }
-})();
+});
 
 /* ===== 术语 hover 卡片：每书首现术语包成 .term（悬浮显示释义） ===== */
 (function () {
@@ -588,6 +702,7 @@ sup { font-size:0.7em; color:var(--accent); }
         var span = document.createElement('span');
         span.className = 'term';
         span.setAttribute('data-def', def);
+        span.setAttribute('aria-label', '术语：' + def);  // 读屏可及（T2 2026-10）
         span.setAttribute('tabindex', '0');
         span.textContent = term;
         var rest = node.splitText(idx + term.length);

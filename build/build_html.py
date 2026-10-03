@@ -24,6 +24,12 @@ from pathlib import Path
 import html as html_mod
 
 import md_links
+import mdprep
+import lint_md
+import check_html
+import books
+import template_common as tc
+import selfcheck
 
 # pandoc reader 参数：harvest（md_links）与真实转换共用，保证标题 id 一字不差
 FROM_FLAGS = md_links.FROM_FLAGS
@@ -33,38 +39,18 @@ NL = chr(10)  # 行分隔符（模板/正文拼接用）
 ROOT = Path(__file__).resolve().parent.parent
 HERE = Path(__file__).resolve().parent
 HTML_DIR = ROOT / "html"
-FIG_SRC = [ROOT / "1_ai_math" / "figures", ROOT / "2_foundation" / "figures",
-           ROOT / "3_use_ai" / "figures", ROOT / "1a_diffusion" / "figures",
-           ROOT / "4_ai_law" / "figures"]
+FIG_SRC = [b.fig_dir for b in books.BOOKS]
 
-# 五篇：(md路径相对ROOT, 显示标题, doc-id)
-DOC_LABELS = ["AI数学", "基座", "用好AI", "扩散", "AI规律"]
+# 五篇：(md路径相对ROOT, 显示标题, doc-id)；常量从 books 注册表派生
+DOC_LABELS = [b.label for b in books.BOOKS]
 
-DOCS = [
-    ("1_ai_math/AI数学_从起步到前沿.md", "AI数学：从起步到前沿", "doc-1"),
-    ("2_foundation/基座模型_从咿呀到行动.md", "基座模型：从咿呀到行动", "doc-2"),
-    ("3_use_ai/用好AI_从有用到驾驭.md", "用好AI：从有用到驾驭", "doc-3"),
-    ("1a_diffusion/扩散_从噪声到生成.md", "扩散：从噪声到生成", "doc-4"),
-    ("4_ai_law/AI规律_从现象到预见.md", "AI规律：从现象到预见", "doc-5"),
-]
+DOCS = [(b.md_rel, b.title, b.doc_id) for b in books.BOOKS]
 
 # 图片重名冲突：不同子目录可能有同名 fig_*.png
-FIG_PREFIX = {
-    "1_ai_math": "aimath",
-    "1a_diffusion": "diff",
-    "2_foundation": "base",
-    "3_use_ai": "use",
-    "4_ai_law": "ailaw",
-}
+FIG_PREFIX = {b.key: b.fig_prefix for b in books.BOOKS}
 
 # 篇目录 → 书名简称（正文跨篇引用写法）
-BOOK_ALIAS = {
-    "1_ai_math": "AI数学",
-    "1a_diffusion": "扩散",
-    "2_foundation": "基座模型",
-    "3_use_ai": "用好AI",
-    "4_ai_law": "AI规律",
-}
+BOOK_ALIAS = {b.key: b.alias for b in books.BOOKS}
 
 # 跨篇引用索引：{书名: {编号(normalized): 目标标题 id}}
 HEADING_INDEX = {}
@@ -126,19 +112,9 @@ def _copy_highlight_assets(src: Path, dst: Path) -> None:
 
 
 def preprocess_md(text: str) -> str:
-    """预处理器：修正 pandoc 会误解析的语法。"""
-    # 1. 行首 --- 在段落后会被 GFM 当作 h2；转成 ***（pandoc 渲染 <hr>）
-    lines = text.split("\n")
-    out = []
-    for i, line in enumerate(lines):
-        s = line.strip()
-        if s == "---" and i > 0:
-            prev = lines[i - 1].strip()
-            if prev and not prev.startswith(("#", ">", "|", "-", "*")):
-                out.append("***")
-                continue
-        out.append(line)
-    return "\n".join(out)
+    """构建端预处理：块分隔空行保证 + 分隔符规范化（见 mdprep 模块）＋
+    非标题行的行尾稳定 ID 剥离（题目 `{#q-…}` 会被 pandoc 当字面文本渲染）。"""
+    return mdprep.prepare(mdprep.strip_nonheading_ids(text))
 
 
 def pandoc_to_html(md_text: str, cwd: Path) -> str:
@@ -164,64 +140,32 @@ def pandoc_to_html(md_text: str, cwd: Path) -> str:
 
 
 
-SELFCHECK_MARKERS = [
-    "## 附录：自检问题与答案",
-    "# 附录：自检问题与答案",
-]
-
-SELFCHECK_END_MARKERS = [
-    # AI数学 的“前沿优化器选读”附录插在自检与逻辑链之间，是正文选读内容，
-    # 必须作为自检附录的结束边界，否则会被一并裁掉（内链随之全部失效）。
-    "# 附录：前沿优化器选读",
-    "# 附录：逻辑链",
-    "> **全书完**",
-]
-
-
 def find_selfcheck_span(text: str):
-    """返回自检附录在 md 中的 [start, end)；找不到返回 None。"""
-    start = -1
-    for marker in SELFCHECK_MARKERS:
-        pos = text.find(marker)
-        if pos != -1:
-            start = pos
-            break
-    if start == -1:
-        return None
-    end = len(text)
-    for em in SELFCHECK_END_MARKERS:
-        pos = text.find(em, start + 1)
-        if pos != -1 and pos < end:
-            end = pos
-    return start, end
+    """返回自检附录在 md 中的 [start, end)；找不到返回 None。
+
+    区间 = 自检附录 H1 到下一个 H1（围栏感知）。自检之后的附录
+    （扩展题/动手路径/逻辑链/参考文献等）天然在区间之外，按正文章节保留。
+    """
+    return selfcheck._selfcheck_span_range(text)
 
 
 def remove_selfcheck_appendix(text: str) -> str:
-    """从 md 中移除独立的“自检问题与答案”附录，保留需要留存的扩展/收束内容。"""
+    """从 md 中移除独立的“自检问题与答案”附录；保留其后的附录与收束内容。"""
     span = find_selfcheck_span(text)
-    if span is not None:
-        start, end = span
-        # 3_use_ai 的“扩展题”不是正文某章的自检题，保留为文末独立练习区；
-        # 只移除与正文章节对应的自检 Q&A 附录。
-        keep_start = text.find("### 扩展题", start, end)
-        if keep_start != -1:
-            removed = text[start:keep_start]
-            tail = text[keep_start:]
-        else:
-            removed = text[start:end]
-            tail = text[end:]
+    if span is None:
+        return text
+    start, end = span
+    removed = text[start:end]
 
-        # AI数学/基座模型 的“把知识连成网”属于附录收束内容，移到正文自检区之后保留。
-        conn = re.search(
-            r'<details>\s*<summary>\s*把知识连成网.*?</details>',
-            removed,
-            re.S,
-        )
-        connection = conn.group(0) if conn else ""
+    # “把知识连成网”属于附录收束内容（连线条目），移到移除位原位保留。
+    conn = re.search(
+        r'<details>\s*<summary>\s*把知识连成网.*?</details>',
+        removed,
+        re.S,
+    )
+    connection = conn.group(0) if conn else ""
 
-        text = text[:start] + connection + '\n' + tail
-
-    return text
+    return text[:start] + connection + ('\n' if connection else '') + text[end:]
 
 
 def remove_selfcheck_toc_refs(text: str) -> str:
@@ -245,6 +189,8 @@ def parse_selfcheck_html(appendix_html: str):
         r'(<h3\b[^>]*>.*?</h3>|'
         r'<p><strong>【[^】]+】</strong></p>|'
         r'<strong>Q(\d+).*?</strong>|'
+        r'<p>Q(\d+).*?</p>|'
+        r'Q(\d+)\.[^<\n]*|'
         r'<details>.*?</details>)',
         re.S,
     )
@@ -265,10 +211,12 @@ def parse_selfcheck_html(appendix_html: str):
         elif tok.startswith('<p><strong>【'):
             gm = re.match(r'<p><strong>【([^】]+)】</strong></p>', tok)
             current_group = gm.group(1) if gm else None
-        elif tok.startswith('<strong>Q'):
+        elif tok.startswith('<strong>Q') or re.match(r'<p>Q\d', tok) or re.match(r'Q\d+\.', tok):
             if current is None:
                 continue
-            qm = re.match(r'<strong>Q(\d+)', tok)
+            qm = (re.match(r'<strong>Q(\d+)', tok)
+                  or re.match(r'<p>Q(\d+)', tok)
+                  or re.match(r'Q(\d+)\.', tok))
             if qm:
                 current["questions"].append({
                     "group": current_group,
@@ -279,19 +227,6 @@ def parse_selfcheck_html(appendix_html: str):
         elif tok.startswith('<details>'):
             sm = re.search(r'<summary>\s*(.*?)\s*</summary>', tok, re.S)
             summary = sm.group(1).strip() if sm else ""
-            cm = None
-            if current is None and sm:
-                cm = re.match(r'(?:Ch\s*(\d+)|第\s*(\d+)\s*章)\s*(提示|答案|解析)', summary)
-            if cm:
-                # ai-law 风格：无 h3 的整章答案折叠（ChN 答案/提示）→ 按章收录
-                idx = int(cm.group(1) or cm.group(2)) - 1
-                while len(chapters) <= idx:
-                    chapters.append({'heading': 'Ch%d' % (len(chapters) + 1), 'questions': [], 'group_details': []})
-                detail_content = tok[sm.end():-len('</details>')].strip() if sm else tok
-                items = extract_top_level_lis(detail_content)
-                key = 'numbered_hints' if cm.group(3) == '提示' else 'numbered_answers'
-                chapters[idx].setdefault(key, []).extend(items)
-                continue
             content = tok[sm.end():-len('</details>')].strip() if sm else tok
             if current is None:
                 continue
@@ -331,81 +266,6 @@ def extract_selfcheck_data(md_text: str, cwd: Path):
     segment = md_text[start:end]
     appendix_html = pandoc_to_html(segment, cwd)
     return parse_selfcheck_html(appendix_html)
-
-
-def extract_top_level_lis(fragment: str):
-    """提取 HTML 片段中 <ol> 下的顶层 <li> 内部 HTML，并把随后的 <ul> 补充到对应编号项。
-
-    用于把整组答案拆到每题；只把有序列表的编号项当作一道题，<ul> 子要点并入前一项。
-    """
-    # 1. 先找所有 <ol> 块，提取其中的编号 <li>
-    ol_blocks = []
-    for m in re.finditer(r'<ol\b', fragment):
-        end_ol = fragment.find('</ol>', m.end())
-        if end_ol == -1:
-            continue
-        ol_blocks.append((m.start(), end_ol + len('</ol>')))
-    if not ol_blocks:
-        return []
-
-    def _ol_lis(block: str):
-        events = []
-        for m in re.finditer(r'<li\b', block):
-            tag_end = block.find('>', m.end())
-            events.append((m.start(), "li_start", tag_end + 1 if tag_end != -1 else m.end()))
-        for m in re.finditer(r'</li>', block):
-            events.append((m.start(), "li_end", m.end()))
-        for m in re.finditer(r'<ol\b', block):
-            events.append((m.start(), "ol_start", m.end()))
-        for m in re.finditer(r'</ol>', block):
-            events.append((m.start(), "ol_end", m.end()))
-        for m in re.finditer(r'<ul\b', block):
-            events.append((m.start(), "ul_start", m.end()))
-        for m in re.finditer(r'</ul>', block):
-            events.append((m.start(), "ul_end", m.end()))
-        events.sort(key=lambda x: x[0])
-        list_stack = []
-        depth = 0
-        start_content = None
-        items = []
-        for pos, typ, end in events:
-            if typ == "ol_start":
-                list_stack.append("ol")
-            elif typ == "ul_start":
-                list_stack.append("ul")
-            elif typ == "ol_end":
-                if list_stack and list_stack[-1] == "ol":
-                    list_stack.pop()
-            elif typ == "ul_end":
-                if list_stack and list_stack[-1] == "ul":
-                    list_stack.pop()
-            elif typ == "li_start":
-                if depth == 0 and list_stack and list_stack[-1] == "ol":
-                    start_content = end
-                depth += 1
-            elif typ == "li_end":
-                depth -= 1
-                if depth == 0 and start_content is not None:
-                    items.append(block[start_content:pos].strip())
-                    start_content = None
-        return items
-
-    items = []
-    for i, (start_ol, end_ol) in enumerate(ol_blocks):
-        block = fragment[start_ol:end_ol]
-        block_items = _ol_lis(block)
-        if not block_items:
-            continue
-        next_start = ol_blocks[i + 1][0] if i + 1 < len(ol_blocks) else len(fragment)
-        tail = fragment[end_ol:next_start]
-        # 把该编号项后面紧跟的 <ul> 子要点并入最后一项
-        ul_tail = ""
-        for um in re.finditer(r'<ul\b.*?</ul>', tail, re.S):
-            ul_tail += um.group(0)
-        if ul_tail:
-            block_items[-1] = block_items[-1] + "\n" + ul_tail
-        items.extend(block_items)
-    return items
 
 
 def collect_body_slots(region: str):
@@ -518,7 +378,7 @@ def beautify_bubble(html):
 
 
 _EXT_QA_RE = re.compile(
-    r'(<p><strong>Q\d+\..*?</strong></p>)\s*'
+    r'(<p>(?:<strong>)?Q\d+\..*?(?:</strong>)?</p>)\s*'
     r'<details>\s*<summary>\s*卡住再看提示\s*</summary>(?P<hint>.*?)</details>\s*'
     r'<details>\s*<summary>\s*答案\s*</summary>(?P<answer>.*?)</details>',
     re.S,
@@ -527,11 +387,11 @@ _EXT_QA_RE = re.compile(
 
 def convert_extended_popups(html: str) -> str:
     """把“扩展题”区的 details 提示/答案转成与其余自检一致的弹出按钮。"""
-    m = re.search(r'<h[1-6][^>]*data-label="扩展题"[^>]*>扩展题</h[1-6]>', html)
+    m = re.search(r'<h[1-6][^>]*data-label="[^"]*扩展题"[^>]*>.*?</h[1-6]>', html)
     if not m:
         return html
     start = m.end()
-    nxt = re.search(r'<h1\b', html[start:])
+    nxt = re.search(r'<h[1-6]\b', html[start:])
     end = start + nxt.start() if nxt else len(html)
 
     def repl(qm):
@@ -556,22 +416,28 @@ def make_popup(hint_html, answer_html):
     return "".join(parts)
 
 
-def find_question(chapter, slot):
-    """按 group+number（或仅 number）在 per_q 章节中查找对应题目。"""
+def pair_questions(chapter, slots):
+    """按组内出现顺序把题槽与 Q&A 配对（不依赖编号风格：正文可能跨组连续编号）。
+
+    两侧顺序同源（正文题序与附录题序一致，由 selfcheck 守恒校验兜底），
+    因此组内逐位配对比编号配对更稳；编号漂移由 lint 的 number-mismatch 监控。
+    """
     questions = chapter.get("questions", [])
-    if not questions:
-        return None
-    has_groups = any(q.get("group") for q in questions)
-    if has_groups:
-        return next(
-            (
-                q for q in questions
-                if (q.get("group") or "") == (slot.get("group") or "")
-                and q["number"] == slot["number"]
-            ),
-            None,
-        )
-    return next((q for q in questions if q["number"] == slot["number"]), None)
+    by_group = {}
+    for q in questions:
+        by_group.setdefault(q.get("group"), []).append(q)
+    used = {}
+    pairs = []
+    for slot in slots:
+        g = slot.get("group")
+        pool = by_group.get(g)
+        if pool is None:
+            pool = by_group.get(None, [])
+        i = used.get(g, 0)
+        if i < len(pool):
+            pairs.append((slot, pool[i]))
+            used[g] = i + 1
+    return pairs
 
 
 def inject_selfcheck_popups(html: str, qa_data):
@@ -590,75 +456,18 @@ def inject_selfcheck_popups(html: str, qa_data):
         slots = collect_body_slots(region)
 
         insertions = []
-        if chapter.get("questions"):
-            for slot in slots:
-                q = find_question(chapter, slot)
-                if q is None:
-                    continue
-                popup = make_popup(q.get("hint"), q.get("answer"))
-                if not popup:
-                    continue
-                insert_at = slot["end"]
-                insertions.append((region_start + insert_at, popup))
-        elif chapter.get("numbered_answers") or chapter.get("numbered_hints"):
-            # ai-law 风格：题目与答案两侧各 1..N 同序，按位置配对（题目经 <ol start> 全局编号）
-            answers = chapter.get("numbered_answers") or []
-            hints = chapter.get("numbered_hints") or []
-            for j, slot in enumerate(slots):
-                ans_html = answers[j] if j < len(answers) else None
-                hint_html = hints[j] if j < len(hints) else None
-                popup = make_popup(hint_html, ans_html)
-                if popup:
-                    insertions.append((region_start + slot["end"], popup))
-        else:
-            # AI 数学等没有 Q 编号、以整组 details 出现的章节：
-            # 把提示/答案的 <li> 按组切分，逐题插入。
-            hint_items = None
-            for d in chapter.get("group_details", []):
-                if "提示" in d["summary"]:
-                    hint_items = extract_top_level_lis(d["content"])
-                    break
-
-            consumed = {}
-            group_names = []
-            for slot in slots:
-                if slot["group"] not in group_names:
-                    group_names.append(slot["group"])
-            for gname in group_names:
-                gslots = [s for s in slots if s["group"] == gname]
-                if not gslots:
-                    continue
-                answer_key = None
-                if gname and "逻辑链" in gname:
-                    answer_key = "逻辑链答案"
-                elif gname and ("知识点" in gname or "Attention" in gname or "组装" in gname):
-                    answer_key = "知识点答案"
-                elif gname is None:
-                    answer_key = "知识点答案"
-
-                ans_items = []
-                if answer_key:
-                    for d in chapter.get("group_details", []):
-                        if answer_key in d["summary"]:
-                            ans_items = extract_top_level_lis(d["content"])
-                            break
-
-                offset = consumed.get(answer_key, 0)
-                use_hint = bool(
-                    gname and ("知识点" in gname or "Attention" in gname or "组装" in gname)
-                ) or (gname is None and answer_key == "知识点答案")
-                for j, slot in enumerate(gslots):
-                    hint_html = None
-                    if use_hint and hint_items and offset + j < len(hint_items):
-                        hint_html = hint_items[offset + j]
-                    ans_html = None
-                    if ans_items and offset + j < len(ans_items):
-                        ans_html = ans_items[offset + j]
-                    popup = make_popup(hint_html, ans_html)
-                    if popup:
-                        insert_at = slot["end"]
-                        insertions.append((region_start + insert_at, popup))
-                consumed[answer_key] = offset + len(gslots)
+        if not chapter.get("questions"):
+            continue
+        pairs = pair_questions(chapter, slots)
+        if len(pairs) != len(slots):
+            raise RuntimeError(
+                f"自检配对不完整（第 {idx + 1} 区）：题槽 {len(slots)}，配对 {len(pairs)}")
+        for slot, q in pairs:
+            popup = make_popup(q.get("hint"), q.get("answer"))
+            if not popup:
+                continue
+            insert_at = slot["end"]
+            insertions.append((region_start + insert_at, popup))
         for pos, snippet in sorted(insertions, key=lambda x: x[0], reverse=True):
             html = html[:pos] + snippet + html[pos:]
 
@@ -733,7 +542,7 @@ def bump_headings(html: str, new_doc_id: str) -> str:
         label = label.replace(r"\(", "").replace(r"\)", "").replace(r"\[", "").replace(r"\]", "")
         label = convert_latex(label)
         label = label.strip()
-        attrs += f' data-label="{label}"'
+        attrs += f' data-label="{html_mod.escape(label, quote=True)}"'
         return f"<{tag}{attrs}>{inner}</{tag}>"
 
     # 先统一加前缀（所有标题）
@@ -780,6 +589,33 @@ def wrap_chapters(html: str) -> str:
         out.append('<section class="chapter">' + "".join(buf) + '</section>')
     return "".join(out)
 
+KATEX_NEEDED = ["katex.min.css", "katex.min.js", "contrib/auto-render.min.js"]
+KATEX_UNUSED = ["katex.js", "katex.mjs", "katex.css", "README.md"]
+
+
+def _katex_ready(dst: Path) -> bool:
+    version = (dst / "VERSION")
+    if not version.exists() or version.read_text(encoding="utf-8").strip() != KATEX_VERSION:
+        return False
+    return all((dst / f).exists() for f in KATEX_NEEDED) and (dst / "fonts").is_dir()
+
+
+def _copy_katex_assets(src: Path, dst: Path) -> None:
+    """只复制页面实际加载的文件（min.css/js + auto-render + fonts），并写版本戳。"""
+    dst.mkdir(parents=True, exist_ok=True)
+    for f in ("katex.min.css", "katex.min.js"):
+        shutil.copy2(src / f, dst / f)
+    contrib = src / "contrib"
+    (dst / "contrib").mkdir(exist_ok=True)
+    shutil.copy2(contrib / "auto-render.min.js", dst / "contrib" / "auto-render.min.js")
+    fonts_src, fonts_dst = src / "fonts", dst / "fonts"
+    if fonts_src.is_dir():
+        shutil.copytree(fonts_src, fonts_dst, dirs_exist_ok=True)
+    for name in KATEX_UNUSED:                      # 历史整包复制的冗余文件
+        (dst / name).unlink(missing_ok=True)
+    (dst / "VERSION").write_text(KATEX_VERSION + "\n", encoding="utf-8")
+
+
 def ensure_frontend_assets() -> None:
     """Ensure html/katex and html/highlight exist, auto-installing via npm if needed."""
     katex_dst = HTML_DIR / "katex"
@@ -797,26 +633,26 @@ def ensure_frontend_assets() -> None:
         NPM_CACHE_DIR / "node_modules" / "@highlightjs" / "cdn-assets",
     ]
 
-    # 如果目标已有产物则跳过；否则若所有本地源都缺失，自动用 npm 安装缺失项
+    # 目标缺失或版本过期且本地无源时，用 npm 自动安装
     missing_packages = []
-    if not katex_dst.exists() and not any(p.exists() for p in katex_candidates):
+    if not _katex_ready(katex_dst) and not any(p.exists() for p in katex_candidates):
         missing_packages.append(f"katex@{KATEX_VERSION}")
-    if not hljs_dst.exists() and not any(p.exists() for p in hljs_candidates):
+    if not (hljs_dst / "highlight.min.js").exists() and not any(p.exists() for p in hljs_candidates):
         missing_packages.append(f"@highlightjs/cdn-assets@{HLJS_VERSION}")
     if missing_packages:
         _npm_install(missing_packages)
 
-    if katex_dst.exists():
-        print(f"✓ KaTeX 已存在（{katex_dst}），跳过复制")
+    if _katex_ready(katex_dst):
+        print(f"✓ KaTeX 已存在且版本匹配（{KATEX_VERSION}），跳过复制")
     else:
         katex_src = next((p for p in katex_candidates if p.exists()), None)
         if katex_src is None:
             raise RuntimeError("KaTeX 源不可用，无法生成完整 HTML。请检查 npm 安装或恢复 vendor/。")
-        shutil.copytree(katex_src, katex_dst)
-        print(f"✓ 复制 KaTeX 到 html/katex/")
+        _copy_katex_assets(katex_src, katex_dst)
+        print(f"✓ 复制 KaTeX {KATEX_VERSION} 到 html/katex/（仅所需文件）")
 
     # 复制 highlight.js（代码高亮，本地化）
-    if hljs_dst.exists():
+    if (hljs_dst / "highlight.min.js").exists():
         print(f"✓ highlight.js 已存在（{hljs_dst}），跳过复制")
     else:
         hljs_src = next((p for p in hljs_candidates if p.exists()), None)
@@ -906,7 +742,31 @@ def fix_image_tags(html: str, fig_prefix: str) -> str:
         if dim:
             attrs += f' width="{dim[0]}" height="{dim[1]}"'
         return f'<img src="figures/{fig_prefix}_{src}"{rest}{attrs} />'
-    return re.sub(r'<img src="figures/([^"]*)"([^><]*)>', _img_repl, html)
+    return re.sub(r'<img src="(?:\./)?figures/([^"]*)"([^><]*)>', _img_repl, html)
+
+
+def wrap_takeaways(html: str) -> str:
+    """本章回顾 → 要点卡（自检题区留在卡片之外，避免卡片吞掉交互题）。"""
+    pattern = re.compile(
+        r'(<h3\b[^>]*data-label="[^"]*本章回顾"[^>]*>.*?</h3>)(.*?)(?=<h[23]\b|\Z)',
+        re.S)
+    marker = '<p><strong>本章自检</strong>'
+
+    def repl(m):
+        content = m.group(2)
+        cut = content.find(marker)
+        if cut == -1:
+            return f'<section class="takeaway">{m.group(1)}{content}</section>'
+        return (f'<section class="takeaway">{m.group(1)}{content[:cut]}</section>'
+                + content[cut:])
+
+    return pattern.sub(repl, html)
+
+
+def wrap_callouts(html: str) -> str:
+    """阅读型 callout：本章回顾 → 要点卡。"""
+    html = wrap_takeaways(html)
+    return html
 
 
 def index_headings(html_frag: str, book: str) -> None:
@@ -955,12 +815,29 @@ def rewrite_cross_refs(body: str) -> str:
     return "".join(out)
 
 
+def reading_stats(md_text: str) -> str:
+    """构建端估算篇幅与阅读时长（去代码/公式/标记后的正文字符数，约 350 字/分钟）。"""
+    s = re.sub(r'\s*\{#[^}\s]+\}', '', md_text)      # 稳定 ID 不是正文（编号方案三件套）
+    s = re.sub(r'```.*?```', '', s, flags=re.S)
+    s = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', s)
+    s = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', s)
+    s = re.sub(r'\$\$.*?\$\$', '', s, flags=re.S)
+    s = re.sub(r'\$[^$\n]*\$', '', s)
+    s = re.sub(r'<[^>]+>', '', s)
+    s = re.sub(r'[#>*_`|~\-\s〔〕]', '', s)   # 〔〕 是绑定的机器标点，不算篇幅
+    n = len(s)
+    mins = max(1, round(n / 350))
+    amount = f'{n/10000:.1f} 万字' if n >= 10000 else f'{n} 字'
+    return f'全文约 {amount} · 阅读约 {mins} 分钟'
+
+
 def render_doc(md_rel: str, title: str, doc_id: str) -> str:
     """单篇 md → doc-section 块 HTML（完整流水线）。"""
     md_path = ROOT / md_rel
     fig_prefix = FIG_PREFIX[md_rel.split("/")[0]]
 
     text = md_path.read_text(encoding="utf-8")
+    meta_line = reading_stats(text)
     qa_data = extract_selfcheck_data(text, md_path.parent)
     text = remove_selfcheck_appendix(text)
     text = remove_selfcheck_toc_refs(text)
@@ -981,10 +858,12 @@ def render_doc(md_rel: str, title: str, doc_id: str) -> str:
     html = mark_long_math(html)
     html = fix_image_tags(html, fig_prefix)
     html = remove_doc_title_heading(html, title)
+    html = wrap_callouts(html)
     html = wrap_chapters(html)
 
     section = f'<section class="doc-section" id="{doc_id}" data-title="{title}">\n'
     section += f'<h1 class="doc-title" id="{doc_id}-title">{title}</h1>\n'
+    section += f'<p class="doc-meta">{meta_line}</p>\n'
     section += html
     section += "</section>"
     print(f"✓ {md_rel} → HTML ({len(html)} chars)")
@@ -994,7 +873,16 @@ def main():
     ap = argparse.ArgumentParser(description="构建 AI 五篇合集单页 HTML")
     ap.add_argument("--out", default=str(HTML_DIR / "index.html"),
                     help="输出文件路径（默认 html/index.html）")
+    ap.add_argument("--no-lint", action="store_true",
+                    help="跳过 md 结构 lint（仅应急用）")
+    ap.add_argument("--no-verify", action="store_true",
+                    help="跳过产物校验（仅应急用）")
     args = ap.parse_args()
+
+    if not args.no_lint:
+        findings = lint_md.lint_paths([md_rel for md_rel, _, _ in DOCS])
+        if lint_md.report(findings):
+            raise SystemExit("md 结构 lint 未通过；修复源稿后重试（或 --no-lint）")
 
     HTML_DIR.mkdir(exist_ok=True)
     (HTML_DIR / "figures").mkdir(exist_ok=True)
@@ -1020,13 +908,25 @@ def main():
         _json.loads((HERE / "glossary.json").read_text(encoding="utf-8"))["terms"],
         ensure_ascii=False)
     html_out = (
-        TEMPLATE.replace("{{BODY}}", body)
+        TEMPLATE.replace("{{COMMON_HEAD}}", tc.COMMON_HEAD)
+                .replace("{{BODY}}", body)
                 .replace("{{DOC_BTNS}}", doc_btns)
                 .replace("{{GLOSSARY}}", _glossary)
     )
+    for _ph in ("{{COMMON_HEAD}}", "{{BODY}}", "{{DOC_BTNS}}", "{{GLOSSARY}}"):
+        if _ph in html_out:
+            raise RuntimeError(f"模板占位符未替换：{_ph}（检查 template.html 与 build_html.py 契约）")
     out = Path(args.out)
     out.write_text(html_out, encoding="utf-8", newline="\n")
     print(f"✓ 输出 {out} ({out.stat().st_size/1024:.0f} KB)")
+
+    if not args.no_verify:
+        issues = check_html.check(out)
+        if issues:
+            for issue in issues:
+                print(f"✗ {issue}")
+            raise SystemExit(f"HTML 产物校验未通过（{len(issues)} 项）")
+        print("✓ HTML 产物校验通过")
 
 
 def _load_template() -> str:

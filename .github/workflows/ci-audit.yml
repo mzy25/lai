@@ -1,0 +1,84 @@
+name: CI Audit
+
+# 本工作流只做**根仓库自足**的门禁。理由（2026-10-03 实测）：
+# internal/ 与 .opencode/ 是两个独立 git repo，既不在根仓跟踪范围内，也没有远程
+# （`git ls-files internal/` 为空），GitHub 的干净 checkout 里根本没有这些仪器脚本。
+# 因此"全仪器套件"（internal/tools/audit_all.py --full）**无法**在此工作流内运行，
+# 除非先决定这两个仓如何发布（见 internal/notes/B2c_首现裁读_20261002.md §7 待决）。
+# 现在落地的是根仓自足的两道：结构硬断言 + 产物新鲜度。
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  structure:
+    name: 结构硬断言
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 环境读数（诊断用）
+        run: |
+          python3 -V
+          git --version
+      # lint_md 是纯 stdlib + 本地模块，错误即结构违规（标题层级/details 配对/
+      # 答案缩进等）。exit code 非 0 即红。
+      - name: lint_md
+        run: python3 build/lint_md.py
+
+  artifacts:
+    name: 产物新鲜度
+    runs-on: ubuntu-24.04
+    # TODO(ci): 首轮跑通后去掉 continue-on-error，转为硬门禁。
+    # 之所以先"咨询态"：pandoc / KaTeX / Python 版本与本机不完全一致时会产生
+    # **假红**（内容其实没变）。在 GitHub 上亲眼见到一次全绿后再收紧。
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # build/style_docx.py 需要 python-docx + lxml（唯一非 stdlib 依赖，实测：
+      # 缺任一个 → build_docx 在 style_docx 步非零退出）。版本对齐本机 .venv，
+      # 否则 docx 产出字节可能与入库产物不一致（门禁假红）。
+      - name: 安装 DOCX 依赖
+        # --break-system-packages：ubuntu-24.04 的系统 pip 受 PEP 668 限制；
+        # CI 容器用后即弃，加此旗标可兼容 setup-python/系统两种解释器。
+        run: python3 -m pip install --disable-pip-version-check --break-system-packages "python-docx==1.2.0" "lxml==6.1.1"
+      - name: 安装 pandoc 3.1.3（对齐本机；apt 版本更旧会让 HTML 产出不一致）
+        run: |
+          set -euo pipefail
+          url=https://github.com/jgm/pandoc/releases/download/3.1.3/pandoc-3.1.3-linux-amd64.tar.gz
+          curl -fsSL "$url" -o /tmp/pandoc.tar.gz
+          tar -xzf /tmp/pandoc.tar.gz -C /tmp
+          sudo install -m755 /tmp/pandoc-3.1.3/bin/pandoc /usr/local/bin/pandoc
+          pandoc --version | head -1
+      - name: 环境读数（诊断用）
+        run: |
+          python3 -V
+          pandoc --version | head -1
+          node --version
+          npm --version
+      # vendor/（KaTeX、highlight.js）不入库，build_html 会用 npm 自动装到临时目录。
+      - name: 重建产物
+        run: |
+          set -euo pipefail
+          python3 build/build_html.py
+          python3 build/build_docx.py
+          python3 build/build_cards.py
+          python3 build/check_cards.py
+      # 与 HEAD 比对：html/cards 逐字节；docx 逐 zip 条目但跳过 docProps（pandoc 写时间戳）。
+      - name: 产物新鲜度门禁
+        run: python3 build/check_artifact_fresh.py

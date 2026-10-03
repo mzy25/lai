@@ -19,6 +19,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import md_links
+import mdprep
+import lint_md
+import heading_check
+import books
+import selfcheck
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -40,12 +45,11 @@ class Chapter:
 
 
 # Output: intermediate raw docx in chapter folder, reference docx in docs/
+# 书册元数据从 build/books.py 注册表派生（单一事实源）
 CHAPTERS = [
-    Chapter("1_ai_math", "1_ai_math", "AI数学_从起步到前沿.md", "AI数学_从起步到前沿_raw.docx", str(ROOT / "docs" / "AI数学_从起步到前沿.docx"), "AI数学：从起步到前沿", "# 附录：自检问题与答案"),
-    Chapter("1a_diffusion", "1a_diffusion", "扩散_从噪声到生成.md", "扩散_从噪声到生成_raw.docx", str(ROOT / "docs" / "扩散_从噪声到生成.docx"), "扩散：从噪声到生成", "# 附录：自检问题与答案"),
-    Chapter("2_foundation", "2_foundation", "基座模型_从咿呀到行动.md", "基座模型_从咿呀到行动_raw.docx", str(ROOT / "docs" / "基座模型_从咿呀到行动.docx"), "基座模型：从咿呀到行动", "# 附录：自检问题与答案"),
-    Chapter("3_use_ai", "3_use_ai", "用好AI_从有用到驾驭.md", "用好AI_从有用到驾驭_raw.docx", str(ROOT / "docs" / "用好AI_从有用到驾驭.docx"), "用好AI：从有用到驾驭", "# 附录：自检问题与答案"),
-    Chapter("4_ai_law", "4_ai_law", "AI规律_从现象到预见.md", "AI规律_从现象到预见_raw.docx", str(ROOT / "docs" / "AI规律_从现象到预见.docx"), "AI规律：从现象到预见", "# 附录：自检问题与答案"),
+    Chapter(b.key, b.key, b.markdown, b.raw_docx_name, str(b.docx_path),
+            b.title, books.SELFCHECK_HEADING)
+    for b in books.BOOKS
 ]
 
 
@@ -57,13 +61,10 @@ def preprocess_self_check(text: str, split_marker: str) -> str:
     appendix.  <details> blocks in chapter bodies are expanded inline
     (bold title + content) so they render properly in docx.
     """
-    # Replace standalone --- separators (not YAML frontmatter) with * * *
-    # to prevent pandoc's yaml_metadata_block from eating sections containing
-    # colon-bearing lines (e.g. "doi: 10.1038/...") between two --- delimiters.
-    # NOTE: \s* would also swallow the blank line after ---, merging the
-    # separator with a following heading (pandoc then treats the heading as a
-    # paragraph continuation). Match only the newline itself:
-    text = re.sub(r'(?<=\n)---[^\S\n]*\n(?!$)', '* * *\n', text)
+    # 预处理：块分隔空行保证 + 分隔符统一（与 HTML 管线共用 mdprep）。
+    # 旧版这里单独把 --- 换成 * * *；现行方案是两条管线同一函数，且构建前
+    # 已由 lint_md 保证源稿干净。
+    text = mdprep.prepare(text)
 
     # Split at self-check section: chapter body vs Q&A section
     split_pos = text.find(split_marker)
@@ -72,11 +73,25 @@ def preprocess_self_check(text: str, split_marker: str) -> str:
         # No self-check section — just expand all <details> inline
         return _expand_details_inline(text)
 
-    chapter_text = text[:split_pos]
-    qa_text = text[split_pos:]
+    # 自检区终点 = 之后的第一个 H1（围栏感知）。自检区之后的附录（如
+    # 「前沿优化器选读」）里的 details 是正文深层折叠，应内联展开，
+    # 不能当作自检答案搬去页尾。
+    # 「附录：扩展题」与自检同族（题在正文侧、答案延迟到页尾），并入提取区。
+    section_end = len(text)
+    in_fence = False
+    for off, line in markdown_scanner_offsets(text, split_pos + len(split_marker)):
+        if re.match(r'^\s*(```|~~~)', line):
+            in_fence = not in_fence
+            continue
+        if not in_fence and re.match(r'^#\s', line):
+            if line.strip() == '# 附录：扩展题':
+                continue
+            section_end = off
+            break
 
-    # Expand chapter-body <details> inline
-    chapter_text = _expand_details_inline(chapter_text)
+    before = _expand_details_inline(text[:split_pos])
+    qa_text = text[split_pos:section_end]
+    after = _expand_details_inline(text[section_end:])
 
     # Extract Q&A <details> blocks into answer appendix.
     # 跳过"提示"折叠（summary 含"提示"）：提示是支架，保留在题目区；
@@ -103,7 +118,7 @@ def preprocess_self_check(text: str, split_marker: str) -> str:
     questions_only = pattern.sub(_extract, qa_text)
 
     if not answers:
-        return chapter_text + questions_only
+        return before + questions_only + after
 
     # Build answer section with page break before it
     answer_section = (
@@ -113,7 +128,15 @@ def preprocess_self_check(text: str, split_marker: str) -> str:
         + "\n\n".join(answers)
     )
 
-    return chapter_text + questions_only + answer_section
+    return before + questions_only + after + answer_section
+
+
+def markdown_scanner_offsets(text: str, start: int):
+    """从 start 起逐 (字符偏移, 行) 产出（供围栏感知的块边界扫描）。"""
+    pos = start
+    for line in text[start:].split('\n'):
+        yield pos, line
+        pos += len(line) + 1
 
 
 def _expand_details_inline(text: str) -> str:
@@ -148,6 +171,7 @@ def build_chapter(chapter: Chapter) -> None:
 
     # Preprocess: separate self-check questions and answers with page break
     processed = preprocess_self_check(md_text, chapter.self_check_marker)
+    processed = mdprep.strip_nonheading_ids(processed)   # 题目行尾 {#q-…} 不渲染
     processed = md_links.normalize_citations(processed)
     # 内链修复：目录锚点 → pandoc 实际 id（与 HTML 管线共用，保证书签/链接一致）
     processed, link_warnings, _ = md_links.fix_internal_links(
@@ -229,24 +253,73 @@ def verify_chapter(chapter: Chapter) -> bool:
         anchors = re.findall(r'<w:hyperlink[^>]*w:anchor="([^"]+)"', xml)
         dead_anchors = [a for a in anchors if _norm(a) not in bookmarks]
 
-    ok = not missing_images and media_count >= len(image_refs) and not dead_anchors
+        # 散文误落代码样式：SourceCode 段含 $ 与中文（details 缩进残渣，2026-10-02）
+        prose_code = 0
+        for pm in re.finditer(r'<w:p\b[^>]*>.*?</w:p>', xml, re.S):
+            para = pm.group(0)
+            if 'w:val="SourceCode"' not in para:
+                continue
+            txt = re.sub(r'<[^>]+>', '', para)
+            # 成对 $…$ ＋中文（shell `$VAR` 等合法代码不误伤；2026-10-02 收窄）
+            if re.search(r'\$[^$\n]{1,120}\$', txt, re.S) and re.search(r'[\u4e00-\u9fff]', txt):
+                prose_code += 1
+        prose_code_issues = ([f'docx 代码样式段含中文+$ 散文 {prose_code} 段']
+                             if prose_code else [])
+        math_issues = ([f'docx 公式渲染缺失：源稿含 $…$ 但 OMML 计数为 0（math-count gate）']
+                       if ('$' in text and math_count == 0) else [])
+
+    # 标题完整性：md 标题（含书名标题与自检附录题群）必须都落在 docx Heading 里
+    heading_issues = heading_check.check_docx(md_path, docx_path)
+
+    # 答案完整性：页尾 A 段数 == 自检附录答案数 + 扩展题答案数（源自 selfcheck 模型）
+    expected_answers = (
+        sum(1 for ch in selfcheck.parse_appendix(text) for r in ch.records if r.answer)
+        + sum(1 for r in selfcheck.extra_records(text) if r.answer))
+    actual_answers = _count_docx_answers(docx_path)
+    answer_issues = []
+    if actual_answers != expected_answers:
+        answer_issues.append(
+            f'docx 答案数 {actual_answers} ≠ 期望 {expected_answers}')
+    pagebreak_issues = []
+    if actual_answers and 'w:pageBreakBefore' not in xml:
+        pagebreak_issues.append('docx 答案区缺分页（pageBreakBefore）——翻页隔离失效')
+
+    ok = (not missing_images and media_count >= len(image_refs)
+          and not dead_anchors and not heading_issues and not answer_issues
+          and not prose_code_issues and not math_issues and not pagebreak_issues)
     status = "OK" if ok else "FAIL"
     print(
         f"{status} {chapter.key}: images={media_count}/{len(image_refs)} "
         f"drawings={drawing_count} tables={table_count} math={math_count} "
-        f"links={len(anchors)}/{len(anchors) - len(dead_anchors)} headers={headers}"
+        f"links={len(anchors)}/{len(anchors) - len(dead_anchors)} "
+        f"answers={actual_answers}/{expected_answers} headers={headers}"
     )
     if missing_images:
         print(f"  missing images: {missing_images}")
     if dead_anchors:
         print(f"  dead anchors: {dead_anchors}")
+    for issue in heading_issues + answer_issues + prose_code_issues + math_issues + pagebreak_issues:
+        print(f"  {issue}")
     return ok
+
+
+def _count_docx_answers(docx_path: Path) -> int:
+    """统计页尾答案段（段首 'A<数字>：'）数量。"""
+    with zipfile.ZipFile(docx_path) as zf:
+        xml = zf.read("word/document.xml").decode("utf-8", errors="ignore")
+    n = 0
+    for m in re.finditer(r'<w:p\b.*?</w:p>', xml, re.S):
+        txt = ''.join(re.findall(r'<w:t[^>]*>([^<]*)</w:t>', m.group(0)))
+        if re.match(r'^A\d+[：:]', txt):
+            n += 1
+    return n
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build and verify styled DOCX outputs.")
     parser.add_argument("chapters", nargs="*", help="Chapter keys to build: " + ", ".join(c.key for c in CHAPTERS))
     parser.add_argument("--verify-only", action="store_true", help="Skip pandoc/style rebuild and only verify existing DOCX files.")
+    parser.add_argument("--no-lint", action="store_true", help="跳过 md 结构 lint（仅应急用）")
     args = parser.parse_args()
 
     selected = CHAPTERS
@@ -256,6 +329,13 @@ def main() -> int:
         unknown = wanted - {chapter.key for chapter in CHAPTERS}
         if unknown:
             print("Unknown chapter(s): " + ", ".join(sorted(unknown)), file=sys.stderr)
+            return 2
+
+    if not args.no_lint:
+        findings = lint_md.lint_paths(
+            [f"{c.folder}/{c.markdown}" for c in selected])
+        if lint_md.report(findings):
+            print("md 结构 lint 未通过；修复源稿后重试（或 --no-lint）", file=sys.stderr)
             return 2
 
     if not args.verify_only:
