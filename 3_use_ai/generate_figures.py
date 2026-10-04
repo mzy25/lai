@@ -1,6 +1,6 @@
 """《用好AI：从有用到驾驭》配套可视化图表
 18张图：POMDP循环 / Harness六层 / Agent Loop运行时剖面 / 规划四诊断 / ReAct循环 / 工具五步管道
-        / 四类失效映射 / 成熟度梯度 / 上下文窗口 / 约束硬度梯度 / 数字vs具身 / 多Agent拓扑
+        / 四类失效映射 / 现状与缺口 / 上下文窗口 / 约束硬度梯度 / 数字vs具身 / 多Agent拓扑
         / AgentFail分类 / 自演化三路线 / 后训练阶段图谱 / 训练时vs推理时
         / 控制范式四阶段 / 状态图示意
 风格：轻填充、粗边框、低饱和度、高清晰度
@@ -194,95 +194,104 @@ def fig_ch3_six_layer_stack():
         ax.text(3.5, y-0.5, pomdp, fontsize=8, ha='left', va='center', color=border,
                 style='italic', zorder=9)
 
-    # 右侧成熟度箭头
-    ax.annotate('', xy=(10, 11), xytext=(10, 1),
-                arrowprops=dict(arrowstyle='->', color=p['text'], lw=2.5))
-    ax.text(10.5, 6, '越\n往\n上\n越\n不\n成\n熟', fontsize=10, fontweight='bold', ha='center',
-            va='center', color=p['text'], linespacing=1.6)
-
-    # 左侧标签
-    ax.text(0.5, 10, '缺\n口\n集\n中', fontsize=10, fontweight='bold', ha='center',
-            va='center', color=p['danger'], linespacing=1.6)
-    ax.text(0.5, 3, '成\n熟\n稳\n定', fontsize=10, fontweight='bold', ha='center',
-            va='center', color=p['success'], linespacing=1.6)
-
     ax.text(5.5, 12.5, 'Harness 六层：可靠产出的必要条件',
             fontsize=15, fontweight='bold', ha='center', va='center', color=p['text'])
     return save(fig, 'fig_ch3_six_layer_stack.png')
 
 
 # ============================================================
-# 图12：栈成熟度梯度
+# 图12：六层现状与缺口
 # ============================================================
-def fig_ch6_maturity_gradient():
-    """Harness 六层成熟度梯度"""
-    fig, ax = plt.subplots(figsize=(14, 10))
-    ax.set_xlim(-1, 14)
-    ax.set_ylim(-2.35, 10.4)
+def fig_ch6_status_gap():
+    """Harness 六层现状与缺口（状态卡表：现状 / 自建成本 / 主要缺口）"""
+    fig, ax = plt.subplots(figsize=(16, 11))
+    ax.set_xlim(0, 16)
+    ax.set_ylim(-0.2, 12.3)
     ax.axis('off')
     p = PALETTE
 
-    # (代码, 名称, 状态, 详情, 边框色, 填充色, 成熟条宽或None, 是否虚线)
-    layers = [
-        ('G',  '治理（单列）', '制度问题', '权限边界·风险分级·留痕追责', p['success'], p['success_fill'], None, True),
-        ('L6', '护栏·安全', '最不成熟最关键', '无主导框架·硬约束把关生效边界', p['danger'], p['danger_fill'], 1.5, False),
-        ('L5', '评估·观测', '最大缺口', '89% 有可观测性\n仅 52% 有评估', p['warning'], p['warning_fill'], 2.5, False),
-        ('L4', '编排', '重心转移中', '图管不可逆路径·规划接管探索流', p['primary'], p['light'], 4.0, False),
-        ('L3', '记忆与知识', '复杂度最高', '治理＋知识备料\n运行时接口＝上下文工程', p['primary'], p['light'], 3.7, False),
-        ('L2', '协议与工具', '协议已定', 'MCP 连工具·A2A 连智能体\n技能包供应链要审', p['secondary'], p['lighter'], 5.0, False),
-        ('L1', '推理', '快速演进', '每代打开新能力空间\n层在商品化', p['tertiary'], p['lighter'], 5.5, False),
+    cols = [
+        (0.60, 2.55),   # 层
+        (3.40, 4.60),   # 现状
+        (8.25, 3.10),   # 自建成本
+        (11.60, 3.80),  # 主要缺口
+    ]
+    headers = ['层', '现状', '自建成本', '主要缺口']
+    rows = [
+        ('G',  '治理（单列）', '制度问题', p['success'], p['success_fill'],
+         '独立于技术栈：权限、分级、\n留痕是制度要求',
+         '—',
+         '权限边界·风险分级\n留痕追责·确定性回放'),
+        ('L6', '护栏·安全', '现成方案最少', p['danger'], p['danger_fill'],
+         '无主导框架，无通用模式',
+         '最高——从零写策略代码',
+         '授权·沙箱·动态边界\n跨 Agent 传播未解'),
+        ('L5', '评估·观测', '最大缺口', p['warning'], p['warning_fill'],
+         '可观测性标配（89%）\n评估滞后（52%）',
+         '高——评估集要自己做',
+         '轨迹级评估·静默失败\n奖励钻空子'),
+        ('L4', '编排', '框架已收敛', p['primary'], p['light'],
+         'LangGraph v1.0 主导\n企业生产落地',
+         '锁定风险全栈最高\n编排代码不可移植',
+         '确定性与探索的混合分层\n执行环境拥塞'),
+        ('L3', '记忆与知识', '复杂度最高', p['primary'], p['light'],
+         '向量检索与专用设施可选\n（Letta·Zep·Mem0）',
+         '中——渐进式：历史\n→检索→专用设施',
+         '记忆治理·污染传播\n领域备料'),
+        ('L2', '协议与工具', '协议已定', p['secondary'], p['lighter'],
+         'MCP 成为标准\nA2A 快速跟进',
+         '低——开放标准\n跨 Agent 复用',
+         '安全未解（82% 服务器\n路径遍历风险）·skill 供应链'),
+        ('L1', '推理', '快速演进', p['tertiary'], p['lighter'],
+         '每代打开新能力空间\n供给面商品化',
+         '低——接口稳定\n选型即用',
+         '能力按维度分化\n按模型×系统配对'),
     ]
 
-    for i, (code, name, status, detail, border, fill, bar_w, dashed) in enumerate(layers):
-        y = 8.6 - i * 1.30
-        box = FancyBboxPatch((0.5, y-0.5), 4, 1.0,
-                              boxstyle="round,pad=0.08,rounding_size=0.12",
-                              facecolor=fill, edgecolor=border, linewidth=3,
-                              linestyle='--' if dashed else '-', zorder=8)
-        ax.add_patch(box)
-        ax.text(1.05, y+0.15, code, fontsize=12, fontweight='bold', ha='center', va='center',
-                color=border, zorder=9)
-        ax.text(1.75, y+0.15, name, fontsize=11 if dashed else 12, fontweight='bold', ha='left',
-                va='center', color=p['text'], zorder=9)
-        ax.text(4.2, y+0.15, status, fontsize=9, fontweight='bold', ha='right', va='center',
-                color=border, zorder=9)
-        ax.text(2.5, y-0.27, detail, fontsize=8, ha='left', va='center', color=p['subtext'], zorder=9)
+    y0, row_h = 10.0, 1.35
 
-        if bar_w is None:
-            ax.text(8.5, y, '制度维度——独立于技术栈，不参与成熟度排序', fontproperties=CJK_FONT_NAME, fontsize=8.5,
-                    ha='center', va='center', color=border, style='italic')
-            continue
-        ax.add_patch(FancyBboxPatch((5.5, y-0.18), 6.0, 0.36,
-                     boxstyle="round,pad=0.02,rounding_size=0.05",
-                     facecolor='#E8E8E8', edgecolor='none', zorder=6))
-        ax.add_patch(FancyBboxPatch((5.5, y-0.18), bar_w, 0.36,
-                     boxstyle="round,pad=0.02,rounding_size=0.05",
-                     facecolor=border, edgecolor='none', alpha=0.75, zorder=7))
-
-    for x, lab in [(5.5, '低'), (8.5, '中'), (11.5, '高')]:
-        ax.text(x, -0.25, lab, fontsize=8, ha='center', color=p['subtext'])
-    ax.text(8.5, -0.62, '← 成熟度 →（仅对 L1-L6）', fontsize=9, ha='center',
-            color=p['subtext'], fontweight='bold')
-
-    ax.annotate('37pp 差距', xy=(8.2, 6.0), xytext=(10.3, 6.7),
-               arrowprops=dict(arrowstyle='->', color=p['danger'], lw=1.5),
-               fontsize=9, ha='center', color=p['danger'], fontweight='bold',
-               bbox=dict(boxstyle='round,pad=0.2', facecolor=p['danger_fill'],
-               edgecolor=p['danger'], alpha=0.9))
-
-    ax.text(6.5, 9.95, 'Harness 成熟度梯度：六层 ＋ 治理（G）', fontsize=15, fontweight='bold',
+    ax.text(8, 11.95, 'Harness 六层：现状与缺口', fontsize=15, fontweight='bold',
             ha='center', va='center', color=p['text'])
-    ax.text(6.5, 9.42, 'Harness 的薄弱层在哪里，工程重心就在哪里', fontproperties=CJK_FONT_NAME, fontsize=11,
-            ha='center', va='center', color=p['subtext'], style='italic')
+    ax.text(8, 11.45, '哪些能直接依赖，哪些得自己补——薄弱层在哪里，工程重心就在哪里',
+            fontproperties=CJK_FONT_NAME, fontsize=10.5, ha='center', va='center',
+            color=p['subtext'], style='italic')
 
-    ax.text(6.5, -1.18, '跨层课题：循环自身的失效与终止工程——Loopmaxxing · 理解债 · 多重退出条件（§6.6）',
-            fontproperties=CJK_FONT_NAME, fontsize=8, ha='center', color=p['subtext'], style='italic')
-    ax.text(6.5, -1.58, '学术对照：ETCLOVG 七层（E 执行·T 工具·C 上下文·L 编排·O 可观测·V 验证·G 治理）与 Harness 六层大致对应，O/V/G 更强调形式化与审计',
-            fontproperties=CJK_FONT_NAME, fontsize=7.5, ha='center', color=p['subtext'], style='italic')
-    ax.text(6.5, -1.98, '2026 前瞻：Provider SDK 正把记忆、工具调用与基础评估吸进单一 API——通用件被商品化，独特件（领域备料、专有评估集）除外',
-            fontproperties=CJK_FONT_NAME, fontsize=8, ha='center', color=p['subtext'], style='italic')
+    for (x, w), h in zip(cols, headers):
+        ax.add_patch(FancyBboxPatch((x, y0 + 0.72), w, 0.5,
+                     boxstyle="round,pad=0.02,rounding_size=0.06",
+                     facecolor=p['text'], edgecolor='none', alpha=0.92, zorder=5))
+        ax.text(x + w / 2, y0 + 0.97, h, fontsize=10.5, fontweight='bold',
+                ha='center', va='center', color='white', zorder=6)
 
-    return save(fig, 'fig_ch6_maturity_gradient.png')
+    for i, (code, name, status, border, fill, now, cost, gap) in enumerate(rows):
+        y = y0 - i * row_h
+        if i % 2 == 0:
+            ax.add_patch(FancyBboxPatch((0.60, y - 0.62), 14.80, row_h - 0.10,
+                         boxstyle="round,pad=0.02,rounding_size=0.05",
+                         facecolor='#F7F9FA', edgecolor='none', zorder=1))
+        ax.add_patch(FancyBboxPatch((cols[0][0], y - 0.55), cols[0][1], 1.10,
+                     boxstyle="round,pad=0.03,rounding_size=0.10",
+                     facecolor=fill, edgecolor=border, linewidth=2.6,
+                     linestyle='--' if code == 'G' else '-', zorder=8))
+        ax.text(cols[0][0] + 0.30, y + 0.16, code, fontsize=11.5, fontweight='bold',
+                ha='left', va='center', color=border, zorder=9)
+        ax.text(cols[0][0] + 0.95, y + 0.16, name, fontsize=10.5, fontweight='bold',
+                ha='left', va='center', color=p['text'], zorder=9)
+        ax.text(cols[0][0] + 0.30, y - 0.26, status, fontsize=8.5, fontweight='bold',
+                ha='left', va='center', color=border, zorder=9)
+        for (x, w), txt in zip(cols[1:], (now, cost, gap)):
+            ax.text(x + 0.10, y, txt, fontsize=8.6, ha='left', va='center',
+                    color=p['subtext'] if txt == '—' else p['text'], zorder=6,
+                    linespacing=1.55)
+
+    for i in range(1, len(rows)):
+        y = y0 + 0.62 - i * row_h + 0.05
+        ax.plot([0.65, 15.35], [y, y], color='#E2E8ED', lw=0.8, zorder=0)
+
+    ax.text(8, 1.05, '跨层课题：循环自身的失效与终止工程——Loopmaxxing · 理解债 · 多重退出条件（§6.6）',
+            fontproperties=CJK_FONT_NAME, fontsize=8.5, ha='center', color=p['subtext'], style='italic')
+
+    return save(fig, 'fig_ch6_status_gap.png')
 
 
 # ============================================================
@@ -1310,7 +1319,7 @@ def main():
         fig_ch5_react_loop,
         fig_ch6_tool_pipeline,
         fig_ch6_death_modes,
-        fig_ch6_maturity_gradient,
+        fig_ch6_status_gap,
         fig_ch6_context_lifecycle,
         fig_ch6_trust_gradient,
         fig_ch6_radar,
