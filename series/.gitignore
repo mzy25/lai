@@ -1,0 +1,10 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyc
+
+# 临时扫描产物（可重生，不入库）
+.tmp/
+
+# Windows 元数据残留
+*:Zone.Identifier

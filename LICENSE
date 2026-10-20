@@ -2,7 +2,7 @@
 
 ## 正文与配图
 
-各篇源稿（`*.md`）、配图（`figures/`）、网页与文档产物（`html/`、`docs/`）采用
+`series/` 下的源稿（`*.md`）、配图（`figures/`）、实验资产（`assets/`）与站点产物（`dist/`）采用
 **知识共享 署名 4.0 国际（CC BY 4.0）**。
 
 - 许可摘要（中文）：https://creativecommons.org/licenses/by/4.0/deed.zh-hans
@@ -10,7 +10,7 @@
 
 ## 构建脚本与代码
 
-`build/` 目录及各篇 `generate_figures.py` 等代码采用 **MIT License**：
+`series/tools/` 与 `build/` 目录下的构建、扫描与配图脚本采用 **MIT License**：
 
 ```
 MIT License

@@ -27,6 +27,6 @@ jobs:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: html
+          path: series/dist
       - id: deployment
         uses: actions/deploy-pages@v4

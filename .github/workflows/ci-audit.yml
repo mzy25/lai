@@ -1,11 +1,8 @@
 name: CI Audit
 
-# 本工作流只做**根仓库自足**的门禁。理由（2026-10-03 实测）：
-# internal/ 与 .opencode/ 是两个独立 git repo，既不在根仓跟踪范围内，也没有远程
-# （`git ls-files internal/` 为空），GitHub 的干净 checkout 里根本没有这些仪器脚本。
-# 因此"全仪器套件"（internal/tools/audit_all.py --full）**无法**在此工作流内运行，
-# 除非先决定这两个仓如何发布（见 internal/notes/B2c_首现裁读_20261002.md §7 待决）。
-# 现在落地的是根仓自足的两道：结构硬断言 + 产物新鲜度。
+# 根仓自足门禁：series 源稿 + 发布产物。
+# internal/ 与 .opencode/ 是本地私有仓，不在根仓跟踪范围；全仪器套件仍只在本地跑。
+# 本工作流只验证公开读者能看到的东西：结构、路线、README、HTML 产物与新鲜度。
 
 on:
   push:
@@ -33,31 +30,26 @@ jobs:
         run: |
           python3 -V
           git --version
-      # lint_md 是纯 stdlib + 本地模块，错误即结构违规（标题层级/details 配对/
-      # 答案缩进等）。exit code 非 0 即红。
-      - name: lint_md
-        run: python3 build/lint_md.py
+      - name: 表格结构
+        run: python3 series/tools/table_check.py
+      - name: 路线断链
+        run: python3 series/tools/route_lint.py --check
+      - name: 阅读入口 README 是否同步
+        run: python3 series/tools/build_readme.py --check
 
   artifacts:
     name: 产物新鲜度
     runs-on: ubuntu-24.04
-    # 2026-10-03 首轮全绿（apt pandoc 对齐本机后），已从 continue-on-error
-    # 咨询态转为硬门禁：重建后与 HEAD 不一致即红。
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      # build/style_docx.py 需要 python-docx + lxml（唯一非 stdlib 依赖，实测：
-      # 缺任一个 → build_docx 在 style_docx 步非零退出）。版本对齐本机 .venv，
-      # 否则 docx 产出字节可能与入库产物不一致（门禁假红）。
-      - name: 安装 DOCX 依赖
-        # --break-system-packages：ubuntu-24.04 的系统 pip 受 PEP 668 限制；
-        # CI 容器用后即弃，加此旗标可兼容 setup-python/系统两种解释器。
-        run: python3 -m pip install --disable-pip-version-check --break-system-packages "python-docx==1.2.0" "lxml==6.1.1"
-      # 本机 pandoc = Ubuntu 24.04 的 3.1.3+ds-2（/usr/bin/pandoc）。官方静态 3.1.3
-      # 二进制的 texmath/OMML 输出与本机不同，会让五篇 docx 的 word/document.xml
-      # 全部"假红"（2026-10-03 首轮实测）。故 CI 用同一发行版包（同 ubuntu-24.04）。
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # 本机 pandoc = Ubuntu 24.04 的 3.1.3+ds-2（/usr/bin/pandoc）。CI 用同一发行版包，
+      # 保证 build_site 的 HTML 输出与入库产物一致（官方静态二进制可能产生差异）。
       - name: 安装 pandoc（apt，对齐本机 3.1.3+ds）
         run: |
           set -euo pipefail
@@ -69,17 +61,11 @@ jobs:
           python3 -V
           pandoc --version | head -1
           node --version
-          npm --version
-      # vendor/（KaTeX、highlight.js）不入库，build_html 会用 npm 自动装到临时目录。
-      - name: 重建产物
-        run: |
-          set -euo pipefail
-          python3 build/build_html.py
-          python3 build/build_docx.py
-          python3 build/build_cards.py
-          python3 build/check_cards.py
-      # 与 HEAD 比对：html/cards 逐字节；docx 逐 zip 条目但跳过 docProps（pandoc 写时间戳）。
-      # 失败时把逐行报告转成 check-run annotation，便于无 token 环境远程诊断。
+      - name: 重建站点产物
+        run: python3 series/tools/build_site.py
+      - name: 站点结构/路线/资产门禁
+        run: python3 series/tools/series_check.py
+      # 与 HEAD 比对：series/dist 逐字节；失败时转成 check-run annotation。
       - name: 产物新鲜度门禁
         run: |
           set +e

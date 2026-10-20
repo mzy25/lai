@@ -1,0 +1,98 @@
+{
+ "0-2": {
+  "file": "fig_0_2_rocket.png",
+  "func": "fig_0_2_rocket"
+ },
+ "T1-2": {
+  "file": "fig_t1_2_noising.png",
+  "func": "fig_t1_2_noising"
+ },
+ "T4-2": {
+  "file": "fig_t4_2_controlnet_vs_cfg.png",
+  "func": "fig_t4_2_controlnet_vs_cfg"
+ },
+ "0-1": {
+  "file": "fig_0_1_loop.png",
+  "func": "fig_0_1_loop"
+ },
+ "15-1": {
+  "file": "fig_15_1_pomdp.png",
+  "func": "fig_15_1_pomdp"
+ },
+ "16-1": {
+  "file": "fig_16_1_harness.png",
+  "func": "fig_16_1_harness"
+ },
+ "16-2": {
+  "file": "fig_16_2_agent_loop.png",
+  "func": "fig_16_2_agent_loop"
+ },
+ "T4-3": {
+  "file": "fig_t4_3_clip_path.png",
+  "func": "fig_t4_3_clip_path"
+ },
+ "T4-5": {
+  "file": "fig_t4_5_open_closed.png",
+  "func": "fig_t4_5_open_closed"
+ },
+ "T4-6": {
+  "file": "fig_t4_6_studio.png",
+  "func": "fig_t4_6_studio"
+ },
+ "10-1": {
+  "file": "fig_10_1_double_descent.png",
+  "func": "fig_10_1_double_descent"
+ },
+ "T1-1": {
+  "file": "fig_t1_1_ink.png",
+  "func": "fig_t1_1_ink"
+ },
+ "T1-4": {
+  "file": "fig_t1_4_peaks.png",
+  "func": "fig_t1_4_peaks"
+ },
+ "T1-5": {
+  "file": "fig_t1_5_manifold.png",
+  "func": "fig_t1_5_manifold"
+ },
+ "T1-6": {
+  "file": "fig_t1_6_field.png",
+  "func": "fig_t1_6_field"
+ },
+ "T1-7": {
+  "file": "fig_t1_7_two_sigmas.png",
+  "func": "fig_t1_7_two_sigmas"
+ },
+ "T1-8": {
+  "file": "fig_t1_8_arrows.png",
+  "func": "fig_t1_8_arrows"
+ },
+ "T1-9": {
+  "file": "fig_t1_9_noise_vs_score.png",
+  "func": "fig_t1_9_noise_vs_score"
+ },
+ "T1-3": {
+  "file": "fig_t1_3_gauss.png",
+  "func": "fig_t1_3_gauss"
+ },
+ "T4-1": {
+  "file": "fig_t4_1_cfg_extrapolation.png",
+  "func": "fig_t4_1_cfg_extrapolation"
+ },
+ "T4-4": {
+  "file": "fig_t4_4_mask.png",
+  "func": "fig_t4_4_mask"
+ },
+ "7-1": {
+  "file": "fig_7_1_rag_chain.png",
+  "func": "fig_7_1_rag_chain"
+ },
+ "10-2": {
+  "file": "fig_10_2_map.png",
+  "func": "fig_10_2_map"
+ },
+ "13-1": {
+  "file": "fig_13_1_tests.png",
+  "func": "fig_13_1_tests"
+ }
+}

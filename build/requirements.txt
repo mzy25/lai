@@ -1,9 +1,7 @@
-# 本文件为宽松下限（便于本地安装）；CI（.github/workflows/ci-audit.yml）
-# 按 python-docx==1.2.0 / lxml==6.1.1 精确对齐本机产物，生成发布产物请用仓库 .venv。
-matplotlib>=3.8
-numpy>=1.26
-python-docx>=1.1
-lxml>=4.9
-# 附加：部分辅助脚本使用（文本解析/图像处理）
-markdown-it-py>=3.0
-Pillow>=10.0
+# 本地技能环境（series v1 仅站点构建不需要这些；配图/历史 DOCX 参考脚本需要）
+numpy
+matplotlib
+python-docx
+lxml
+markdown-it-py
+pillow

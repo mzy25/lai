@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="chapter-page">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T3 方向怎么学、一千步怎么压到二十步？ · AI 系列读物</title>
+<script>
+/* 主题/字号引导（沿用五篇键位，跨站无缝） */
+(function () {
+  try {
+    var t = localStorage.getItem('ai-primer-theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.dataset.theme = t;
+    var f = localStorage.getItem('ai-primer-fs');
+    if (f) document.documentElement.style.setProperty('--fs', f);
+  } catch (e) {}
+})();
+</script>
+<style>
+/* ===== tokens（与五篇同一视觉语言）===== */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  color-scheme: light;
+  --bg:#fafaf8; --card:#ffffff; --ink:#1f2937; --ink-soft:#4b5563;
+  --line:#e5e7eb; --accent:#2563eb; --accent-soft:#eff6ff;
+  --code-bg:#f3f4f6; --pre-bg:#f6f8fa; --th-bg:#f3f4f6; --row-alt:#fafafa;
+  --sidebar-w:290px; --fs:17px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#111827; --card:#1f2937; --ink:#e5e7eb; --ink-soft:#9ca3af;
+  --line:#374151; --accent:#60a5fa; --accent-soft:#1e3a5f;
+  --code-bg:#273244; --pre-bg:#282c34; --th-bg:#273244; --row-alt:#1a2332;
+}
+:root[data-theme="dark"] img { filter: brightness(0.92); }
+html { font-size: var(--fs, 17px); scroll-behavior: smooth; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","DejaVu Sans",system-ui,sans-serif;
+       background:var(--bg); color:var(--ink); line-height:1.9; }
+a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }
+a:hover { text-decoration:underline; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+.skip-link { position:absolute; left:-9999px; top:0; background:var(--card); color:var(--accent);
+  padding:8px 12px; border:1px solid var(--line); border-radius:0 0 8px 0; z-index:999; }
+.skip-link:focus { left:0; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+/* ===== 布局 ===== */
+.topbar { position:fixed; top:0; left:0; right:0; height:46px; z-index:60;
+  display:flex; align-items:center; gap:10px; padding:0 14px;
+  background:var(--card); border-bottom:1px solid var(--line); }
+.topbar .brand { font-weight:700; font-size:0.92rem; color:var(--ink); }
+.topbar .brand a { color:var(--ink); }
+.topbar .spacer { flex:1; }
+.topbar button, .topbar a.btn { border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+  border-radius:999px; padding:3px 10px; font-size:0.78rem; cursor:pointer; line-height:1.5; }
+.topbar button:hover, .topbar a.btn:hover { color:var(--accent); border-color:var(--accent); text-decoration:none; }
+.layout { display:flex; max-width:1500px; margin:0 auto; min-height:100vh; padding-top:46px; }
+.sidebar { width:var(--sidebar-w); flex-shrink:0; background:var(--card);
+  border-right:1px solid var(--line); position:sticky; top:46px; height:calc(100vh - 46px);
+  overflow-y:auto; padding:14px 12px; z-index:50; }
+.sidebar .search-box input { width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--bg); color:var(--ink); font-size:0.85rem; }
+.sidebar .part { margin:10px 0 2px; padding:4px 8px; font-size:0.72rem; letter-spacing:0.04em;
+  color:var(--ink-soft); text-transform:none; border-top:1px solid var(--line); }
+.sidebar .part:first-of-type { border-top:none; }
+.sidebar ul { list-style:none; }
+.sidebar li.ch a { display:block; padding:4px 8px; border-radius:6px; font-size:0.85rem;
+  color:var(--ink-soft); border-left:2px solid transparent; }
+.sidebar li.ch a:hover { background:var(--accent-soft); color:var(--accent); text-decoration:none; }
+.sidebar li.ch.current > a { color:var(--accent); font-weight:700; background:var(--accent-soft); }
+.sidebar ul.sub { margin:0 0 4px 10px; }
+.sidebar ul.sub a { display:block; padding:2px 8px; font-size:0.78rem; color:var(--ink-soft); border-radius:6px; }
+.sidebar ul.sub a:hover { background:var(--accent-soft); color:var(--accent); text-decoration:none; }
+.sidebar ul.sub a.active { color:var(--accent); }
+.sidebar .mk { margin-left:4px; }
+.main { flex:1; min-width:0; padding:26px 34px 60px; }
+/* 无目录的页面（Hub / 打印 / 辅助页）：整条侧栏与目录开关不渲染 */
+html[data-page="hub-page"] .sidebar, html[data-page="print-page"] .sidebar,
+html[data-page="aux-page"] .sidebar,
+html[data-page="hub-page"] #navToggle, html[data-page="print-page"] #navToggle,
+html[data-page="aux-page"] #navToggle { display:none; }
+.content { max-width:46em; margin:0 auto; }
+.main.wide .content { max-width:none; }
+
+/* ===== 章头 / 正文 ===== */
+.chapter-head { margin:6px 0 18px; padding-bottom:12px; border-bottom:2px solid var(--line); }
+.chapter-head h1 { font-size:1.5rem; line-height:1.5; }
+.doc-meta { font-size:0.83rem; color:var(--ink-soft); margin-top:6px; }
+article.chapter p, article.chapter li, article.chapter blockquote { max-width:44em; }
+/* 正文内链：颜色之外再给下划线（WCAG 1.4.1；axe link-in-text-block）；
+   卡片/按钮型组件豁免（它们不是文内链接，靠形态区分） */
+.content a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.content a.route-card, .content a.route-next, .content a.review-link, .content a.router-start,
+.content a.pv-prev, .content a.pv-next, .content .hub-nav a { text-decoration: none; }
+h2 { font-size:1.22rem; margin:1.6em 0 0.6em; padding-bottom:0.2em; border-bottom:1px solid var(--line); }
+h3 { font-size:1.06rem; margin:1.3em 0 0.5em; }
+h1, h2, h3 { scroll-margin-top:60px; }
+p { margin:0.65em 0; }
+ul, ol { margin:0.6em 0 0.6em 1.5em; }
+li { margin:0.25em 0; }
+strong { font-weight:700; }
+hr { border:none; border-top:1px solid var(--line); margin:1.6em 0; }
+blockquote { border-left:3px solid var(--accent); background:var(--bg);
+  padding:6px 14px; margin:0.9em 0; color:var(--ink); border-radius:0 8px 8px 0; }
+blockquote p { margin:0.35em 0; }
+code { background:var(--code-bg); padding:0.1em 0.35em; border-radius:5px;
+  font-family:"SF Mono",Consolas,"DejaVu Sans Mono",monospace; font-size:0.88em; }
+pre { background:var(--pre-bg); border:1px solid var(--line); border-radius:10px;
+  padding:10px 14px; overflow-x:auto; margin:0.9em 0; line-height:1.6; }
+pre code { background:none; padding:0; font-size:0.85em; }
+.table-wrap { overflow-x:auto; margin:0.9em 0; }
+table { border-collapse:collapse; font-size:0.9rem; width:100%; }
+th, td { border:1px solid var(--line); padding:5px 10px; text-align:left; vertical-align:top; }
+th { background:var(--th-bg); font-weight:700; }
+tbody tr:nth-child(even) { background:var(--row-alt); }
+/* ===== 表格容器：宽表横向滚动（普通表零变化） ===== */
+.table-wrap { overflow-x: auto; margin: 1.1em 0; }
+.table-wrap > table.wide { width: max-content; min-width: 100%; }
+@media print { .table-wrap { overflow: visible; } }
+
+/* ===== 标记徽章（读法标记）===== */
+.mk { display:inline-block; font-size:0.72em; line-height:1.5; padding:0 6px; margin-left:6px;
+  border:1px solid currentColor; border-radius:999px; vertical-align:middle; cursor:help;
+  color:var(--ink-soft); background:var(--card); }
+.mk-▽ { color:#0369a1; }
+.mk-○ { color:#7c3aed; }
+.mk-◌ { color:#b45309; }
+.mk-◇ { color:#be123c; }
+:root[data-theme="dark"] .mk-▽ { color:#7dd3fc; }
+:root[data-theme="dark"] .mk-○ { color:#c4b5fd; }
+:root[data-theme="dark"] .mk-◌ { color:#fcd34d; }
+:root[data-theme="dark"] .mk-◇ { color:#fda4af; }
+
+/* ===== 资产索引：类型标签与注记 ===== */
+.tag { display:inline-block; font-size:0.72em; line-height:1.5; padding:0 6px; margin-right:6px;
+  border:1px solid var(--line); border-radius:999px; vertical-align:middle; color:var(--ink-soft); }
+.meta { color:var(--ink-soft); font-size:0.85em; }
+
+/* ===== 折叠块 ===== */
+details { border:1px dashed var(--line); border-radius:10px; padding:8px 14px; margin:0.9em 0;
+  background:var(--card); }
+details summary { cursor:pointer; font-weight:600; color:var(--ink-soft); }
+details[open] summary { margin-bottom:6px; }
+
+/* ===== 章尾导航 / 资产卡 ===== */
+.prevnext { display:flex; justify-content:space-between; gap:12px; margin:30px 0 6px;
+  padding-top:14px; border-top:1px solid var(--line); font-size:0.86rem; }
+.prevnext a { border:1px solid var(--line); border-radius:10px; padding:6px 12px; background:var(--card); }
+.asset-card { margin:16px 0; padding:10px 14px; border:1px solid var(--line); border-radius:10px;
+  background:var(--card); font-size:0.85rem; }
+.asset-card b { color:var(--ink); }
+.footer { margin-top:34px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:0.75rem; color:var(--ink-soft); }
+
+/* ===== 首页 ===== */
+.hero { margin:10px 0 22px; }
+.hero h1 { font-size:1.5rem; margin-bottom:8px; }
+.legend { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 20px; font-size:0.85rem; color:var(--ink-soft); }
+.legend span.item { border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--card); }
+
+/* ===== 代码高亮（pandoc skylighting 类，亮/暗两套）===== */
+.sourceCode { background:var(--pre-bg); }
+pre.sourceCode { padding:10px 14px; }
+.sourceCode .kw, .sourceCode .cf { color:#7c3aed; font-weight:600; }
+.sourceCode .dt { color:#0f766e; }
+.sourceCode .dv, .sourceCode .bn, .sourceCode .fl { color:#b45309; }
+.sourceCode .st, .sourceCode .ch { color:#16a34a; }
+.sourceCode .co, .sourceCode .an { color:#6b7280; font-style:italic; }
+.sourceCode .fu, .sourceCode .va { color:#2563eb; }
+.sourceCode .op { color:#6b7280; }
+.sourceCode .at { color:#be123c; }
+:root[data-theme="dark"] .sourceCode .kw, :root[data-theme="dark"] .sourceCode .cf { color:#c4b5fd; }
+:root[data-theme="dark"] .sourceCode .dt { color:#5eead4; }
+:root[data-theme="dark"] .sourceCode .dv, :root[data-theme="dark"] .sourceCode .bn, :root[data-theme="dark"] .sourceCode .fl { color:#fcd34d; }
+:root[data-theme="dark"] .sourceCode .st, :root[data-theme="dark"] .sourceCode .ch { color:#86efac; }
+:root[data-theme="dark"] .sourceCode .fu, :root[data-theme="dark"] .sourceCode .va { color:#93c5fd; }
+
+/* ===== B3：路径 UI ===== */
+.path-line { margin:6px 4px 4px; font-size:0.8rem; color:var(--ink-soft); }
+.depth-toggle, .read-toggle { border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+  border-radius:8px; padding:3px 10px; font-size:0.78rem; cursor:pointer; }
+.depth-toggle { margin:0 4px 8px; }
+.depth-toggle:hover, .read-toggle:hover { color:var(--accent); border-color:var(--accent); }
+
+.read-toggle.on { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+.migration { margin:20px 0 4px; padding:10px 14px; border:1px solid var(--accent); border-left-width:4px;
+  border-radius:10px; background:var(--accent-soft); font-size:0.9rem; }
+.sidebar li.ch.dim > a { opacity:.5; }
+.sidebar li.ch.focus > a { opacity:.85; }
+.sidebar ul.sub li.dim a { opacity:.5; }
+section.sec.dim { opacity:.62; }
+section.sec.dim > h2::after { content:"未纳入当前路径"; font-size:.72em; font-weight:400;
+  color:var(--ink-soft); margin-left:8px; border:1px solid var(--line); border-radius:999px;
+  padding:0 8px; vertical-align:middle; }
+section.sec.dim[data-kind="depth"] > h2::after { content:"实践优先：跳过（理论优先可读）"; }
+section.sec.dim[data-kind="focus"] > h2::after { content: attr(data-why); }
+section.sec.dim[data-kind="focus"]:not([data-why]) > h2::after { content:"本路线只读所列节"; }
+/* path 类降灰显示具体原因（长原因截断显示；广场通用句兜底） */
+section.sec.dim[data-kind="path"] > h2::after { content: attr(data-why);
+  display:inline-block; max-width:26em; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; vertical-align:middle; }
+section.sec.dim[data-kind="path"]:not([data-why]) > h2::after { content:"未纳入当前路径"; }
+.wizard { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:14px 16px; margin:18px 0; }
+.wiz-title { font-weight:700; margin-bottom:8px; }
+.wiz-group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }
+.wiz-label { min-width:13em; color:var(--ink-soft); font-size:0.88rem; }
+.wiz-opt { border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:0.84rem;
+  cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.wiz-opt:hover { border-color:var(--accent); }
+.wiz-result { margin-top:10px; font-size:0.9rem; color:var(--accent); font-weight:600; }
+.route { margin:18px 0; }
+.route-part { margin:14px 0 6px; font-weight:700; font-size:0.95rem; }
+.route-note { font-size:0.8rem; color:var(--ink-soft); margin:-2px 0 6px; }
+.node { display:block; border:1px solid var(--line); border-radius:10px; background:var(--card);
+  padding:7px 12px; margin:5px 0 5px 12px; font-size:0.9rem; color:var(--ink); }
+.node::after { content:""; display:block; clear:both; }
+.node:hover { border-color:var(--accent); text-decoration:none; }
+.node .node-mins { float:right; font-size:0.75rem; color:var(--ink-soft); margin-left:8px; }
+.node.dim { opacity:.55; }
+.node.focus { border-style:dashed; }
+.node-why { display:block; font-size:0.76rem; color:var(--ink-soft); margin-top:2px; }
+.route-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin:14px 0; }
+.route-card { display:flex; flex-direction:column; gap:4px; border:1px solid var(--line);
+  border-radius:10px; background:var(--card); padding:10px 12px; color:var(--ink); text-decoration:none; }
+.route-card:hover { border-color:var(--accent); }
+.route-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.route-card .rc-t { font-weight:700; }
+.route-card .rc-tag { font-size:0.72em; color:var(--accent); }
+.route-card .rc-aud { font-size:0.8em; color:var(--ink-soft); }
+.route-card .rc-exit { font-size:0.8em; }
+.route-card .rc-hours { font-size:0.76em; color:var(--ink-soft); }
+#routerGoal, #routerTime { padding:3px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+.route-banner { margin:10px 0; padding:8px 12px; border:1px dashed var(--line); border-radius:8px;
+  font-size:0.88em; color:var(--ink-soft); background:var(--accent-soft); }
+.catchup-card { margin:10px 0 6px; padding:8px 12px; border:1px dashed var(--line);
+  border-radius:8px; font-size:0.86em; color:var(--ink-soft); background:var(--accent-soft); }
+.route-next { border:1px solid var(--line); border-radius:10px; padding:6px 12px; background:var(--card);
+  color:var(--accent); text-decoration:none; font-size:0.9em; }
+.route-next:hover { border-color:var(--accent); }
+.read-row { margin:18px 0 4px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.exit-check { display:block; margin:4px 0; font-size:0.9em; }
+.exit-list { margin:6px 0 10px; }
+.chapter-terms { margin:18px 0 8px; font-size:0.9em; color:var(--ink-soft); }
+.chapter-terms ul { margin:6px 0 0 1.2em; }
+.exit-line { margin:6px 0 0; font-size:0.88rem; color:var(--accent); font-weight:600; }
+.rc-plan { font-size:0.78em; color:var(--ink-soft); }
+.resume { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:10px 14px; margin:14px 0; }
+.resume-link { font-weight:700; color:var(--accent); }
+.recent { margin:6px 0 0 1.1em; font-size:0.88em; }
+.chapter-meta { margin:6px 0 14px; font-size:0.86rem; color:var(--ink-soft); }
+pre { position:relative; }
+.copy-btn { position:absolute; top:6px; right:6px; font-size:0.72rem; padding:2px 8px;
+  border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink-soft);
+  cursor:pointer; opacity:0.55; }
+.copy-btn:hover { opacity:1; border-color:var(--accent); }
+.fig-dialog { border:none; background:transparent; padding:0; max-width:96vw; }
+.fig-dialog img { max-width:92vw; max-height:88vh; }
+.term-hit td { background: var(--accent-soft); }
+@media print { .copy-btn { display:none !important; } }
+.selftest-note { margin-top:6px; font-size:0.88rem; color:var(--ink-soft); }
+.selftest-note a { color:var(--accent); }
+.selftest-save { margin:16px 0 4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.selftest-save select { padding:3px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+.selftest-save button, .prog-btns button { padding:4px 10px; border:1px solid var(--line);
+  border-radius:8px; background:var(--card); color:var(--ink); cursor:pointer; }
+.selftest-save button:hover, .prog-btns button:hover { border-color:var(--accent); }
+.st-saved { font-size:0.86rem; color:var(--accent); }
+.progress-io { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:12px 16px; margin:18px 0; }
+.progress-io textarea { width:100%; font-family:ui-monospace,monospace; font-size:0.82rem;
+  padding:8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+.prog-btns { margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.hub-nav { margin:10px 0 4px; font-size:0.9rem; color:var(--ink-soft); }
+.hub-nav a { color:var(--accent); }
+.hub-sec { margin-top:26px; }
+.hub-h { font-size:1.05rem; border-bottom:1px solid var(--line); padding-bottom:4px; margin-bottom:10px; }
+.read-progress { position:fixed; top:0; left:0; height:3px; width:0; background:var(--accent); z-index:70; }
+.review-link { border:1px solid var(--line); border-radius:10px; padding:6px 12px; background:var(--card);
+  color:var(--accent); text-decoration:none; font-size:0.9em; }
+.review-link:hover { border-color:var(--accent); }
+.review ul { margin:6px 0; font-size:0.9em; }
+.review button { padding:4px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card);
+  color:var(--ink); cursor:pointer; }
+.review button:hover { border-color:var(--accent); }
+body.focus-hide section.sec.dim.offroute-shown { display:block !important; }
+.focus-toggle { display:block; margin:6px 0 0; font-size:0.88rem; color:var(--ink-soft); }
+.focus-row { margin:4px 0 12px; font-size:0.86rem; color:var(--ink-soft); }
+.router-start { display:inline-block; margin-top:8px; color:var(--accent); font-weight:600; }
+.offroute-btn { margin-left:8px; font-size:0.8em; padding:2px 8px; border:1px solid var(--line);
+  border-radius:8px; background:var(--card); color:var(--accent); cursor:pointer; }
+body.focus-hide .sidebar li.ch.dim:not(.current) { display:none; }
+
+body.focus-hide .node.dim { display:none; }
+body.focus-hide article.chapter section.sec.dim { display:none; }
+body.show-offroute article.chapter section.sec.dim { display:block; }
+@media print { .offroute-btn, .focus-toggle, .focus-row, .router-start,
+  .route-banner { display:none !important; }
+  body.focus-hide article.chapter section.sec.dim { display:block !important; } }
+@media (max-width: 640px) {
+  .route-cards { grid-template-columns:1fr; }
+  .topbar { flex-wrap:wrap; row-gap:6px; }
+  .content { padding-left:14px; padding-right:14px; }
+  .prevnext { flex-direction:column; gap:8px; }
+  .wiz-group { align-items:flex-start; flex-direction:column; }
+  .wiz-label { min-width:0; }
+}
+.schedule { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:14px 16px; margin:18px 0; }
+.course-tabs { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.course-tab { border:1px solid var(--line); background:var(--bg); border-radius:999px; padding:3px 12px;
+  font-size:0.84rem; cursor:pointer; color:var(--ink-soft); }
+.course-tab.active { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); font-weight:600; }
+.course-body p { font-size:0.88rem; }
+.sched-sub { font-weight:700; font-size:0.9rem; margin:10px 0 2px; }
+.schedule ul { margin-left:1.2em; font-size:0.88rem; }
+.rings { display:flex; flex-wrap:wrap; gap:22px; align-items:center; margin:18px 0; }
+.ring { position:relative; width:86px; height:86px; flex-shrink:0; }
+.ring svg { transform:rotate(-90deg); width:86px; height:86px; }
+.ring-bg { fill:none; stroke:var(--line); stroke-width:3.4; }
+.ring-fg { fill:none; stroke:var(--accent); stroke-width:3.4; stroke-linecap:round; stroke-dasharray:0 99.9; }
+.ring-txt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; font-size:0.72rem; color:var(--ink-soft); }
+.ring-txt b { font-size:0.82rem; color:var(--ink); }
+.ring-note { font-size:0.78rem; color:var(--ink-soft); }
+.search-area { margin:18px 0; }
+.search-area input { width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:10px;
+  background:var(--card); color:var(--ink); font-size:0.9rem; }
+.search-results { border:1px solid var(--line); border-radius:10px; background:var(--card);
+  margin-top:6px; padding:8px 12px; }
+.sgroup { margin:6px 0; }
+.stitle { font-weight:600; display:block; font-size:0.88rem; }
+.shit { display:block; font-size:0.82rem; color:var(--ink-soft); padding-left:12px; }
+.snone { color:var(--ink-soft); font-size:0.85rem; }
+
+/* ===== 打印 ===== */
+@media print {
+  .topbar, .sidebar, .prevnext, .skip-link, .back-top,
+  .wizard, .route, .schedule, .rings, .search-area, .read-row, .migration,
+  .progress-io, .resume, .exit-line, .selftest-note, .hub-nav, .review,
+  .read-progress { display:none !important; }
+  .layout { display:block; padding-top:0; }
+  .main { padding:0; }
+  .content { max-width:none; }
+  body { font-size:11pt; line-height:1.65; }
+  a, .content a { color:inherit; text-decoration:none; }
+  details { break-inside:avoid; }
+  details > summary { display:none; }
+  .print-page .chapter { break-before:page; }
+  .print-page .chapter:first-of-type { break-before:auto; }
+}
+@media (max-width: 960px) {
+  .sidebar { position:fixed; left:0; top:46px; bottom:0; transform:translateX(-100%);
+    transition:transform .25s ease; box-shadow:0 0 24px rgba(0,0,0,.18); }
+  body.nav-open .sidebar { transform:none; }
+  .main { padding:20px 18px 50px; }
+}
+.back-top { position:fixed; right:16px; bottom:18px; z-index:70; border:1px solid var(--line);
+  background:var(--card); color:var(--ink-soft); border-radius:999px; padding:6px 12px; cursor:pointer; }
+.back-top:hover { color:var(--accent); border-color:var(--accent); }
+/* ===== 配图（series/figures，单一来源配图管线）===== */
+figure.book-fig { margin: 1.35em auto; text-align: center; }
+figure.book-fig img { max-width: 100%; height: auto; border-radius: 6px; }
+figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em; line-height: 1.6; }
+@media print { figure.book-fig img { max-width: 92%; } }
+</style>
+</head>
+<body class="chapter-page">
+<a class="skip-link" href="#main">跳到正文</a>
+<div class="read-progress" id="readProgress" aria-hidden="true"></div>
+<header class="topbar">
+  <div class="brand"><a href="index.html">AI 系列读物</a></div>
+  <button id="navToggle" aria-label="切换目录" aria-expanded="false">☰ 目录</button>
+  <div class="spacer"></div>
+  <button id="fsDown" aria-label="减小字号">A−</button>
+  <button id="fsUp" aria-label="增大字号">A+</button>
+  <button id="themeToggle" aria-label="切换深浅色">◐</button>
+  <button id="printBtn" aria-label="打印本页">打印</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="search-box"><input type="search" id="searchInput" placeholder="筛选章节…" autocomplete="off"></div>
+    <div class="path-line" id="pathLine">自由读 · <a href="index.html">换路线</a></div>
+    <button type="button" class="depth-toggle" id="depthToggle">深度：实践优先（折叠收起）（点按切换）</button>
+<div class="part">第〇部 · 总览与读法</div>
+<ul>
+<li class="ch" data-slug="s0a"><a href="s0a.html">大模型是怎么训练出来的？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="s0b"><a href="s0b.html">AI 怎样生成内容？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="s0c"><a href="s0c.html">这套读物怎么用？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+</ul>
+<div class="part">第一部 · 建造：模型怎样获得能力</div>
+<ul>
+<li class="ch" data-slug="ch01"><a href="ch01.html">文字、图像、声音怎样变成模型能算的数？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch02"><a href="ch02.html">模型怎样从错误里学习？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch03"><a href="ch03.html">概率怎么算、又怎样算得诚实？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch04"><a href="ch04.html">预测出了错，误差怎样分摊到每个参数？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch05"><a href="ch05.html">模型怎样读懂上下文？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch06"><a href="ch06.html">模型怎样把海量文本压进参数？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-◇" title="主线依赖">◇</span></a>
+</li>
+<li class="ch" data-slug="ch07"><a href="ch07.html">只会续写的模型，怎样变成听得懂指令的助手？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch08"><a href="ch08.html">想改模型，一定要全量重训吗？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch09"><a href="ch09.html">模型怎样一个词一个词地生成一段话？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+</ul>
+<div class="part">支线 · 生成深潜</div>
+<ul>
+<li class="ch" data-slug="intro"><a href="intro.html">· 生成深潜</a>
+</li>
+<li class="ch" data-slug="recipe"><a href="recipe.html">· 主线速览版 SD 配方</a>
+</li>
+<li class="ch" data-slug="t1"><a href="t1.html">把图片一步步变成噪声，能得到什么？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="t2"><a href="t2.html">知道了方向，噪声怎样变回数据？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch current" data-slug="t3"><a href="t3.html">方向怎么学、一千步怎么压到二十步？<span class="mk mk-▽" title="可后读">▽</span></a>
+<ul class="sub">
+<li><a href="#t3-s01">去噪分数匹配：答案是自己采的</a></li>
+<li><a href="#t3-s02">Fisher 散度：只比斜率，不比高度</a></li>
+<li><a href="#t3-s03">训练循环：三行字，转几千圈</a></li>
+<li><a href="#t3-s04">概率流 ODE：把随机性拿掉</a></li>
+<li><a href="#t3-s05">DDIM、三源误差与采样器选型</a></li>
+<li><a href="#t3-s06">动手：实现训练循环</a></li>
+<li><a href="#t3-s07">回望与下一章</a></li>
+</ul>
+</li>
+<li class="ch" data-slug="t4"><a href="t4.html">怎样控制生成的内容、还能生成什么？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-◌" title="延伸选读">◌</span></a>
+</li>
+</ul>
+<div class="part">第二部 · 规律：能力为什么可信</div>
+<ul>
+<li class="ch" data-slug="ch10"><a href="ch10.html">为什么模型越大，越不容易过拟合？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch11"><a href="ch11.html">训练怎样挑出会泛化的解？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch12"><a href="ch12.html">为什么模型的表现能提前预测、配方能大小通吃？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-○" title="支线先补">○</span></a>
+</li>
+<li class="ch" data-slug="ch13"><a href="ch13.html">模型内部是什么样子、能看能改吗？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-◌" title="延伸选读">◌</span></a>
+</li>
+<li class="ch" data-slug="ch14"><a href="ch14.html">哪些&quot;做不到&quot;是定理，哪些只是还没做到？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+</ul>
+<div class="part">第三部 · 驾驭：把能力用成可靠系统</div>
+<ul>
+<li class="ch" data-slug="ch15"><a href="ch15.html">为什么模型在演示里表现很好，放进真实任务就…<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch16"><a href="ch16.html">模型之外还要配些什么？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch17"><a href="ch17.html">控制权怎么分、边界怎么守？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-○" title="支线先补">○</span></a>
+</li>
+<li class="ch" data-slug="ch18"><a href="ch18.html">一个大目标，怎样拆成能落地、也能反悔的步骤？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch19"><a href="ch19.html">一群智能体一起干活，会多出什么？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-◇" title="主线依赖">◇</span></a>
+</li>
+<li class="ch" data-slug="ch20"><a href="ch20.html">AI 怎样走出屏幕、进入物理世界？<span class="mk mk-▽" title="可后读">▽</span></a>
+</li>
+<li class="ch" data-slug="ch21"><a href="ch21.html">这一切能走多远？<span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-◇" title="主线依赖">◇</span></a>
+</li>
+</ul>
+  </aside>
+  <main class="main" id="main">
+    <div class="content">
+<article class="chapter">
+<div class="route-banner" id="routeBanner" data-slug="t3" hidden></div>
+<div class="chapter-meta" id="chapterMeta" data-slug="t3">1.4 万字 · 约 39 分钟</div>
+<div class="focus-row" id="focusRow" hidden><label><input type="checkbox" id="focusHide"> 隐藏非路线内容</label></div>
+<h1 id="t3">T3 方向怎么学、一千步怎么压到二十步？——学会与加速 <span class="mk mk-▽" title="可后读">▽</span></h1>
+<p>上一章把网络当成训好的黑箱用：不管分数怎么到手，只管拿它走回数据。章末留了两笔账：这个方向是网络学出来的，怎么学；学好了，一千步又怎么压到二十步。这一章前一半还第一笔账，后一半还第二笔账。先说第一笔账的难处：前两章的分数函数 s_t(x) 是数学对象，定义写在纸上，可数据只是一堆图片，真实的分数你根本看不到。方向不是给定的，得从数据里学出来，这是整个扩散模型最值钱的一次"无中生有"。至于上一章只挂了门牌的那个 DDIM，这一章后半连本带利讲清楚。</p>
+<section class="sec" data-anchor="t3-s01"><h2 id="t3-s01">去噪分数匹配：答案是自己采的</h2>
+<p>学任何东西，第一课是问监督从哪来：网络猜错了，谁告诉它错多少？扩散模型在这一点上占了大便宜，因为噪声是我们自己加的，加了多少一清二楚。想象训练一位噪声鉴定师：给他一张加过噪的图片，让他指出当初加进去的是哪团噪声。训练时我们确切知道加了哪个 ε（因为是我们自己采样的），它就是标准答案。网络只看到加噪后的 x_t 和噪声水平 t，要猜出当初那团噪声。练得多了，它从任意噪声图片里都能认出当初那团噪声，反过来说，它也就知道该往哪去噪。</p>
+<p>监督现成，训练目标就可以写下来。对一批随机采样的噪声水平 t 和数据 x<sub>0</sub>，让网络预测分数，拿它跟条件分数对账，差的平方取期望，就是损失：</p>
+<p><code>L = E_{t,X₀,ε}[‖s_θ(a_t·X₀ + σ_t·ε, t) + ε/σ_t‖²]</code></p>
+<p>记号挨个认：a_t 和 σ_t 是第 t 档的信号保留比例和噪声标准差（T1 闭式跳步的连乘记账法，上一章沿用，这里直接用）；ε 是前向加噪那枚标准高斯骰子；a_t·X<sub>0</sub> + σ_t·ε 就是闭式一步加出来的 x_t。此 L 只管本章这笔训练损失的账，不借 <a class="xref" href="ch02.html">§2</a> 的曲率 L。式子里一个扎眼的细节是加号：直觉上回归目标该写成 ‖s_θ − 目标‖<sup>2</sup>，减号才对，怎么是加？原因是条件分数带负号：∇ ln p(x_t|x<sub>0</sub>) = −ε/σ_t（T1 的 Tweedie 恒等式），所以网络该靠近的目标正是 −ε/σ_t，s_θ 减去 −ε/σ_t，写出来就成了加号。加号就是"减去负数"，没有别的玄机。</p>
+<p>手算一次，把这笔账摸实。取 ε = [0.5, −0.3]，网络预测 ε_θ = [0.4, −0.2]，当前噪声水平 σ_t = 0.8。用噪声参数化算：<code>L = (0.5−0.4)² + (−0.3+0.2)² = 0.01 + 0.01 = 0.02</code>。损失对网络参数的梯度是 <code>∇_θL = −2(ε−ε_θ)·∇_θε_θ = [−0.2, 0.2]·∇_θε_θ</code>，含义直白：把预测往 [0.5, −0.3] 的方向调。换回分数参数化再验算一遍，数字严丝合缝。</p>
+<details>
+<summary>
+分数参数化·验算：两种写法一笔账
+</summary>
+<p>s_θ = −ε_θ/σ_t = [−0.5, 0.25]，目标 −ε/σ_t = [−0.625, 0.375]，差的平方和是 0.03125，乘上 σ_t<sup>2</sup> = 0.64，恰好回到 0.02。乘法展开看更清：分数参数化的损失是噪声参数化的损失除以 σ_t<sup>2</sup>——反过来，噪声损失 = 分数损失 × σ_t<sup>2</sup>；两种写法一笔账，中间隔着的就是上一章那个缩放因子，一步都没多。</p>
+</details>
+<p>训练过程随之定型：从数据集采一张 x<sub>0</sub>，随机选一档 t，掷一次骰子 ε，闭式公式一步算出 x_t，网络给出预测，和标准答案算均方误差，反向传播更新参数。关键在这句话：训练只需要前向加噪，不需要反向采样。前向加噪是闭式的，一步到位，不走那一千步的逆过程，所以训练很快；反向采样是推理阶段的活，两笔账分开记，这正是上一章把网络当黑箱用、把怎么学留给本章的那层意思。</p>
+<p>还有一个合法性问题欠着：回归目标是 −ε/σ_t，它是条件分数，不是真实分数 s*。拿一个"不是最优答案"的东西当标准答案，凭什么能学到真东西？凭期望。真实分数是对所有可能的原图取后验期望，<code>s* = E[∇ln p(x_t|x₀) | x_t]</code>，而对每一个具体的 (x<sub>0</sub>, ε) 样本，−ε/σ_t 正是这个条件分数。网络最小化平方误差时，学到的天然就是目标的后验期望：把不可计算的目标（真实分数）替换成可计算的目标（条件分数），期望值不变。这是去噪分数匹配的核心贡献，十多年前就被人提出来了。边界也说清：期望意义下等价，不等于每个样本上都对得上，单个样本的 −ε/σ_t 离真实分数可以很远，是平均把它们抹平了。</p>
+<p>同一个损失，文献里有两种写法，值得摆开来对照，因为这两派正是扩散模型的两根枝。DDPM 论文写"预测噪声"：用 Tweedie 代换 ε_θ = −σ_t·s_θ，损失变成 <code>‖ε − ε_θ‖²</code>。NCSN 论文写"预测分数"，直接用 s_θ 形式。单个 t 上看，这是同一个损失的两种等价写法，只是输出层差一个 −σ_t 的缩放因子。先别把"等价"记死：等会儿训练循环里会碰到另一种口径，说两者在跨 t 联合训练时隐含权重不同，这两种说法的适用范围，到时候都会摆出来。</p>
+<details>
+<summary>
+三个容易算错的期待
+</summary>
+<p>其一："DDPM 的训练和 NCSN 的训练算两笔账？"不是。两者通过 Tweedie 恒等式是同一目标的两种写法，同一个网络、同一份数据，只是输出层参数化不同。其二，方向相反："既然监督现成，是不是连训练都省了，分数可以直接从数据里算出来？"小数据上可以，支线第一章的手算就是这么干的；真实图片的维度动辄上百万维，这个后验期望算不动，才必须请网络来学。其三，最隐蔽：别把回归目标直接叫成真实分数，它的身份是条件分数，真身藏在期望值里。</p>
+</details>
+</section><section class="sec" data-anchor="t3-s02"><h2 id="t3-s02">Fisher 散度：只比斜率，不比高度</h2>
+<p>去噪分数匹配最小化的目标有个学名：Fisher 散度（相差一个与参数无关的常数），写法是 <code>J(p‖q) = ½·E_p‖∇ln p − ∇ln q‖²</code>。此 J 只管这件叫 Fisher 散度的事，不是 <a class="xref" href="ch05.html">§5</a> 那个 Softmax 雅可比 J。名字先认下，性质更重要：它只比较两个分布的分数场，也就是斜率场差多远，完全不碰密度本身的值。这一点直接解释了分数路线的立身之本：比较密度需要归一化常数，<a class="xref" href="ch03.html">§3</a> Softmax 底下那个算不动的分母 Z，在这里直接消失了，因为分数是 ∇ln p，常数的导数是零。不比高度，只比坡度，坡度的尺子人人拿得到。</p>
+<details>
+<summary>
+常数的导数是零：一步微积分，一笔大账
+</summary>
+<p>把话说到底，只是一步微积分：ln(c·p) = ln c + ln p，两边求梯度，常数 ln c 的导数是零，∇ln(c·p) = ∇ln p。<a class="xref" href="ch03.html">§3</a> 的难题是配分函数 Z 根本算不出来，概率密度 p(x) 只能写到"未归一化的形状 × 未知的 Z"；而分数对 Z 完全无感，Z 再神秘也不进公式。反过来，只比斜率也够：两个分布的斜率场处处相同，形状就处处相同，差的只剩一个整体高度，那个高度反正归一化时会消掉。所以"不比密度值"不是将就，是等价。顺带一句，"相差一个与参数无关的常数"只是一个客气的说法：损失和 Fisher 散度之间差的那个数不随网络参数动，求梯度时恒为零，优化时完全可以当不存在。</p>
+</details>
+<p>学到这可以暂停。前半章的数学墙砌下了第一块砖：你能写出损失方框，说清加号的来历，并回答为什么拿条件分数当目标在期望意义下不亏。自测两题：把 <code>‖s_θ + ε/σ_t‖²</code> 对 s_θ 求导，最优解长什么样，它和数据分布是什么关系？反过来，真实分数为什么并不总等于单个样本的 −ε/σ_t？答不出的地方，就是值得回头重读的地方。</p>
+</section><section class="sec" data-anchor="t3-s03"><h2 id="t3-s03">训练循环：三行字，转几千圈</h2>
+<p>损失写在纸上，怎样变成一个真正会去噪的网络？答案 <a class="xref" href="ch04.html">§4</a> 给过：反向传播，把损失对每个参数的影响算出来，逐个微调。<a class="xref" href="ch04.html">§4</a> 立过自动微分的全套工序：计算图加节点级微分，每个节点只算自己门口的一段账。这一章起它天天上班，往后不再重讲机制。</p>
+<p>先认参数名单。θ 是网络全部权重和偏置的总名单：一个实际使用的 U-Net 有上亿个标量参数，动手节的玩具网络只有 6,770 个，身份一样。网络行为完全由 θ 决定。损失对 θ 的梯度是"分数输出对每个参数多敏感"的集合，这个偏导要用链式法则从输出层逐层乘回每个参数所在的层，这正是反向传播。梯度式照抄下来就一行：<code>∇_θL = 2(s_θ + ε/σ_t)·∇_θs_θ</code>，和上一节手算的 [−0.2, 0.2] 同款形状，只是那里写的是噪声参数化。</p>
+<p>落到单个权重上，更新的链条是这样：损失先对分数求导得 2(s_θ + ε/σ_t)，乘以该权重的局部偏导（反向传播算出），得到这个权重的责任，然后按梯度下降走一步 <code>W ← W − η·∂L/∂W</code>。η 是 <a class="xref" href="ch02.html">§2</a> 的老朋友学习率，管每步更新的幅度。名单上所有参数同时各走各的一步，就是一次训练迭代；训练循环就是让这件事转几千圈，反向传播负责高效地一次性算出全部方向。</p>
+<p>网络内部怎么长，才配得上这份工作？先看一个要紧的小零件：时间嵌入。网络吃的是 x_t 和 t 两样东西，可 t 只是个标量，直接喂进去太单薄。做法是把 t 用正弦位置编码映成一个 16 维向量再注入每一层，同一套权重在不同 t 下表现出不同行为，全靠它。正弦位置编码和 <a class="xref" href="ch05.html">§5</a> 见过的位置编码同源但不同派，两派的差别收在下面。</p>
+<details>
+<summary>
+正弦派与旋转派：两派位置编码
+</summary>
+<p><a class="xref" href="ch05.html">§5</a> 讲的旋转编码 RoPE 是"旋转"一派：把位置信息编成一对向量的旋转角，注意力打分天然带上相对位置。正弦编码是另一派老办法：用一组频率越来越低的正弦、余弦函数把标量位置摊成高维向量，铺得越开，相邻位置越容易区分。两派细节不同，用途一致：都是把"位置"这种网络吃不动的信息，变成网络听得懂的高维信号。扩散这里没有时间上的"相对位置"要打分，要的是让同一套权重认得"当前是第几档噪声"，正弦编码够用、好写、也够经典。</p>
+</details>
+<p>再看整体结构。教学基准叫 U-Net：一条下采样路径把图越缩越小（看到的是全局结构），一条上采样路径把尺寸放大回来（要补局部细节），中间用跳跃连接把对称两层接起来，两层信息都不丢。这个结构正对分数预测的胃口：高噪声的 x_t 是一团轮廓，要的是全局结构的粗略方向；低噪声的 x_t 接近成品，要的是局部细节的精细修补，两条路径各管一段。U-Net 不是唯一答案，更不是终点：损失、梯度、反向传播这一套推导，完全不依赖网络内部长什么样，s_θ 只要是个"输入 x_t 和 t、输出预测、参数可微"的函数就全部成立。到写作时为止，前沿模型已经把 U-Net 大批换成 Transformer 骨架，行话叫 DiT（扩散 Transformer）：去噪这条技法不变，跑技法的工具从一种老牌结构换成了注意力网络，为什么值得换、代价是什么，支线最后一章摊开讲。要点收成一句：架构是可插拔的，U-Net 是当前的教学基准。</p>
+<p>训练难度不是处处一样。量化难度的尺子叫信噪比，<code>SNR(t) = ᾱ_t / (1−ᾱ_t)</code>，信号方差与噪声方差的比。SNR 刻画着网络在每个 t 面对的活儿：SNR 高（低噪声）时，x_t 几乎是原图，噪声只占一小份，要精确知道数据分布长什么样才提得出来，方向复杂，难学；SNR 低（高噪声）时，x_t 几乎就是噪声本身，粗略的大方向一读就有，好学。有意思的是，每个 t 上的回归目标都是同一个 N(0,I)，目标分布一模一样，难度却差出好几倍，SNR 正是量化这一差异的尺子。</p>
+<p>难度差在损失曲线上看得见、也测得着：高噪声段的 loss 低，低噪声段的 loss 高。这不是玄学，是任务的结构性差别：t 很大时 x_t ≈ ε，网络几乎可以直接把噪声读出来；t 很小时 x_t ≈ x<sub>0</sub>，噪声份额微乎其微，提取它等于逼网络复现出数据的全部细枝末节。动手节的玩具实验把这条曲线真跑出来了：低噪声段均值 0.9591，高噪声段 0.3000，差出三倍多。难怪训练时要随机采样 t，让网络在每个噪声水平上都有练习机会：只在高噪声段训练，生成的图只有粗略轮廓没有细节；只在低噪声段训练，细节有，整体结构混乱。支线第一章的地图缩放说法在这里再借一次：跳过任何一个缩放级别，那一级就是空白。第一节末尾欠下的那句话也在此兑现：同一笔损失，噪声写法比分数写法多乘一个 σ_t<sup>2</sup>，固定一个 t 时无所谓，随机采 t、把各档平均到一起训练时，两派给各档噪声的隐含权重就不同了——DDPM 走等权的噪声写法，NCSN 走分数写法，两种说法各有适用范围。</p>
+<p>同一个"多练"的冲动，还有一笔容易算错的账。既然每张图都要配一个 (t, ε)，一张图多配几个噪声，是不是等于数据多了几倍、方差降几倍？账要拆开：这样配出来的估计依旧无偏，但各份噪声出自同一张图，彼此相关，方差降不下来多少。结论先给：主流做法仍是每张图配一个 (t, ε)，把数据多样性用足，比在同一张图上反复掷骰子划算。</p>
+<details>
+<summary>
+一图多噪的方差账
+</summary>
+<p>设数据集有 m 张图，每张图配 n 个噪声。一图多噪给出的梯度估计依旧无偏，但方差是 <code>Var = (v_φ + (n−1)c_φ) / (m·n)</code>，其中 v_φ 是单样本方差，c_φ 是同一张图不同噪声之间的协方差。收益是 <code>(n−1)(v_φ − c_φ) / (m·n)</code>：在这个玩具量级下，n 从 1 加到 10，方差也只降到约一半，n 再加下去收益趋向零，地板是 c_φ/m。</p>
+<p>拿玩具数感受一下：单样本方差为 2、协方差为 1 的量级，m = 10 张图时，n = 1 方差 0.2，n = 10 方差 0.11，n 无穷大也只降到 0.1。反过来把 m 做大：m = 1000 张图、n = 1，方差直接 0.002。说成人话：同一张考卷复印十份，请十个老师各判一遍，平均分确实更稳，但这份稳很快到顶——卷子还是同一张；多出几套新题（新数据），比多请老师（多噪声）管用得多。</p>
+</details>
+<p>两个误区在这里一并结清。"只在最终噪声水平训练就够了？"不够。不同噪声水平学到的是不同尺度的信息，高噪声学粗略结构，低噪声学细节，跳过任何一段，生成图就在对应尺度上出问题，像地图少了一个缩放级别。这条不只是说法：动手节训了两个残次模型做对照，只练高噪声段的，模式覆盖率从 0.969 掉到 0.883；只练低噪声段的，掉到 0.676，连峰心的位置都找不准。"每个 t 的目标都是同一个高斯，难度应该一样？"目标分布确实相同；但难度由输入决定，同一目标下照样分难易，SNR 那一段的账就是反证。</p>
+<p>数学墙的第二块砖就位：训练循环的全部零件都在手上了。这一关的里程碑和 <a class="xref" href="ch04.html">§4</a> 同款验收口径：动手把循环真跑通，梯度检查对拍通过，这半章才算过。暂停之前自测两题：每张图配 10 个噪声，方差降到每张图配 1 个时的几成？（折叠块里的玩具数直接可用，答案是个五开头的百分数。）只训低噪声段的网络，采样时最先在哪一段出错，为什么？（想想两段各管什么尺度。）</p>
+</section><section class="sec" data-anchor="t3-s04"><h2 id="t3-s04">概率流 ODE：把随机性拿掉</h2>
+<p>前半章的账还完了：分数学出来了，训练只需前向加噪，网络和架构各就各位。可整趟流程要走一千步，每步跑一次网络，采样一张图动辄几十秒。后半章还第二笔账：能不能少走几步？上一章已经说清随机性管的是哪一层——单条轨迹的随机分支；这一章把它拿掉，步子就能放开。同一个采样分布，可以由带随机项的 SDE 生成，也可以由一条完全确定性的常微分方程（ODE，没有随机项的微分方程）生成；拿掉随机项之后，成熟的数值方法就能大幅压缩步数。这一步升级不动前面任何一章的结论，只是换了一条通往同一目的地的路。</p>
+<p>先认一个旧相识。残差网络的一层更新 x′ = x + h(x)，正是步长为 1 的欧拉法解微分方程的一步；把层数推向无穷多、步长推向无穷小，阶梯就变成斜坡，这就是 Neural ODE 的思想：把网络层当成微分方程的离散步，两者是同一种世界观，别读成"残差网络就是微分方程"。误差量级先看结论：一层残差块做的正是这种一步近似，差千分之五。</p>
+<details>
+<summary>
+残差块就是欧拉一步：e^{−0.1} 手算
+</summary>
+<p>拿最简方程 ẋ = −x 从 x(0) = 1 出发走 0.1。真解是指数衰减：x(0.1) = e^{−0.1} ≈ 0.905。欧拉一步只做线性外推：x<sub>1</sub> = 1 + 0.1×(−1) = 0.9。两个数差 0.005，千分之五，来源是一阶方法扔掉了二阶及更高的项。步长减半，差大约也减半，这是一阶方法的身价。残差网络的一层做的正是这种"用切线代替曲线"的一步近似，层数越深、每步越小，阶梯越逼近斜坡。</p>
+</details>
+<p>从 SDE 到 ODE 的五步推导，地图先摆出来：[1] Fokker-Planck 方程（密度视角）→ [2] 把扩散项重写成散度形式 → [3] 两项合并成连续性方程 → [4] 读出速度场 → [5] 验证同分布。推导的终点收成两样：概率流 ODE 的方框和它的一句读法。</p>
+<details>
+<summary>
+五步推导：从 Fokker-Planck 到概率流 ODE
+</summary>
+<p><strong>第 1 步，Fokker-Planck 方程。</strong> SDE <code>dX = f dt + g dB</code> 支配的单条轨迹之外，还有一个场视角：所有样本合成的密度 p_t(x) 满足偏微分方程 <code>∂_t p = −∇·(fp) + ½g²Δp</code>。SDE 描述一个粒子怎么演化，Fokker-Planck 描述整片云怎么变形，同一个过程两个视角。这是随机分析的经典结果，不推导，当已知工具用：输入一个 SDE，输出它对应的密度演化方程。两个算子认一下：Δ 是 Laplacian（拉普拉斯算子），度量密度在某点的凹凸；∇· 是散度，度量向量场在某点是向外发散还是向内汇聚。工具本身上一章的折叠块里借过一次，那里只取它一条结论，这次用它的全式。</p>
+<p>这里的 ½g<sup>2</sup> 写法默认扩散各向同性：g 是标量（或标量乘单位矩阵），每个坐标方向的噪声强度相同。VP 和 VE 两种调度都满足，绝大多数常用调度也都满足，扩散支线只处理这一情形。</p>
+<p><strong>第 2 步，Laplacian 重写。</strong> 目标是把 Δp 塞进散度的形状，恒等式是 <code>Δp = ∇·∇p = ∇·(p·∇p/p) = ∇·(p∇ln p)</code>。第一个等号是定义；第二个等号是 ∇p/p = ∇ln p，即对数求导，<a class="xref" href="ch04.html">§4</a> 链式法则的直系亲属。整个恒等式就是把 ∇p 拆成 p·∇ln p 再塞回散度，纯微积分，跟扩散无关。</p>
+<p><strong>第 3 步，代入合并。</strong> 把第 2 步代回第 1 步，两项都是 ∇·(p·某向量) 的形状；散度是线性算子，两项可以合并成一个散度、向量部分相减：<code>∂_t p = −∇·[(f − ½g²∇ln p)p]</code>。</p>
+<p><strong>第 4 步，读出速度场。</strong> 上式是连续性方程 <code>∂_t p = −∇·(vp)</code> 的形状：它描述密度 p 被速度场 v 输运的守恒流，某点密度变化只取决于流入与流出之差，−∇·(vp) 就是净流入率。向量部分直接读出来：</p>
+<p><code>v_t(x) = f_t(x) − ½g_t²·∇ln p_t(x)</code>，于是 <code>dx/dt = f_t(x) − ½g_t²·∇ln p_t(x)</code>，这就是概率流 ODE。</p>
+<p><strong>第 5 步，验证。</strong> 这个速度场不是碰巧凑出来的。从起点 x(0) 按这条 ODE 走到 t，恰好有 x(t) 的分布等于 p_t：SDE 的密度演化由 Fokker-Planck 管，ODE 的密度演化天然满足连续性方程，合并之后两者共享同一个 ∂_t p，连续性方程就是它们的公共媒介。换句话说，"SDE 和 ODE 有相同的 p_t"不是证出来的定理，是配出来的构造：先反推一个让两条方程对齐的 v。在不额外添加散度为零的项的自然构造下，减号和 ½ 系数是唯一能让两边对齐的配法，不是任意选的。</p>
+<p>五步各管一件事：摆方程、塞散度、线性合并、读速度、验同分布，没有一步是"整理即可得到"。每一步都是一次具体的数学操作。</p>
+</details>
+<p>终点方框再抄一遍，读法跟着落地：</p>
+<p><code>dx/dt = f_t(x) − ½g_t²·∇ln p_t(x)</code></p>
+<p>右边是一个速度场：站在 x 点，它告诉你下一刻朝哪、走多快。此 v 是速度场，不是 <a class="xref" href="ch02.html">§2</a> 那个 Adam 给每个方向记的二阶矩 v_t，撞了号，各归各的。它的两个动作似曾相识，逐词对账上一章的目的动作。动作一，复原尺度：f_t(x) 是前向漂移的逆，采样时逆着时间走，把前向缩小的信号逐步放大回来（VE 调度 f = 0，没有衰减要补，这一项直接消失）。动作二，拉向数据：−½g<sup>2</sup>∇ln p，和上一章反复出场的去噪主干是同一个动作，只是系数换了。上一章三层多样性表的结论在这里兑付：概率流 ODE 与反向 SDE 唯一的结构差别，是随机项被删掉了；删掉的是同一起点的轨迹分支，不是样本多样性本身，不同噪声起点仍映射到不同数据点，多样性来自起点分布的覆盖面。两家的完整对照就三行：</p>
+<div class="table-wrap" tabindex="0"><table>
+<thead>
+<tr class="header">
+<th></th>
+<th>反向 SDE</th>
+<th>概率流 ODE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>复原尺度（拉回信号）</td>
+<td>有（−f 项）</td>
+<td>有（f 项原样保留）</td>
+</tr>
+<tr class="even">
+<td>拉向数据（分数修正）</td>
+<td>g<sup>2</sup>·∇ln p</td>
+<td>½g<sup>2</sup>·∇ln p</td>
+</tr>
+<tr class="odd">
+<td>保多样（随机项）</td>
+<td>g·dB̃</td>
+<td>无</td>
+</tr>
+</tbody>
+</table></div>
+<p>名字的来源就在这：单个粒子沿 v 确定性地流动，一整群粒子的密度分布恰好复现 p_t 的演化，流动的是概率本身，所以叫概率流。关于连续性方程还有一个容易想当然的读法，收在下面"ODE 的三个想当然"折叠块的第三条。</p>
+<p>上一章折叠块里埋的"两倍"在这里兑现，这笔账值得单点一句：Fokker-Planck 里的 ½g<sup>2</sup> 原样流进速度场，一步都没翻倍；反向 SDE 里那个翻倍的 g<sup>2</sup> 是 Anderson 时间反演干出来的活，而构造概率流不用反演、只要散度合并，所以 ½ 保住了。同是 ½g<sup>2</sup>，一处消失一处留守，差别全在走哪条路。</p>
+<p>拿两种调度代入，方框立刻具体化。</p>
+<details>
+<summary>
+两种调度的速度场：VP 与 VE 各一行
+</summary>
+<p>VP（f = −½x，g = 1）：<code>v = −½x − ½∇ln p</code>，复原尺度和拉向数据两项都在。VE（f = 0，g = 1）：<code>v = −½∇ln p</code>，没有衰减要补，只剩拉向数据一项。对照各自的反向 SDE（两家的 g<sup>2</sup> 都是 1），VE 的概率流比 VE 的反向 SDE 还省一半系数，根源就在刚才那笔账：反向 SDE 的系数经过 Anderson 反演翻倍成 g<sup>2</sup>，概率流没走反演，½ 原样保留。</p>
+</details>
+<p>直觉画面最后补上。想象广场上一群人，密度就是某一小块地上的人数。SDE 派的玩法：每个人随机游走，同时被 ∇ln p 往人多的区域吸引，个体路径乱成一团，整体密度却稳定演化。ODE 派的玩法：没人掷骰子，所有人按同一条预先定好的速度规则 v(x) 平稳移动，只要每一小块地的净流出恰好等于那里密度的减少，整体密度演化就和 SDE 派完全相同。按构造，两者复现一模一样的密度变化，个体行为却完全不同。这幅画面同时回答了上一章的多样性之问：样本间的多样性来自 p_t 本身覆盖的区域（两派都保留），同一起点的轨迹分支来自个体的随机性（只有 SDE 派有）。</p>
+<p>SDE 和 ODE 产生相同的密度演化，但 ODE 是确定性的，给定初始噪声，输出唯一确定，于是数值求解器（Euler、Heun、Runge-Kutta、DPM-Solver 这一家子）可以直接上场，不必模拟随机过程，步数得以从一千压到二十到五十。这份名单是写作时的快照，不是终局名单，求解器家族一直在长。这条路的边界也要说清。</p>
+<details>
+<summary>
+二十到五十的最佳区间：两个坎与换范式
+</summary>
+<p>坎一，每步变贵：高阶方法每步要多次调用网络，真正要省的是网络总调用次数，二十到五十步正是这个总量的最佳区间，不是越少越好。坎二，积分到头了：再往个位数压，截断误差明显变大，不能再靠"更精细地积分同一条轨迹"，得换范式。蒸馏是换范式的代表（<a class="xref" href="ch07.html">§7</a> RLVR 一节见过它让模型直接模仿教师），机制见后文 DDIM 节，权衡归支线最后一章。一步到位的路线还有一致性模型这一支，细节和代价归支线最后一章。</p>
+</details>
+<details>
+<summary>
+ODE 的三个想当然
+</summary>
+<p>其一："ODE 和 SDE 同分布，所以随便互换？"两层代价都在：互换失去的是同一起点的轨迹分支；更要紧的是不可跨调度互换，训练用 VP 调度，采样却套 VE 的公式，方向再对账也对不上，这是一条隐藏的约定。其二："概率流 ODE 只是个近似，SDE 才是严格的？"正相反，对齐是严格的对齐：两条方程共享同一个 ∂_t p，是构造上严丝合缝，不是误差意义上的差不多。其三："连续性方程就是密度守恒不变？"不是：它管的是密度随输运的变化率，密度本身一路在变，这是可压缩形式。</p>
+</details>
+<p>数学墙的最后一块砖：这条 ODE 的推导，你能合上折叠块独立复述五步吗？复述得出，墙就过了。自测两题：ODE 和 SDE 同分布，关键的中间媒介是什么，它为什么对两条方程都成立？（提示：从密度视角出发。）残差网络的一层和欧拉法的一步是同一个动作，把"层数推向连续时间"这句话接下去，会通向哪一族模型？</p>
+</section><section class="sec" data-anchor="t3-s05"><h2 id="t3-s05">DDIM、三源误差与采样器选型</h2>
+<p>上一章给确定性采样器挂过门牌：把随机项置零的那一族叫 DDIM，那笔账"T3 一起算"。现在算。先给定义：对 VP 的概率流 ODE 做 Euler 离散化，这就是 DDIM。ODE 没有随机项，所以 DDIM 的每一步都确定。</p>
+<p>等一下。上一章说过：随机项管的是同一起点的轨迹分支；丢掉它，同一起点只剩一条路——这是一笔真代价。它付在哪一层？回到三层多样性表：去掉随机项，失去的是单条轨迹的随机分支；样本间多样性由初始噪声保证，纹丝不动；单样本质量实践中基本不受影响。想要样本间多样性，就随机采多个起点；想要固定起点复现同一张图，就用 DDIM。这两个需求原本互斥，DDIM 把它们解耦了。这就是上一章"不对称性是 T3 拿掉随机项的底气"的正式兑付。</p>
+<p>DDIM 的公式怎么来？思路一句话：换一套坐标，让 ODE 变成直线，然后在直线上走一步。三步走。第 1 步，把 VP 的速度场用网络的实际输出 ε_θ 写出来（Tweedie 代换，上一章的手法）：<code>ẋ = −½x + ε_θ/(2σ_t)</code>。第 2 步，换元：x_t 随时间收缩，而 t 和噪声标准差 σ_t 的对应又不是线性的，两个量一起变，看不出方程的形状，于是把收缩除掉、把时间换成噪声比，定义归一化状态 <code>x̃_t = x_t/√ᾱ_t</code> 和归一化噪声比 <code>σ̃_t = σ_t/√ᾱ_t = √(1/ᾱ_t − 1)</code>，后者的读法就是"剩余噪声与残余信号的比"。第 3 步，代入化简，ODE 收缩成一行：<code>dx̃_t/dσ̃_t = ε_θ(x_t, t)</code>。这一行是 DDIM 全部几何直觉的字面意思：在归一化坐标下，ODE 的每一步都沿 ε_θ 走一段直线，不是隐喻，是真的直线。换元中间的代数五步（链式法则、漂移两项恰好抵消、σ̃ 的导数恰好对消），每个等号都是初等微积分，关键是 σ 和 σ̃ 必须分清。</p>
+<details>
+<summary>
+换元代数五步：从 VP 的 ODE 到直线
+</summary>
+<p>记 <code>a_t = √ᾱ_t</code>，<code>σ_t = √(1−ᾱ_t)</code>，<code>σ̃_t = σ_t/a_t</code>。</p>
+<p><strong>第 1 步，代入 Tweedie。</strong> VP 概率流 ODE <code>ẋ = −½x − ½∇ln p</code>，用 s_θ = −ε_θ/σ_t 换掉分数，得 <code>ẋ = −½x + ε_θ/(2σ_t)</code>。</p>
+<p><strong>第 2 步，对归一化状态求导。</strong> <code>d(x_t/a_t)/dt = ẋ_t/a_t − x_t·ȧ_t/a_t²</code>。</p>
+<p><strong>第 3 步，漂移两项抵消。</strong> VP 下 <code>ȧ_t/a_t = −½</code>（a_t<sup>2</sup> = ᾱ_t，取对数求导），于是 <code>−½x_t/a_t</code> 与 <code>−x_t·ȧ_t/a_t² = +½x_t/a_t</code> 恰好抵消，只剩 <code>ε_θ/(2a_tσ_t)</code>。</p>
+<p><strong>第 4 步，算 σ̃ 的导数。</strong> <code>σ̃_t = σ_t/a_t</code>，求导通分后分子出现 σ_t<sup>2</sup> + a_t<sup>2</sup> = 1，得 <code>σ̃̇_t = 1/(2a_tσ_t)</code>。</p>
+<p><strong>第5步，两式相除。</strong> <code>dx̃_t/dσ̃_t = [ε_θ/(2a_tσ_t)] / [1/(2a_tσ_t)] = ε_θ</code>。分母分子是同一个数，这就是直线方程的出处。</p>
+</details>
+<p>直线上的这一步用 Euler 走。去噪方向是 σ̃ 变小，Δσ̃ &lt; 0，所以这一步沿 ε_θ 的反方向走。代回 x 空间，DDIM 采样公式落地（t 沿离散步倒着数）：</p>
+<p><code>x_{t−1} = √(ᾱ_{t−1}/ᾱ_t)·x_t + √ᾱ_{t−1}·(√(1/ᾱ_{t−1}−1) − √(1/ᾱ_t−1))·ε_θ(x_t, t)</code></p>
+<p>和上一章的 DDPM 采样公式并排看，物证一目了然：两个公式同出一源（VP），系数结构几乎一样，DDPM 的尾巴上多一项 σ_q·ε。同一个分布，一个带随机项，一个没有，差别就出在那一项上。DDIM 论文里还有一个旋钮叫随机性强度：拧到零是纯确定性，拧大就重新往公式里注入随机、平滑过渡回 DDPM。η 这个符号是 <a class="xref" href="ch02.html">§2</a> 学习率的独家记号，这里不立符号，行文叫"随机性强度"就好。</p>
+<p>DDIM 不是一个独立的算法。它是概率流 ODE 的确定性离散化；DDPM 是反向 SDE 的离散化，一个带随机性，一个不带，两者采样自同一个分布。排开来看：离散化这层上，求解器已经是一大家子。</p>
+<div class="table-wrap" tabindex="0"><table>
+<thead>
+<tr class="header">
+<th>采样器</th>
+<th>类型与阶数</th>
+<th>典型步数</th>
+<th>总误差（分布层面）</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DDPM</td>
+<td>SDE，一阶</td>
+<td>1000</td>
+<td>一阶</td>
+</tr>
+<tr class="even">
+<td>DDIM</td>
+<td>ODE，一阶</td>
+<td>50–100</td>
+<td>一阶</td>
+</tr>
+<tr class="odd">
+<td>DPM-Solver-1</td>
+<td>ODE，一阶（改写）</td>
+<td>50–100</td>
+<td>一阶</td>
+</tr>
+<tr class="even">
+<td>Heun</td>
+<td>ODE，二阶</td>
+<td>30–50</td>
+<td>二阶</td>
+</tr>
+<tr class="odd">
+<td>DPM-Solver-2</td>
+<td>ODE，二阶</td>
+<td>20–30</td>
+<td>二阶</td>
+</tr>
+<tr class="even">
+<td>DPM-Solver-3</td>
+<td>ODE，三阶</td>
+<td>10–20</td>
+<td>三阶</td>
+</tr>
+</tbody>
+</table></div>
+<p>表上每个格子都要交代自己的口径。步数是工程典型值，随任务浮动；Heun 是二阶梯形法的名字，这里只用到它的名字。DDPM 行的"一阶"是分布层面的误差阶数，随机方法的路径层面误差另有一套口径（半步阶，折叠块里补），两口径别混。一个差别值得停一秒：随机项是 SDE 离散化每步都要重新掷的"新掷骰子"，它给步长划了上限；ODE 没有它，步子自然能放大——这是 DDIM 能换速度的一个重要原因。DPM-Solver 是一整个家族，不止一个算法。</p>
+<details>
+<summary>
+DPM-Solver 家族：线性部分精确，非线性部分展开 <span class="mk mk-◌" title="延伸选读">◌</span>
+</summary>
+<p>扩散 ODE 有个好用的结构特征，行话叫半线性：漂移项对 x 是线性的，非线性全躲在分数网络里。线性部分可以解析积分、精确求解，一分钱误差不花；只有非线性部分需要数值逼近，用 Taylor 展开做到高阶。于是每一步的信息利用都比朴素 Euler 充分，同质量下步数更少。论文口径下，三阶的 DPM-Solver 用十到二十步就能达到 DDIM 五十步的质量。写作当时的官方示例与社区惯例各不相同，名单还在变长，这张表迟早会过期。</p>
+</details>
+<details>
+<summary>
+反事实：把 DDPM 硬压到 20 步会怎样 <span class="mk mk-◌" title="延伸选读">◌</span>
+</summary>
+<p>同样压到二十步，DDIM 和 DDPM 的结局完全不同，根子在误差的两笔账。确定性 ODE 的离散化误差只有数值积分的截断一笔：按求解器阶数走（一阶随步长，可用高阶方法继续压），而且没有"每步重掷骰子"的新噪声层层累积——动手节的玩具账里，二十步只丢不到两个百分点。SDE 的 Euler-Maruyama 离散化另有一笔：路径层面误差是半步阶，步长放大 50 倍、路径误差放大 √50 ≈ 7 倍，每一步注入的独立新噪声都无法被后续步骤抵消，只会一路累积，轨迹整体明显偏离原过程，生成质量显著下降。同一个"二十步"，确定性采样正落在最佳区间，随机采样则显著变差。这条不对称正是 DDIM、DPM-Solver、一致性模型这一路加速的共同前提之一：随机性在采样时是可省略的，省下来才能放开步子。</p>
+</details>
+<p>压步数的总账，DDIM 论文的实验口径最有发言权：二十到一百步之内就能达到可比千步模型的质量，速度快十到五十倍。这是论文在特定基准上的实验结论，不是定律；落到具体任务，步数和质量的兑换率以实测为准。动手节的玩具账更直观：同一起点集、同一个训好的小网络，DDPM 走 200 步的模式覆盖率 0.988，DDIM 走 20 步是 0.971，砍掉九成步数，只丢不到两个百分点。</p>
+<p>步数压到二十还想往下呢？蒸馏换范式：让小网络直接模仿大网络多步采样的最终结果，把"逐步去噪"换成"一步到位"，收益是快出几十上百倍，代价是可能丢细节与多样性，这笔权衡归支线最后一章算。</p>
+<p>"DDIM 是 DDPM 的改进版？"不是，两者是两条并行的技术路线，定位前面已给。DDIM 快，快在确定性允许放大步长、高阶求解器还能接着压，不是公式本身更聪明。"去掉随机性，质量会掉？"随机性提供的是同一起点内的轨迹分支，样本间的多样性来自起点的覆盖面；单样本质量上，确定性采样往往并不逊色。实际选用看需求：同一起点要多种可能的猫，SDE 派；要多张不同的样本，换个起点即可；要同一噪声永远复现同一张图、或者要速度，ODE 派。"步数越多越好？"总误差降到一定程度就停在分数误差的地板上，再多步只是空转，地板以下的改善只能靠更准的分数，也就是更好的网络。</p>
+<p>误差这件事，值得拆成三笔账细看，选型时先看它。采样出来的分布和真实数据分布的差距（KL 散度，<a class="xref" href="ch03.html">§3</a> 立过，真实分布在前的那个口径），启发式地拆成三项：</p>
+<p><code>D_KL(p₀‖p̂₀) ≲ ε_init² + ε_disc² + c·Σ_i Δs_i·ε_{i,score}²</code></p>
+<p>Δs_i 是第 i 步的步长（T1 立过的记号，采样步长与学习率 η 各归各的）：每一步的更新量是步长乘方向，方向里的分数误差也被放大同样的倍数。</p>
+<p>三个来源各随一枚旋钮走，互不越界：</p>
+<div class="table-wrap" tabindex="0"><table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>误差源</th>
+<th>随什么变</th>
+<th>对应的解法</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>初始化误差 ε_init</td>
+<td>终止时刻 T：VP 下按 e^{−T/2} 指数衰减（表里标的是信号幅值）</td>
+<td>用足够大的 T（通常 1 到 4）</td>
+</tr>
+<tr class="even">
+<td>离散化误差 ε_disc</td>
+<td>离散步数 N：一阶按 1/N，二阶按 1/N<sup>2</sup>，三阶按 1/N<sup>3</sup></td>
+<td>高阶求解器、加步数</td>
+</tr>
+<tr class="odd">
+<td>分数误差 ε_score</td>
+<td>网络质量；且被步长加权：大步把方向里的分数误差放大得更厉害</td>
+<td>训练更好的网络</td>
+</tr>
+</tbody>
+</table></div>
+<p>两件事别混：这里的 T 是终止时刻，N 是离散步数，是两枚独立旋钮，可以大 T 配小 N，也可以反过来。分数误差那行是最值钱的半句：大步长区域（高噪声段）的分数精度比小步长区域更金贵，方向错一点被放大得更多，这解释了为什么训练要把每个噪声水平都练到、且高噪声段尤其要盯紧。三枚旋钮里，初始化误差通常问题最小，离散化误差能靠高阶方法补回来，真正压住质量天花板的是分数误差的地板：它只随网络走。这张表选型时还要回来用，哪个误差归哪枚旋钮都在上面。</p>
+<details>
+<summary>
+e^{−T/2} 的三口径与两个"步" <span class="mk mk-◌" title="延伸选读">◌</span>
+</summary>
+<p>e^{−T/2} 说的是信号幅值的衰减率；平方 e^{−T} 是对应的能量口径，再平方 e^{−2T} 是方差差的口径。三个数说的是同一件事的不同度量，表里标的是幅值，别处见到平方形式别当成矛盾。T 的常用范围是 1 到 4：T = 1 时幅值还剩 0.61，T = 4 时只剩 0.14，初始噪声的尺度基本归一，再加大 T 收益递减而每一步更贵。两个"步"的完整区分：终止时刻 T 管的是"从多纯的噪声出发"，离散化 N 管的是"把这段路切成多少格"，前者压初始化误差，后者压离散化误差，互不相干，所以大 T 配小 N、小 T 配大 N 都合法，选型时各调各的。</p>
+</details>
+<p>步长分配也有讲究：好策略在分数变化快的区域用小步、变化慢的区域用大步（所谓信噪比感知步长）。现代求解器内置了这类策略，一般不需要手调。</p>
+</section><section class="sec" data-anchor="t3-s06"><h2 id="t3-s06">动手：实现训练循环</h2>
+<p><a class="xref" href="ch04.html">§4</a> 留过一句话：自动微分是支线 T3 的地基，梯度检查这一关，巩固半周再见。地基今天浇筑：梯度检查进下面的脚本，训练循环进正文。题面是一个能真跑完的玩具扩散训练：数据用支线第一章手算过的同款双峰混合高斯（两团各以 [2,2] 和 [−2,−2] 为中心、标准差 0.5，各占一半），网络是 ε_θ 小网：坐标 2 维加上正弦时间嵌入 16 维，两排各 72 个神经元的隐藏层，输出 2 维，共 6,770 个参数，比前面说的上亿参数小四个数量级——干的是同一件事。训练设置照抄教学口径：VP 离散调度（噪声增量从万分之一线性升到百分之二，共 200 档）、每轮 256 个样本、Adam、学习率千分之一、转 4000 圈，CPU 十几秒跑完。先猜一件事再动手：loss 随 t 的曲线长什么样，是平直线，还是一头高一头低？</p>
+<p>循环体三行字，和正文那套一一对应：采一批 x<sub>0</sub>、随机采 t、掷骰子取 ε，闭式公式加噪得 x_t；网络吃 (x_t, t) 吐出 ε_θ，和标准答案算均方误差；loss.backward() 一步，自动微分把全部参数的账一次算清，你只写了前向。配套脚本（<a class="asset" href="assets/T3-%E4%BD%93%E9%AA%8C%E5%AE%9E%E9%AA%8C/toy_diffusion_train.py">assets/T3-体验实验/toy_diffusion_train.py</a>）把每个判据做成断言，跑完自动对拍。</p>
+<p>真实跑出来的结果，逐条入账。训练损失末段均值 0.4714，而这套数据加调度下 ε 预测的理论下限（混合高斯后验的最优均方误差，用二十万个样本数值估出）是 0.4556，网络贴在下限的 1.035 倍处，学会了，且没有多余的水分可挤。loss 随 t 的曲线是你猜的形状吗：低噪声段（t 从 1 到 40）均值 0.9591，高噪声段（t 从 161 到 200）均值 0.3000，一头一尾差三倍多，"目标同一个高斯、难度随 t 变化"在玩具上直接可见。梯度检查照 <a class="xref" href="ch04.html">§4</a> 的判据执行：6,770 个参数逐一与中心有限差分对拍，1e-5 级组合容差全部通过，最大超出量 −9.992e-09；纯相对误差在约 1e-9 量级的小梯度处受浮点抵消干扰，不作判据，记录里留了档。采样对拍：512 个纯噪声起点，DDIM 走 50 步，落进两峰各半径 1.5 的并集的比例是 0.969；DDPM 走 200 步是 0.988；DDIM 只走 20 步仍有 0.971，比 200 步低不到两个百分点。两百步压到二十步的账，玩具版结算完毕：步数砍到一成，模式覆盖几乎不丢。两个残次模型给"随机采样 t"作证：只练高噪声段的，覆盖率掉到 0.883；只练低噪声段的掉到 0.676，样本离峰心的平均距离 1.25，连峰心都找不准。</p>
+</section><section class="sec" data-anchor="t3-s07"><h2 id="t3-s07">回望与下一章</h2>
+<p>收成一句话：方向是学出来的，学法是去噪分数匹配，拿自己采的噪声当答案，期望意义下等价于回归真实分数；一千步是积分出来的，压法是拿掉随机项得到概率流 ODE，离散化之后演化为 DDIM 一族确定性求解器，误差分初始化、离散化、分数三笔账，地板在分数。</p>
+<p>三题自查。</p>
+<ol type="1">
+<li>三源误差各随哪枚旋钮变？把二十步 DDIM 换成二十步 DDPM，涨的是哪一笔账，为什么？</li>
+<li>DDIM 和 DDPM 采样自同一个分布，本质区别在哪一层？DDIM 快，快在公式本身吗？</li>
+<li>同一个噪声起点，DDIM 给它几个样本？想生成两张不同的猫，该动哪一层多样性，怎么动？</li>
+</ol>
+<p>两笔账都还清了，可还欠着一件大事：生成什么，至今不归用户管。想让文字生出指定的图片、让线稿生出写实照、让参考图带画风，就得把"用户说了算"装进扩散，而这要动网络本身的结构：是小改一个模块，还是从头再训？支线最后一章（T4）算这笔账：怎样控制生成的内容、还能生成什么。</p>
+</section>
+
+<details class="chapter-terms"><summary>本章新词（25）</summary><ul><li><a href="terms.html#term-e5d17af9dc">DPM-Solver</a></li><li><a href="terms.html#term-73bf8bc964">DiT</a></li><li><a href="terms.html#term-7e345601e4">Fisher 散度</a></li><li><a href="terms.html#term-edd0670386">Heun</a></li><li><a href="terms.html#term-057cf761b6">Laplacian（拉普拉斯算子）</a></li><li><a href="terms.html#term-b82a44f279">Neural ODE</a></li><li><a href="terms.html#term-78d155cebe">U-Net</a></li><li><a href="terms.html#term-343d54859b">一致性模型</a></li><li><a href="terms.html#term-b8847fd2e8">信噪比</a></li><li><a href="terms.html#term-8c6e4ed41f">分数误差</a></li><li><a href="terms.html#term-b67fc6adbf">初始化误差</a></li><li><a href="terms.html#term-f4ab458382">半线性</a></li><li><a href="terms.html#term-58c517b001">去噪分数匹配</a></li><li><a href="terms.html#term-7288710469">散度</a></li><li><a href="terms.html#term-eadc6c9703">数值求解器</a></li><li><a href="terms.html#term-2f66590de8">时间嵌入</a></li><li><a href="terms.html#term-179b16020e">模式覆盖率</a></li><li><a href="terms.html#term-e2739f549c">欧拉法</a></li><li><a href="terms.html#term-dfb6c70cb5">正弦位置编码</a></li><li><a href="terms.html#term-1bf97b132b">残差网络</a></li><li><a href="terms.html#term-de46a4468c">离散化误差</a></li><li><a href="terms.html#term-fcc7948946">连续性方程</a></li><li><a href="terms.html#term-1fc9a16019">速度场</a></li><li><a href="terms.html#term-c44f109d63">采样器</a></li><li><a href="terms.html#term-4a058c32af">随机性强度</a></li></ul></details>
+<div class="read-row"><button type="button" id="readToggle" data-slug="t3">标记已读</button><a class="review-link" id="reviewLink" href="#t3-s07" data-anchor="t3-s07">抽查本章三题</a><a class="route-next" id="routeNext" data-slug="t3" hidden></a></div>
+<nav class="prevnext"><a class="pv-prev" href="t2.html">← T2 知道了方向，噪声怎样变回数据？</a><a class="pv-next" href="t4.html">T4 怎样控制生成的内容、还能生成什… →</a></nav>
+<div class="asset-card"><b>本章资产：</b>5 件（loss_curves.png、losses.npy、mean_loss_t.npy、run_log.txt、toy_diffusion_train.py） <a href="assets.html#d-T3-%E4%BD%93%E9%AA%8C%E5%AE%9E%E9%AA%8C">全部 →</a></div>
+</article>
+      <footer class="footer">v0.3.0 · 构建 2026-10-20 · 本章源稿校验和 2d3653d1 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
+    </div>
+  </main>
+</div>
+<button class="back-top" id="backTop" title="回到顶部">↑</button>
+<script type="application/json" id="series-data">{"schema":"series-site-data/v2","default_route":"free","routes":[{"id":"taste","order":1,"tag":"尝鲜","title":"尝鲜速览","audience":"只有半天，想先看清这套书值不值得读的人","goal":"用一次半天拿到全貌与边界感，并选出下一步路线","exit":["能复述训练回路（旋钮—山—下山）与四级火箭","能区分自回归与扩散两条生成路线","能把「做不到」分成定理锁死与还没做到两类","能说出自己下一步想走哪条线"],"selfcheck":["§0.1/§0.2/§0.3 各三题","自找三个「做不到」的流行说法，各判定理/未做到"],"hours":{"read":0.8,"practice":0,"project":0},"open_default":false,"pace_note":"一次半天即可读完；不需要排课表","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch14","mode":"focus","sections":["ch14-s05","ch14-s06"]}],"catchups":[{"where":"ch14-s05/s06","need":"§7 KL 账、§6 三条根","fix":"已内联半句；数据墙四名目随 s05 补齐"},{"where":"ch14-s06 数据墙","need":"§10 双下降","fix":"已内联（不可约损失一句）"}],"supply":["terms.html","selftest.html"],"exempt":["零动手为设计（试读包）；三题自查在 §0 各章章末"],"cards":[{"anchor":"ch14-s05","text":"本节引用的 §7 KL 账与 §6 三条根，都已在本节句内给了半句解释；按旁注读即可。"},{"anchor":"ch14-s06","text":"本节提到 §10 的双下降：只需记住「损失地板」这一句，细节留给以后。"}],"note":"一次半天拿全貌与边界感；方向定下后再换对应路线。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"dim","ch02":"dim","ch03":"dim","ch04":"dim","ch05":"dim","ch06":"dim","ch07":"dim","ch08":"dim","ch09":"dim","ch10":"dim","ch11":"dim","ch12":"dim","ch13":"dim","ch14":{"focus":["ch14-s05","ch14-s06"]},"ch15":"dim","ch16":"dim","ch17":"dim","ch18":"dim","ch19":"dim","ch20":"dim","ch21":"dim","intro":"dim","recipe":"dim","t1":"dim","t2":"dim","t3":"dim","t4":"dim"},"dim_sections":{"ch14-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s09":{"reason":"本路线只读所列节","kind":"focus"}},"counts":{"main":4,"branch":0},"open":false,"cards":{"ch14-s05":"本节引用的 §7 KL 账与 §6 三条根，都已在本节句内给了半句解释；按旁注读即可。","ch14-s06":"本节提到 §10 的双下降：只需记住「损失地板」这一句，细节留给以后。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch14"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch14":4},"total":4}},{"id":"agent-full","order":2,"tag":"完整线","title":"应用与 Agent·完整线（推荐）","audience":"做产品/工程，要把模型用成可靠 Agent 系统的人","goal":"获得模型全貌＋驾驭部重点，能搭、能守、能估、能判","exit":["搭得出六站 Agent 并写下三条断言","守得住护栏：双轴表、最小权限、间接注入缓解、验证门","估得出六站 Agent 的月成本（三笔账）","判得出什么时候不需要 Agent","说得清可验证性 razor，并举一类边界（如表达力上界）"],"selfcheck":["六站全站跑通＋三条断言","写一条反注入缓解：落在哪一层、失败信号是什么、怎么复验","给前五站 Agent 估月成本（四档各一遍）","说出定理级四类边界各一例（表达力／泛化／验证／对齐）"],"hours":{"read":6.6,"practice":2.5,"project":6},"open_default":false,"pace_note":"按每周 5–10 小时约 2–4 个月；节奏示例见下","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"read"},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"read"},{"ch":"ch06","mode":"read"},{"ch":"ch07","mode":"read"},{"ch":"ch08","mode":"read"},{"ch":"ch09","mode":"read"},{"ch":"ch10","mode":"read"},{"ch":"ch11","mode":"read"},{"ch":"ch12","mode":"read"},{"ch":"ch13","mode":"read"},{"ch":"ch14","mode":"read"},{"ch":"ch15","mode":"read"},{"ch":"ch16","mode":"read"},{"ch":"ch17","mode":"read"},{"ch":"ch18","mode":"read"},{"ch":"ch19","mode":"read"},{"ch":"ch20","mode":"read"},{"ch":"ch21","mode":"read"}],"catchups":[],"supply":["terms.html","env.html","selftest.html","assets.html"],"exempt":["支线六页（导言、配方、T1–T4）不读；§21-s04 回收地图含 T3/T4 门牌，作索引略过；论文精读按方向做项目四"],"cards":[{"anchor":"ch21-s04","text":"支线 T3/T4 未读：回收地图里的扩散链作索引略过。"}],"note":"默认线：24 章全走，驾驭部重点，含六站与结业项目。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":"read","ch04":"read","ch05":"read","ch06":"read","ch07":"read","ch08":"read","ch09":"read","ch10":"read","ch11":"read","ch12":"read","ch13":"read","ch14":"read","ch15":"read","ch16":"read","ch17":"read","ch18":"read","ch19":"read","ch20":"read","ch21":"read","intro":"dim","recipe":"dim","t1":"dim","t2":"dim","t3":"dim","t4":"dim"},"dim_sections":{},"counts":{"main":24,"branch":0},"open":false,"cards":{"ch21-s04":"支线 T3/T4 未读：回收地图里的扩散链作索引略过。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"ch10","ch10":"ch11","ch11":"ch12","ch12":"ch13","ch13":"ch14","ch14":"ch15","ch15":"ch16","ch16":"ch17","ch17":"ch18","ch18":"ch19","ch19":"ch20","ch20":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"ch10":13,"ch11":14,"ch12":15,"ch13":16,"ch14":17,"ch15":18,"ch16":19,"ch17":20,"ch18":21,"ch19":22,"ch20":23,"ch21":24},"total":24}},{"id":"train-full","order":3,"tag":"完整线","title":"训练与调参·完整线","audience":"做预训练/微调/评测，要读懂训练动力学与配方的人","goal":"懂训练凭什么有效、怎么配、怎么评，并能动手完成微调与最小 eval","exit":["读懂损失曲线、配比（Chinchilla）与稳定性（EoS/临界步长）","完成一次 QLoRA 微调并对比秩","写得出最小 eval（五件）并说出 eval-driven","知道 μP 与幂律外推解决什么问题"],"selfcheck":["项目二：微调对比秩，交出两档口径","项目三：最小 eval 五件＋换序评判实测","手算：拟合幂律外推四个点","说出失效两路径各一例"],"hours":{"read":5.0,"practice":3,"project":6},"open_default":false,"pace_note":"按每周 5–10 小时约 1.5–3 个月","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"read"},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"read"},{"ch":"ch06","mode":"read"},{"ch":"ch07","mode":"read"},{"ch":"ch08","mode":"read"},{"ch":"ch09","mode":"read"},{"ch":"ch10","mode":"read"},{"ch":"ch11","mode":"read"},{"ch":"ch12","mode":"read"},{"ch":"ch13","mode":"read"},{"ch":"ch14","mode":"focus","sections":["ch14-s01","ch14-s03","ch14-s04","ch14-s08"]},{"ch":"ch21","mode":"focus","sections":["ch21-s03"]}],"catchups":[{"where":"ch21-s03","need":"§10/§12 前文","fix":"已含 §10/§12 全读，无需补"},{"where":"ch21-s03 自动科研注","need":"§19 三问","fix":"已内联「评估器写不写得出来」一句；如需细节，自由读 §19"}],"supply":["terms.html","env.html","assets.html"],"exempt":["§15–§20（驾驭部）不读；§13 全读但以机制理解为目标"],"cards":[{"anchor":"ch21-s03","text":"§19 未读：只需记住「评估器写不写得出来」这句，细节可后补。"}],"note":"建造＋规律（训练向）＋§14 评估节与项目二/三。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":"read","ch04":"read","ch05":"read","ch06":"read","ch07":"read","ch08":"read","ch09":"read","ch10":"read","ch11":"read","ch12":"read","ch13":"read","ch14":{"focus":["ch14-s01","ch14-s03","ch14-s04","ch14-s08"]},"ch15":"dim","ch16":"dim","ch17":"dim","ch18":"dim","ch19":"dim","ch20":"dim","ch21":{"focus":["ch21-s03"]},"intro":"dim","recipe":"dim","t1":"dim","t2":"dim","t3":"dim","t4":"dim"},"dim_sections":{"ch14-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s07":{"reason":"本路线只读所列节","kind":"focus"}},"counts":{"main":18,"branch":0},"open":false,"cards":{"ch21-s03":"§19 未读：只需记住「评估器写不写得出来」这句，细节可后补。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"ch10","ch10":"ch11","ch11":"ch12","ch12":"ch13","ch13":"ch14","ch14":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"ch10":13,"ch11":14,"ch12":15,"ch13":16,"ch14":17,"ch21":18},"total":18}},{"id":"gen-full","order":4,"tag":"完整线","title":"生成方向·完整线","audience":"做生成/多模态，要吃透扩散路线的人","goal":"从第一原理走到训练与控制一条扩散生成系统","exit":["训得动一条玩具扩散训练回路（自动微分版）","压得下采样步数并说清三源误差","用 CFG/ControlNet 的思路控制生成，并评一个配方（四把尺子）","说出两派之争各三行"],"selfcheck":["T3 训练循环真跑＋梯度检查","手算：一步采样／混合高斯分数","四把尺子评一个真实配方","说出生成派 vs JEPA 三栏各一行"],"hours":{"read":5.7,"practice":2.5,"project":0},"open_default":false,"pace_note":"按每周 5–10 小时约 1–2 个月","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"read"},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"read"},{"ch":"ch06","mode":"read"},{"ch":"ch07","mode":"read"},{"ch":"ch08","mode":"read"},{"ch":"ch09","mode":"read"},{"ch":"intro","mode":"read"},{"ch":"recipe","mode":"read"},{"ch":"t1","mode":"read"},{"ch":"t2","mode":"read"},{"ch":"t3","mode":"read"},{"ch":"t4","mode":"read"},{"ch":"ch14","mode":"focus","sections":["ch14-s05","ch14-s06"]},{"ch":"ch21","mode":"focus","sections":["ch21-s02","ch21-s04"]}],"catchups":[{"where":"t4-s04","need":"§8 LoRA 记号","fix":"t4-s04 已自带回指半句"}],"supply":["terms.html","env.html","assets.html"],"exempt":["§10–§13、§15–§20 不读（除结论节）；论文精读无","§21-s04 回收地图含 §11/§12/§14-s07 门牌，未读部分作索引略过","§21 六条线表含 §16、§17、§18、§19 门牌，生成线未读，作索引略过"],"cards":[{"anchor":"ch14-s06","text":"本节提到 §10 的双下降：只需记住「损失地板」这一句，细节留给以后。"},{"anchor":"ch21-s02","text":"§12、§20 未读：「测试时算力」与 V-JEPA 2-AC 细节可后补；这里按表读结论。"},{"anchor":"ch21-s04","text":"回收地图含 §11/§12/§14-s07 门牌：生成线未读，作索引略过。"}],"note":"建造＋支线六页＋§14/§21 结论节。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":"read","ch04":"read","ch05":"read","ch06":"read","ch07":"read","ch08":"read","ch09":"read","ch10":"dim","ch11":"dim","ch12":"dim","ch13":"dim","ch14":{"focus":["ch14-s05","ch14-s06"]},"ch15":"dim","ch16":"dim","ch17":"dim","ch18":"dim","ch19":"dim","ch20":"dim","ch21":{"focus":["ch21-s02","ch21-s04"]},"intro":"read","recipe":"read","t1":"read","t2":"read","t3":"read","t4":"read"},"dim_sections":{"ch14-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s07":{"reason":"本路线只读所列节","kind":"focus"}},"counts":{"main":14,"branch":6},"open":false,"cards":{"ch14-s06":"本节提到 §10 的双下降：只需记住「损失地板」这一句，细节留给以后。","ch21-s02":"§12、§20 未读：「测试时算力」与 V-JEPA 2-AC 细节可后补；这里按表读结论。","ch21-s04":"回收地图含 §11/§12/§14-s07 门牌：生成线未读，作索引略过。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"intro","intro":"recipe","recipe":"t1","t1":"t2","t2":"t3","t3":"t4","t4":"ch14","ch14":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"intro":13,"recipe":14,"t1":15,"t2":16,"t3":17,"t4":18,"ch14":19,"ch21":20},"total":20}},{"id":"research-full","order":5,"tag":"完整线","title":"研究与理论·完整线","audience":"做研究/读论文，要能按证据档位独立判断的人","goal":"获得规律部全貌＋书末方法层，能读论文、能定档、能指出开放问题","exit":["按证据档位评一篇论文并交一页证据卡","说清五个为什么各自的证据状态","说清六类边界中哪些是定理墙、各自的前提与活口","指出至少两条开放问题并给出定位"],"selfcheck":["给一篇论文定档：档位指得回 §14 六类边界表","自拟一个「做不到」并判定理/未做到","把 §12 失效两路径各举一例","按 §21 五维回收框的格式，说一条开放问题综述"],"hours":{"read":5.5,"practice":3,"project":3},"open_default":true,"pace_note":"按每周 5–10 小时约 2 个月；折叠块默认展开（理论优先）","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"read"},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"read"},{"ch":"ch06","mode":"read"},{"ch":"ch07","mode":"read"},{"ch":"ch08","mode":"read"},{"ch":"ch09","mode":"read"},{"ch":"ch10","mode":"read"},{"ch":"ch11","mode":"read"},{"ch":"ch12","mode":"read"},{"ch":"ch13","mode":"read"},{"ch":"ch14","mode":"read"},{"ch":"ch21","mode":"read"}],"catchups":[{"where":"ch21-s04","need":"T3/T4 回指名","fix":"s04 已内联点名不重推；如需底层证据，自由读 T3/T4"}],"supply":["terms.html","selftest.html","§21-s07 候选论文框"],"exempt":["§15–§20 不读；支线不读（生成两派之争保留在 §21-s02 可自由读）","§21 收束与部末十题含 §15–§20 全覆盖（§16、§17、§18、§19 等回话题；研究线未读，作跨部索引略过）"],"cards":[{"anchor":"ch21-s01","text":"§20 未读：「动作空间与评估器」两件只需知道有这个雏形。"},{"anchor":"ch21-s06","text":"§19/§16/§17 未读：「三条硬边界」与 Harness、契约、护栏按名词读，细节可后补。"},{"anchor":"ch21-s07","text":"部末十题含 §15–§20 回话题：未读部分作跨部索引略过。"}],"note":"建造＋规律部全＋§21 全＋论文清单；折叠默认展开。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":"read","ch04":"read","ch05":"read","ch06":"read","ch07":"read","ch08":"read","ch09":"read","ch10":"read","ch11":"read","ch12":"read","ch13":"read","ch14":"read","ch15":"dim","ch16":"dim","ch17":"dim","ch18":"dim","ch19":"dim","ch20":"dim","ch21":"read","intro":"dim","recipe":"dim","t1":"dim","t2":"dim","t3":"dim","t4":"dim"},"dim_sections":{},"counts":{"main":18,"branch":0},"open":true,"cards":{"ch21-s01":"§20 未读：「动作空间与评估器」两件只需知道有这个雏形。","ch21-s06":"§19/§16/§17 未读：「三条硬边界」与 Harness、契约、护栏按名词读，细节可后补。","ch21-s07":"部末十题含 §15–§20 回话题：未读部分作跨部索引略过。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"ch10","ch10":"ch11","ch11":"ch12","ch12":"ch13","ch13":"ch14","ch14":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"ch10":13,"ch11":14,"ch12":15,"ch13":16,"ch14":17,"ch21":18},"total":18}},{"id":"agent-fast","order":6,"tag":"快线","title":"应用与 Agent·快线","audience":"时间紧（集中两三周或业余四到六周），要把 Agent 用起来的人","goal":"拿到可用的最小 Agent 能力：搭骨架、守护栏、估成本、不过度工程","exit":["搭得出最小 Agent（六站前 3 站）并写下三条断言","说得出双轴表两轴与最小权限缓解","估得出一次任务的成本乘数","判得出什么时候不需要 Agent"],"selfcheck":["六站前 3 站跑通＋三条断言","写一条反注入缓解（半句自含）","说出「每步都问更危险」的机制与疏的设计","说出 razor 的一半：验证便宜为什么进展快"],"hours":{"read":3.6,"practice":2,"project":0},"open_default":false,"pace_note":"全职 2–3 周或业余 4–6 周；六站止步第 3 站，4–6 站回补","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"read"},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"focus","sections":["ch05-s01","ch05-s02","ch05-s04","ch05-s05"]},{"ch":"ch06","mode":"focus","sections":["ch06-s01","ch06-s02","ch06-s04"]},{"ch":"ch07","mode":"focus","sections":["ch07-s01","ch07-s02","ch07-s03","ch07-s04","ch07-s05","ch07-s06"]},{"ch":"ch08","mode":"focus","sections":["ch08-s01","ch08-s03"]},{"ch":"ch09","mode":"focus","sections":["ch09-s01","ch09-s02","ch09-s03","ch09-s05"]},{"ch":"ch10","mode":"focus","sections":["ch10-s01","ch10-s02","ch10-s04"]},{"ch":"ch14","mode":"focus","sections":["ch14-s03","ch14-s05"]},{"ch":"ch15","mode":"read"},{"ch":"ch16","mode":"read"},{"ch":"ch17","mode":"read"},{"ch":"ch18","mode":"focus","sections":["ch18-s04"]},{"ch":"ch19","mode":"focus","sections":["ch19-s01","ch19-s02"]},{"ch":"ch21","mode":"focus","sections":["ch21-s06"]}],"catchups":[{"where":"§9-s03 KV 账","need":"§5-s05","fix":"已含（本路线读）"},{"where":"§16-s06 RAG 四问","need":"§7-s06","fix":"已含（本路线读）"},{"where":"ch10-s04 两速度分解（慢针/快针）","need":"ch10-s01/s02","fix":"已含（本路线读）"},{"where":"§17-s06 λ／影子价格","need":"ch07-s04","fix":"已含（本路线读）"},{"where":"ch15 最小结论","need":"§10–§14 规律部","fix":"规律部五条只作名词索引；§12 缩放细节可后补"}],"supply":["terms.html","env.html","selftest.html"],"exempt":["§11–§13、§20 不读；项目一/二/四不做（留给对应完整线）；六站止步第 3 站","ch19-s04 走查可回补（用甲部工具，在完整线里做）"],"cards":[{"anchor":"ch17-s08","text":"§13 未读：本节只需记住「模型内部有一条拒绝方向，可以被压掉」。"}],"note":"快线：关键节直达 §15–§18；六站止步第 3 站。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":"read","ch04":"read","ch05":{"focus":["ch05-s01","ch05-s02","ch05-s04","ch05-s05"]},"ch06":{"focus":["ch06-s01","ch06-s02","ch06-s04"]},"ch07":{"focus":["ch07-s01","ch07-s02","ch07-s03","ch07-s04","ch07-s05","ch07-s06"]},"ch08":{"focus":["ch08-s01","ch08-s03"]},"ch09":{"focus":["ch09-s01","ch09-s02","ch09-s03","ch09-s05"]},"ch10":{"focus":["ch10-s01","ch10-s02","ch10-s04"]},"ch11":"dim","ch12":"dim","ch13":"dim","ch14":{"focus":["ch14-s03","ch14-s05"]},"ch15":"read","ch16":"read","ch17":"read","ch18":{"focus":["ch18-s04"]},"ch19":{"focus":["ch19-s01","ch19-s02"]},"ch20":"dim","ch21":{"focus":["ch21-s06"]},"intro":"dim","recipe":"dim","t1":"dim","t2":"dim","t3":"dim","t4":"dim"},"dim_sections":{"ch05-s02-1":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-2":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-3":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s11":{"reason":"本路线只读所列节","kind":"focus"},"ch06-s12":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s11":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s08-1":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch10-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch10-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch10-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch18-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch18-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch18-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch18-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch18-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s01-1":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s01-2":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s01-3":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s01-4":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s02-1":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s02-2":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s02-3":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch19-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s07":{"reason":"本路线只读所列节","kind":"focus"}},"counts":{"main":20,"branch":0},"open":false,"cards":{"ch17-s08":"§13 未读：本节只需记住「模型内部有一条拒绝方向，可以被压掉」。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"ch10","ch10":"ch14","ch14":"ch15","ch15":"ch16","ch16":"ch17","ch17":"ch18","ch18":"ch19","ch19":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"ch10":13,"ch14":14,"ch15":15,"ch16":16,"ch17":17,"ch18":18,"ch19":19,"ch21":20},"total":20}},{"id":"train-fast","order":7,"tag":"快线","title":"训练与调参·快线","audience":"时间紧，要尽快能微调与自评的人","goal":"拿到最小训练闭环：懂损失与配比，能微调，能写最小 eval","exit":["微调一个模型并对比秩（项目二）","写得出最小 eval 五件（项目三）","说得出幂律/Chinchilla/μP 各一行","说得出 EoS 两旋钮表与临界批"],"selfcheck":["项目二：链路＋玩具秩扫描（免费档）；两秩对比的完整训练按租卡档","项目三：最小 eval＋换序评判","手算：幂律外推四个点","说出失效两路径各一例"],"hours":{"read":4.5,"practice":3,"project":5},"open_default":false,"pace_note":"全职 2–3 周或业余 4–6 周","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"focus","sections":["ch03-s01","ch03-s04","ch03-s05","ch03-s06"]},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"focus","sections":["ch05-s02","ch05-s04","ch05-s05"]},{"ch":"ch06","mode":"read"},{"ch":"ch07","mode":"focus","sections":["ch07-s01","ch07-s02","ch07-s03","ch07-s04","ch07-s05"]},{"ch":"ch08","mode":"read"},{"ch":"ch09","mode":"focus","sections":["ch09-s01","ch09-s02","ch09-s03","ch09-s07"]},{"ch":"ch10","mode":"focus","sections":["ch10-s01","ch10-s02","ch10-s03","ch10-s04"]},{"ch":"ch11","mode":"focus","sections":["ch11-s01","ch11-s03","ch11-s05","ch11-s07"]},{"ch":"ch12","mode":"read"},{"ch":"ch14","mode":"focus","sections":["ch14-s01","ch14-s03","ch14-s04","ch14-s08"]},{"ch":"ch21","mode":"focus","sections":["ch21-s03"]}],"catchups":[{"where":"§9-s03 KV 账","need":"§5-s05","fix":"已含（本路线读）"},{"where":"§10-s03 权重衰减","need":"§7-s04","fix":"已含（本路线读）"},{"where":"§8-s04 MLA 门牌","need":"§9-s07","fix":"已含（本路线读）"},{"where":"ch21-s03 自动科研注","need":"§19 三问","fix":"已内联「评估器写不写得出来」一句；如需细节，自由读 §19"}],"supply":["terms.html","env.html","assets.html"],"exempt":["§13、§15–§20 不读；项目一/四不做"],"cards":[{"anchor":"ch21-s03","text":"第 13 章未读：清单里「解码算不算看见」一条，记住大意即可；§19 未读：只需记住「评估器写不写得出来」这句，细节可后补。"}],"note":"快线：训练主干＋项目二/三。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":{"focus":["ch03-s01","ch03-s04","ch03-s05","ch03-s06"]},"ch04":"read","ch05":{"focus":["ch05-s02","ch05-s04","ch05-s05"]},"ch06":"read","ch07":{"focus":["ch07-s01","ch07-s02","ch07-s03","ch07-s04","ch07-s05"]},"ch08":"read","ch09":{"focus":["ch09-s01","ch09-s02","ch09-s03","ch09-s07"]},"ch10":{"focus":["ch10-s01","ch10-s02","ch10-s03","ch10-s04"]},"ch11":{"focus":["ch11-s01","ch11-s03","ch11-s05","ch11-s07"]},"ch12":"read","ch13":"dim","ch14":{"focus":["ch14-s01","ch14-s03","ch14-s04","ch14-s08"]},"ch15":"dim","ch16":"dim","ch17":"dim","ch18":"dim","ch19":"dim","ch20":"dim","ch21":{"focus":["ch21-s03"]},"intro":"dim","recipe":"dim","t1":"dim","t2":"dim","t3":"dim","t4":"dim"},"dim_sections":{"ch03-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch03-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch03-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-1":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-2":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-3":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s11":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s08-1":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch10-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch10-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch11-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch11-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch11-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch11-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s07":{"reason":"本路线只读所列节","kind":"focus"}},"counts":{"main":17,"branch":0},"open":false,"cards":{"ch21-s03":"第 13 章未读：清单里「解码算不算看见」一条，记住大意即可；§19 未读：只需记住「评估器写不写得出来」这句，细节可后补。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"ch10","ch10":"ch11","ch11":"ch12","ch12":"ch14","ch14":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"ch10":13,"ch11":14,"ch12":15,"ch14":16,"ch21":17},"total":17}},{"id":"gen-fast","order":8,"tag":"快线","title":"生成方向·快线","audience":"时间紧，要吃透扩散并能真跑训练回路的人","goal":"拿到最小生成闭环：训得动、压得下、控得住","exit":["训得动玩具扩散训练回路（T3 真跑）","用 CFG/ControlNet 的思路控制生成，并评一个配方（四把尺子）","说得出三源误差与 DDIM 各一行","评得了一个配方（四把尺子）"],"selfcheck":["T3 训练循环真跑","手算：一步采样／混合高斯分数","四把尺子评一个配方","说出 CFG 的 w 与 §7 的 β 关系"],"hours":{"read":4.6,"practice":2,"project":0},"open_default":false,"pace_note":"全职 2–3 周或业余 4–6 周","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"focus","sections":["ch01-s01","ch01-s02","ch01-s03","ch01-s04"]},{"ch":"ch02","mode":"focus","sections":["ch02-s01","ch02-s05"]},{"ch":"ch03","mode":"focus","sections":["ch03-s04","ch03-s05","ch03-s06"]},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"focus","sections":["ch05-s01","ch05-s02","ch05-s04"]},{"ch":"ch07","mode":"focus","sections":["ch07-s02","ch07-s09"]},{"ch":"ch08","mode":"focus","sections":["ch08-s01","ch08-s03"]},{"ch":"ch09","mode":"focus","sections":["ch09-s01","ch09-s02"]},{"ch":"intro","mode":"read"},{"ch":"recipe","mode":"read"},{"ch":"t1","mode":"read"},{"ch":"t2","mode":"read"},{"ch":"t3","mode":"read"},{"ch":"t4","mode":"read"},{"ch":"ch14","mode":"focus","sections":["ch14-s05"]},{"ch":"ch21","mode":"focus","sections":["ch21-s02","ch21-s04"]}],"catchups":[{"where":"T4-s04 LoRA 回指","need":"§8-s03","fix":"已含（本路线读，且排在 T4 前）"},{"where":"T3 的 KL 记号","need":"§3-s05","fix":"已含（本路线读）"},{"where":"T3-s156 RLVR 半句","need":"§7-s02","fix":"已含（本路线读）"}],"supply":["terms.html","env.html","assets.html"],"exempt":["§6、§10–§13、§15–§20 不读（§8 只读 LoRA 核心两节）","§21-s04 回收地图含 §11/§12/§14-s07 门牌，未读部分作索引略过","§21 六条线表含 §16、§17、§18、§19 门牌，生成线未读，作索引略过"],"cards":[{"anchor":"ch14-s05","text":"§6、§7 未读：幻觉条与 KL 账都已内联半句，按旁注读。"},{"anchor":"ch21-s02","text":"§12、§20 未读：「测试时算力」与 V-JEPA 2-AC 细节可后补；这里按表读结论。"}],"note":"快线：前置关键节＋T1–T4＋结论节。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":{"focus":["ch01-s01","ch01-s02","ch01-s03","ch01-s04"]},"ch02":{"focus":["ch02-s01","ch02-s05"]},"ch03":{"focus":["ch03-s04","ch03-s05","ch03-s06"]},"ch04":"read","ch05":{"focus":["ch05-s01","ch05-s02","ch05-s04"]},"ch06":"dim","ch07":{"focus":["ch07-s02","ch07-s09"]},"ch08":{"focus":["ch08-s01","ch08-s03"]},"ch09":{"focus":["ch09-s01","ch09-s02"]},"ch10":"dim","ch11":"dim","ch12":"dim","ch13":"dim","ch14":{"focus":["ch14-s05"]},"ch15":"dim","ch16":"dim","ch17":"dim","ch18":"dim","ch19":"dim","ch20":"dim","ch21":{"focus":["ch21-s02","ch21-s04"]},"intro":"read","recipe":"read","t1":"read","t2":"read","t3":"read","t4":"read"},"dim_sections":{"ch01-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch01-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch01-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch02-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch02-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch02-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch02-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch02-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch03-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch03-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch03-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch03-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-1":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-2":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s02-3":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch05-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch07-s11":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch08-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s08-1":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch09-s10":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s02":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s04":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s07":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s08":{"reason":"本路线只读所列节","kind":"focus"},"ch14-s09":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s01":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s03":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s05":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s06":{"reason":"本路线只读所列节","kind":"focus"},"ch21-s07":{"reason":"本路线只读所列节","kind":"focus"}},"counts":{"main":13,"branch":6},"open":false,"cards":{"ch14-s05":"§6、§7 未读：幻觉条与 KL 账都已内联半句，按旁注读。","ch21-s02":"§12、§20 未读：「测试时算力」与 V-JEPA 2-AC 细节可后补；这里按表读结论。"},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch07","ch07":"ch08","ch08":"ch09","ch09":"intro","intro":"recipe","recipe":"t1","t1":"t2","t2":"t3","t3":"t4","t4":"ch14","ch14":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch07":9,"ch08":10,"ch09":11,"intro":12,"recipe":13,"t1":14,"t2":15,"t3":16,"t4":17,"ch14":18,"ch21":19},"total":19}},{"id":"deep","order":9,"tag":"深究线","title":"深究线（全取选读＋论文）","audience":"有余力、要把全部选读与前沿论文走完的人","goal":"在主线之上取尽 ○/◌/◇ 与支线，并按证据档位读前沿论文","exit":["交一页论文证据卡（档位指得回 §14 六类边界表）","写一条开放问题综述（用 §21 五维回收框的格式）","说得出全部 ○/◌/◇ 中最看重的三个机制"],"selfcheck":["挑一篇论文定档（名称＋会议/编号入清单）","给 §10-s05 五理论各标证据状态","说出 JEPA 三行与生成四要点","复述理论四层各一例"],"hours":{"read":9.1,"practice":3,"project":6},"open_default":true,"pace_note":"长期；折叠块默认展开（理论优先）","sequence":[{"ch":"s0a","mode":"read"},{"ch":"s0b","mode":"read"},{"ch":"s0c","mode":"read"},{"ch":"ch01","mode":"read"},{"ch":"ch02","mode":"read"},{"ch":"ch03","mode":"read"},{"ch":"ch04","mode":"read"},{"ch":"ch05","mode":"read"},{"ch":"ch06","mode":"read"},{"ch":"ch07","mode":"read"},{"ch":"ch08","mode":"read"},{"ch":"ch09","mode":"read"},{"ch":"intro","mode":"read"},{"ch":"t1","mode":"read"},{"ch":"t2","mode":"read"},{"ch":"t3","mode":"read"},{"ch":"t4","mode":"read"},{"ch":"recipe","mode":"read"},{"ch":"ch10","mode":"read"},{"ch":"ch11","mode":"read"},{"ch":"ch12","mode":"read"},{"ch":"ch13","mode":"read"},{"ch":"ch14","mode":"read"},{"ch":"ch15","mode":"read"},{"ch":"ch16","mode":"read"},{"ch":"ch17","mode":"read"},{"ch":"ch18","mode":"read"},{"ch":"ch19","mode":"read"},{"ch":"ch20","mode":"read"},{"ch":"ch21","mode":"read"}],"catchups":[],"supply":["terms.html","env.html","selftest.html","assets.html","§21-s07 候选论文框"],"exempt":[],"note":"全 30 章＋选读＋论文清单；折叠默认展开。","view":{"disp":{"s0a":"read","s0b":"read","s0c":"read","ch01":"read","ch02":"read","ch03":"read","ch04":"read","ch05":"read","ch06":"read","ch07":"read","ch08":"read","ch09":"read","ch10":"read","ch11":"read","ch12":"read","ch13":"read","ch14":"read","ch15":"read","ch16":"read","ch17":"read","ch18":"read","ch19":"read","ch20":"read","ch21":"read","intro":"read","recipe":"read","t1":"read","t2":"read","t3":"read","t4":"read"},"dim_sections":{},"counts":{"main":24,"branch":6},"open":true,"cards":{},"next":{"s0a":"s0b","s0b":"s0c","s0c":"ch01","ch01":"ch02","ch02":"ch03","ch03":"ch04","ch04":"ch05","ch05":"ch06","ch06":"ch07","ch07":"ch08","ch08":"ch09","ch09":"intro","intro":"t1","t1":"t2","t2":"t3","t3":"t4","t4":"recipe","recipe":"ch10","ch10":"ch11","ch11":"ch12","ch12":"ch13","ch13":"ch14","ch14":"ch15","ch15":"ch16","ch16":"ch17","ch17":"ch18","ch18":"ch19","ch19":"ch20","ch20":"ch21"},"pos":{"s0a":1,"s0b":2,"s0c":3,"ch01":4,"ch02":5,"ch03":6,"ch04":7,"ch05":8,"ch06":9,"ch07":10,"ch08":11,"ch09":12,"intro":13,"t1":14,"t2":15,"t3":16,"t4":17,"recipe":18,"ch10":19,"ch11":20,"ch12":21,"ch13":22,"ch14":23,"ch15":24,"ch16":25,"ch17":26,"ch18":27,"ch19":28,"ch20":29,"ch21":30},"total":30}}],"rhythm":{"courseA":{"label":"节奏示例 A（项目 1–3 全做＋项目四按方向）","weeks":24,"note":"按每周约 10 小时排：第 1–6 周＝第〇部＋§1–§4＋巩固半周；第 7–23 周＝§5–§21 每周一章；第 24 周收尾。逐周表随发布批认定。"},"courseB":{"label":"节奏示例 B（项目选做）","weeks":18,"note":"前 6 周同上；后 12 周约每周一章半，结业项目按方向选做。"},"milestones":[{"weeks":"第 2–3 周","text":"两个「跑起来」：§1 实验、§2 脚本","chapters":["ch01","ch02"]},{"weeks":"第 4–6 周","text":"里程碑：梯度检查通过（含巩固半周）","chapters":["ch04"]}],"stations":{"label":"六站拆批","note":"零 key、全程约 100 分钟；§16 带 1–5 站、§17 带第 6 站；快线可只做前 3 站","chapters":["ch16","ch17"]},"projects":[{"id":"p1","label":"MiniMind-V","chapter":"ch07"},{"id":"p2","label":"QLoRA 微调 7B 对比秩 r","chapter":"ch08"},{"id":"p3","label":"写最小 eval","chapter":"ch14"},{"id":"p4","label":"MiniMind-O＋全双工论文精读（默认仅语音/具身方向）","chapter":"ch20"}]},"parts":[{"id":"zero","label":"第〇部 · 总览与读法"},{"id":"build","label":"第一部 · 建造：模型怎样获得能力"},{"id":"branch","label":"支线 · 生成深潜"},{"id":"law","label":"第二部 · 规律：能力为什么可信"},{"id":"drive","label":"第三部 · 驾驭：把能力用成可靠系统"}],"chapters":[{"slug":"s0a","label":"§0.1","title":"§0.1 大模型是怎么训练出来的？——一个训练回路，一张总览图","part":"zero","mins":6,"sec_mins":{"s0a-s01":2,"s0a-s02":1,"s0a-s03":1,"s0a-s04":1,"s0a-s05":1},"sections":[{"anchor":"s0a-s01","text":"三个直觉看清训练回路","level":2,"markers":[]},{"anchor":"s0a-s02","text":"再看全貌：四个阶段","level":2,"markers":[]},{"anchor":"s0a-s03","text":"三个视角，看同一个模型","level":2,"markers":[]},{"anchor":"s0a-s04","text":"三部三个问题：全书预告","level":2,"markers":[]},{"anchor":"s0a-s05","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"s0b","label":"§0.2","title":"§0.2 AI 怎样生成内容？——自回归与扩散两条路线","part":"zero","mins":3,"sec_mins":{"s0b-s01":1,"s0b-s02":1,"s0b-s03":1,"s0b-s04":1,"s0b-s05":1},"sections":[{"anchor":"s0b-s01","text":"自回归怎样生成","level":2,"markers":[]},{"anchor":"s0b-s02","text":"扩散怎样生成","level":2,"markers":[]},{"anchor":"s0b-s03","text":"三问对照表","level":2,"markers":[]},{"anchor":"s0b-s04","text":"世界模型：输出模拟的模型","level":2,"markers":[]},{"anchor":"s0b-s05","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"s0c","label":"§0.3","title":"§0.3 这套读物怎么用？——路径、标记、环境与工具","part":"zero","mins":7,"sec_mins":{"s0c-s01":3,"s0c-s02":1,"s0c-s03":1,"s0c-s04":1,"s0c-s05":1,"s0c-s06":1,"s0c-s07":1},"sections":[{"anchor":"s0c-s01","text":"路线怎么选","level":2,"markers":[]},{"anchor":"s0c-s02","text":"读法标记与自查用法","level":2,"markers":[]},{"anchor":"s0c-s03","text":"动手指南","level":2,"markers":[]},{"anchor":"s0c-s04","text":"\"用 AI 学 AI\"的规则","level":2,"markers":[]},{"anchor":"s0c-s05","text":"岗位出口分支","level":2,"markers":[]},{"anchor":"s0c-s06","text":"疑问索引","level":2,"markers":[]},{"anchor":"s0c-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch01","label":"§1","title":"§1 文字、图像、声音怎样变成模型能算的数？——表示与多模态","part":"build","mins":11,"sec_mins":{"ch01-s01":2,"ch01-s02":2,"ch01-s03":2,"ch01-s04":1,"ch01-s05":1,"ch01-s06":1,"ch01-s07":1},"sections":[{"anchor":"ch01-s01","text":"文字怎样切成 token","level":2,"markers":[]},{"anchor":"ch01-s02","text":"图像与声音怎样切成 token","level":2,"markers":[]},{"anchor":"ch01-s03","text":"Embedding 与潜空间三性质","level":2,"markers":[]},{"anchor":"ch01-s04","text":"CLIP：一个向量空间装下文字与图像","level":2,"markers":[]},{"anchor":"ch01-s05","text":"冻结为什么可行","level":2,"markers":[]},{"anchor":"ch01-s06","text":"体验实验：0.1B 模型开口说话","level":2,"markers":[]},{"anchor":"ch01-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch02","label":"§2","title":"§2 模型怎样从错误里学习？——梯度下降、学习率与 Adam","part":"build","mins":12,"sec_mins":{"ch02-s01":2,"ch02-s02":3,"ch02-s03":3,"ch02-s04":1,"ch02-s05":2,"ch02-s06":1,"ch02-s07":1},"sections":[{"anchor":"ch02-s01","text":"损失是一座山","level":2,"markers":[]},{"anchor":"ch02-s02","text":"步长之争与临界步长","level":2,"markers":[]},{"anchor":"ch02-s03","text":"EMA 与 Adam：两个矩","level":2,"markers":[]},{"anchor":"ch02-s04","text":"鞍点：前后下坡、左右上坡","level":2,"markers":[]},{"anchor":"ch02-s05","text":"概率速查：高斯","level":2,"markers":[]},{"anchor":"ch02-s06","text":"体验实验：画出学习率轨迹","level":2,"markers":[]},{"anchor":"ch02-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch03","label":"§3","title":"§3 概率怎么算、又怎样算得诚实？——最大熵、Softmax 与交叉熵","part":"build","mins":16,"sec_mins":{"ch03-s01":2,"ch03-s02":1,"ch03-s03":1,"ch03-s04":5,"ch03-s05":3,"ch03-s06":1,"ch03-s07":2},"sections":[{"anchor":"ch03-s01","text":"概率速查：四张卡片","level":2,"markers":[]},{"anchor":"ch03-s02","text":"诚实的要求：最大熵原理","level":2,"markers":[]},{"anchor":"ch03-s03","text":"相切构造一小步：拉格朗日","level":2,"markers":[]},{"anchor":"ch03-s04","text":"Softmax 与温度：缩放从哪来","level":2,"markers":[]},{"anchor":"ch03-s05","text":"交叉熵：诚实的评分规则","level":2,"markers":[]},{"anchor":"ch03-s06","text":"手算：Softmax 与温度变式","level":2,"markers":[]},{"anchor":"ch03-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch04","label":"§4","title":"§4 预测出了错，误差怎样分摊到每个参数？——链式法则、反向传播与自动微分","part":"build","mins":17,"sec_mins":{"ch04-s01":1,"ch04-s02":2,"ch04-s03":5,"ch04-s04":2,"ch04-s05":3,"ch04-s06":2,"ch04-s07":2},"sections":[{"anchor":"ch04-s01","text":"误差从哪来——损失函数","level":2,"markers":[]},{"anchor":"ch04-s02","text":"链式法则：复合函数的账","level":2,"markers":[]},{"anchor":"ch04-s03","text":"误差分回每个参数：反向传播","level":2,"markers":[]},{"anchor":"ch04-s04","text":"激活函数的梯度与初始化","level":2,"markers":[]},{"anchor":"ch04-s05","text":"自动微分：计算图加节点级微分","level":2,"markers":[]},{"anchor":"ch04-s06","text":"动手：MLP 全推＋梯度检查","level":2,"markers":[]},{"anchor":"ch04-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch05","label":"§5","title":"§5 模型怎样读懂上下文？——注意力、位置编码与推理缓存","part":"build","mins":27,"sec_mins":{"ch05-s01":3,"ch05-s02":11,"ch05-s03":3,"ch05-s04":6,"ch05-s05":1,"ch05-s06":1,"ch05-s07":2},"sections":[{"anchor":"ch05-s01","text":"两种\"联\"——动态加权平均","level":2,"markers":[]},{"anchor":"ch05-s02","text":"Q、K、V：查询、键与值","level":2,"markers":[]},{"anchor":"ch05-s02-1","text":"前向：投影、打分与加权","level":3,"markers":[]},{"anchor":"ch05-s02-2","text":"反向：误差怎样分回 Q、K、V","level":3,"markers":[]},{"anchor":"ch05-s02-3","text":"位置：RoPE 把顺序写进点积","level":3,"markers":[]},{"anchor":"ch05-s03","text":"多头注意力：几种看法同时用","level":2,"markers":[]},{"anchor":"ch05-s04","text":"组装成 Block：现代模型的标准件","level":2,"markers":[]},{"anchor":"ch05-s05","text":"KV Cache 原理（GQA/MQA 变体见 §9 的效率节）","level":2,"markers":[]},{"anchor":"ch05-s06","text":"动手：25 行 NumPy 注意力","level":2,"markers":[]},{"anchor":"ch05-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch06","label":"§6","title":"§6 模型怎样把海量文本压进参数？——预训练、数据工程与 Scaling","part":"build","mins":21,"sec_mins":{"ch06-s01":1,"ch06-s02":2,"ch06-s03":3,"ch06-s04":3,"ch06-s05":2,"ch06-s06":1,"ch06-s07":1,"ch06-s08":2,"ch06-s09":2,"ch06-s10":1,"ch06-s11":1,"ch06-s12":1},"sections":[{"anchor":"ch06-s01","text":"next-token：一句话的训练任务","level":2,"markers":[]},{"anchor":"ch06-s02","text":"压缩即理解：通用能力从哪来","level":2,"markers":[]},{"anchor":"ch06-s03","text":"三种能力与 ICL","level":2,"markers":[]},{"anchor":"ch06-s04","text":"Scaling 数字与密度定律","level":2,"markers":[]},{"anchor":"ch06-s05","text":"五条局限","level":2,"markers":[]},{"anchor":"ch06-s06","text":"数据工程：一个\"配比\"，三笔账","level":2,"markers":[]},{"anchor":"ch06-s07","text":"数据污染：评测题漏进语料","level":2,"markers":["▽"]},{"anchor":"ch06-s08","text":"两阶段训练配方","level":2,"markers":["▽"]},{"anchor":"ch06-s09","text":"MoE 与条件计算","level":2,"markers":["◇"]},{"anchor":"ch06-s10","text":"多模态格局","level":2,"markers":["◇"]},{"anchor":"ch06-s11","text":"微实验：对数坐标读 scaling 斜率","level":2,"markers":[]},{"anchor":"ch06-s12","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch07","label":"§7","title":"§7 只会续写的模型，怎样变成听得懂指令的助手？——四种反馈、可验证奖励与上下文工程","part":"build","mins":24,"sec_mins":{"ch07-s01":3,"ch07-s02":3,"ch07-s03":1,"ch07-s04":4,"ch07-s05":2,"ch07-s06":2,"ch07-s07":1,"ch07-s08":2,"ch07-s09":1,"ch07-s10":3,"ch07-s11":1},"sections":[{"anchor":"ch07-s01","text":"从续写到听话：四种反馈","level":2,"markers":[]},{"anchor":"ch07-s02","text":"可验证奖励 RLVR：对错这一路，放大看","level":2,"markers":[]},{"anchor":"ch07-s03","text":"什么时候用哪种：四判据","level":2,"markers":[]},{"anchor":"ch07-s04","text":"约束登场：KKT、对偶与影子价格","level":2,"markers":[]},{"anchor":"ch07-s05","text":"脊柱：训练时写进权重，推理时写进上下文","level":2,"markers":[]},{"anchor":"ch07-s06","text":"检索增强生成：写上下文的第一种工业形态","level":2,"markers":["▽"]},{"anchor":"ch07-s07","text":"思维链与 POMDP","level":2,"markers":[]},{"anchor":"ch07-s08","text":"手算：GRPO 群组优势","level":2,"markers":[]},{"anchor":"ch07-s09","text":"三行对照：CFG 与 RLHF","level":2,"markers":[]},{"anchor":"ch07-s10","text":"结业项目一：MiniMind-V","level":2,"markers":[]},{"anchor":"ch07-s11","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch08","label":"§8","title":"§8 想改模型，一定要全量重训吗？——SVD 与高效微调","part":"build","mins":23,"sec_mins":{"ch08-s01":3,"ch08-s02":3,"ch08-s03":4,"ch08-s04":7,"ch08-s05":3,"ch08-s06":2},"sections":[{"anchor":"ch08-s01","text":"大矩阵可以瘦身：SVD 与谱","level":2,"markers":[]},{"anchor":"ch08-s02","text":"能量尾巴：低秩为什么够用、秩怎么选","level":2,"markers":[]},{"anchor":"ch08-s03","text":"LoRA：加一对小矩阵","level":2,"markers":[]},{"anchor":"ch08-s04","text":"QLoRA·DoRA 与五件高效方法","level":2,"markers":[]},{"anchor":"ch08-s05","text":"结业项目二：QLoRA 微调 7B，对比秩 r","level":2,"markers":[]},{"anchor":"ch08-s06","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch09","label":"§9","title":"§9 模型怎样一个词一个词地生成一段话？——自回归、采样与推理服务","part":"build","mins":29,"sec_mins":{"ch09-s01":2,"ch09-s02":3,"ch09-s03":2,"ch09-s04":2,"ch09-s05":2,"ch09-s06":1,"ch09-s07":6,"ch09-s08":7,"ch09-s09":1,"ch09-s10":3},"sections":[{"anchor":"ch09-s01","text":"自回归循环：逐词生成","level":2,"markers":[]},{"anchor":"ch09-s02","text":"采样：温度、top-k 与随机性","level":2,"markers":[]},{"anchor":"ch09-s03","text":"KV 显存账：推理的物理约束","level":2,"markers":[]},{"anchor":"ch09-s04","text":"动手：KV 显存账估算填空","level":2,"markers":[]},{"anchor":"ch09-s05","text":"服务层三标配＋约束解码","level":2,"markers":[]},{"anchor":"ch09-s06","text":"流式生成","level":2,"markers":[]},{"anchor":"ch09-s07","text":"MLA 与效率回访","level":2,"markers":["◇"]},{"anchor":"ch09-s08","text":"测试时算力：CoT、BoN、训练内化与选择性推理","level":2,"markers":["◇"]},{"anchor":"ch09-s08-1","text":"RLVR：推理时算力升级为独立轴","level":3,"markers":[]},{"anchor":"ch09-s09","text":"章末三行：自回归与扩散的对照","level":2,"markers":[]},{"anchor":"ch09-s10","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch10","label":"§10","title":"§10 为什么模型越大，越不容易过拟合？——泛化、相变与涌现之争","part":"law","mins":23,"sec_mins":{"ch10-s01":7,"ch10-s02":2,"ch10-s03":5,"ch10-s04":4,"ch10-s05":2,"ch10-s06":2},"sections":[{"anchor":"ch10-s01","text":"两条奇怪的曲线：双下降与 grokking 同现","level":2,"markers":[]},{"anchor":"ch10-s02","text":"两速度分解","level":2,"markers":[]},{"anchor":"ch10-s03","text":"机制：隐式正则化与成核","level":2,"markers":[]},{"anchor":"ch10-s04","text":"边界：涌现之争——半个未决","level":2,"markers":[]},{"anchor":"ch10-s05","text":"实验：双下降 30 行，跑一遍看得见","level":2,"markers":[]},{"anchor":"ch10-s06","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch11","label":"§11","title":"§11 训练怎样挑出会泛化的解？——鞍点、噪声与边缘稳定","part":"law","mins":22,"sec_mins":{"ch11-s01":3,"ch11-s02":2,"ch11-s03":3,"ch11-s04":3,"ch11-s05":6,"ch11-s06":3,"ch11-s07":4,"ch11-s08":2},"sections":[{"anchor":"ch11-s01","text":"鞍点：卡不死，也走不快","level":2,"markers":[]},{"anchor":"ch11-s02","text":"模式连通","level":2,"markers":[]},{"anchor":"ch11-s03","text":"Edge of Stability：边缘稳定","level":2,"markers":[]},{"anchor":"ch11-s04","text":"奇异值顺序学习（回收 §8 谱）","level":2,"markers":[]},{"anchor":"ch11-s05","text":"SGD 噪声与线性缩放","level":2,"markers":[]},{"anchor":"ch11-s06","text":"优化器一句：二阶与近似二阶什么时候值得","level":2,"markers":[]},{"anchor":"ch11-s07","text":"实验：故障曲线诊断","level":2,"markers":["▽"]},{"anchor":"ch11-s08","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch12","label":"§12","title":"§12 为什么模型的表现能提前预测、配方能大小通吃？——幂律、Chinchilla 与 μP","part":"law","mins":22,"sec_mins":{"ch12-s01":4,"ch12-s02":1,"ch12-s03":3,"ch12-s04":1,"ch12-s05":6,"ch12-s06":3,"ch12-s07":2},"sections":[{"anchor":"ch12-s01","text":"幂律：损失为什么能提前算","level":2,"markers":[]},{"anchor":"ch12-s02","text":"起源三候选：斜率由什么决定","level":2,"markers":[]},{"anchor":"ch12-s03","text":"Chinchilla：规模与数据怎么配","level":2,"markers":[]},{"anchor":"ch12-s04","text":"失效两路径：饱和与相变","level":2,"markers":[]},{"anchor":"ch12-s05","text":"从黑箱到配方：lazy/rich、NTK 与 μP","level":2,"markers":[]},{"anchor":"ch12-s06","text":"动手：拟合公开曲线并外推","level":2,"markers":[]},{"anchor":"ch12-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch13","label":"§13","title":"§13 模型内部是什么样子、能看能改吗？——叠加、稀疏自编码器与干预","part":"law","mins":26,"sec_mins":{"ch13-s01":7,"ch13-s02":6,"ch13-s03":8,"ch13-s04":1,"ch13-s05":2,"ch13-s06":2},"sections":[{"anchor":"ch13-s01","text":"可观测：叠加与稀疏自编码器","level":2,"markers":[]},{"anchor":"ch13-s02","text":"可判据：什么算解释","level":2,"markers":[]},{"anchor":"ch13-s03","text":"可干预：激活引导、知识编辑与拒绝方向","level":2,"markers":[]},{"anchor":"ch13-s04","text":"警示两行：abliteration 与护栏","level":2,"markers":[]},{"anchor":"ch13-s05","text":"实验：重叠＋SAE 审计","level":2,"markers":[]},{"anchor":"ch13-s06","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch14","label":"§14","title":"§14 哪些\"做不到\"是定理，哪些只是还没做到？——边界","part":"law","mins":27,"sec_mins":{"ch14-s01":3,"ch14-s02":1,"ch14-s03":3,"ch14-s04":2,"ch14-s05":6,"ch14-s06":2,"ch14-s07":3,"ch14-s08":3,"ch14-s09":3},"sections":[{"anchor":"ch14-s01","text":"评估三支柱与 Goodhart","level":2,"markers":[]},{"anchor":"ch14-s02","text":"读结果前的三个追问","level":2,"markers":[]},{"anchor":"ch14-s03","text":"可验证性 razor：验证越便宜，进展越快","level":2,"markers":[]},{"anchor":"ch14-s04","text":"评判员上岗：LLM-as-judge 与 eval-driven","level":2,"markers":[]},{"anchor":"ch14-s05","text":"六类边界：是定理，还是还没做到","level":2,"markers":[]},{"anchor":"ch14-s06","text":"数据墙与模型崩塌","level":2,"markers":[]},{"anchor":"ch14-s07","text":"技能分解：总分骗人，剖面说真话","level":2,"markers":[]},{"anchor":"ch14-s08","text":"结业项目三：写最小 eval","level":2,"markers":[]},{"anchor":"ch14-s09","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch15","label":"§15","title":"§15 为什么模型在演示里表现很好，放进真实任务就出错？——智能体（Agent）建模","part":"drive","mins":19,"sec_mins":{"ch15-s01":3,"ch15-s02":1,"ch15-s03":2,"ch15-s04":2,"ch15-s05":2,"ch15-s06":8,"ch15-s07":1},"sections":[{"anchor":"ch15-s01","text":"最小结论：建造部与规律部","level":2,"markers":[]},{"anchor":"ch15-s02","text":"概率回访：四张卡片的 Agent 版","level":2,"markers":[]},{"anchor":"ch15-s03","text":"演示很好、实战出错：复合错误数学","level":2,"markers":[]},{"anchor":"ch15-s04","text":"看不全的世界：部分可观测","level":2,"markers":[]},{"anchor":"ch15-s05","text":"POMDP：七个可以逐个检查的部件","level":2,"markers":[]},{"anchor":"ch15-s06","text":"手算：客服 Agent 的两轮信念更新","level":2,"markers":[]},{"anchor":"ch15-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch16","label":"§16","title":"§16 模型之外还要配些什么？——工具调用、记忆与评估","part":"drive","mins":17,"sec_mins":{"ch16-s01":3,"ch16-s02":1,"ch16-s03":2,"ch16-s04":1,"ch16-s05":2,"ch16-s06":1,"ch16-s07":2,"ch16-s08":1,"ch16-s09":3,"ch16-s10":1},"sections":[{"anchor":"ch16-s01","text":"Harness 六层：模型的外围","level":2,"markers":[]},{"anchor":"ch16-s02","text":"协议层：协议会换代、契约不变","level":2,"markers":[]},{"anchor":"ch16-s03","text":"数据流闭环","level":2,"markers":[]},{"anchor":"ch16-s04","text":"错误即消息：失败的返回值走同一条路","level":2,"markers":[]},{"anchor":"ch16-s05","text":"工具调用的最小契约：声明、校验、幂等、返回","level":2,"markers":["▽"]},{"anchor":"ch16-s06","text":"RAG：上线后绕不开的四个问题","level":2,"markers":[]},{"anchor":"ch16-s07","text":"状态与记忆：三级台阶与三问","level":2,"markers":[]},{"anchor":"ch16-s08","text":"什么时候不需要 Harness","level":2,"markers":[]},{"anchor":"ch16-s09","text":"动手：六站，前五站跑通最小骨架","level":2,"markers":[]},{"anchor":"ch16-s10","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch17","label":"§17","title":"§17 控制权怎么分、边界怎么守？——授权、沙箱与护栏","part":"drive","mins":18,"sec_mins":{"ch17-s01":2,"ch17-s02":2,"ch17-s03":1,"ch17-s04":2,"ch17-s05":1,"ch17-s06":2,"ch17-s07":2,"ch17-s08":3,"ch17-s09":2,"ch17-s10":1},"sections":[{"anchor":"ch17-s01","text":"控制权怎么分：四种范式","level":2,"markers":[]},{"anchor":"ch17-s02","text":"双轴表：谁决定 × 多硬","level":2,"markers":[]},{"anchor":"ch17-s03","text":"沙箱三行","level":2,"markers":[]},{"anchor":"ch17-s04","text":"两个反直觉：自主度会迁移、每步都问更危险","level":2,"markers":[]},{"anchor":"ch17-s05","text":"间接提示注入：检索与工具返回都是不可信输入","level":2,"markers":[]},{"anchor":"ch17-s06","text":"Safe RL 与 A_safe(c)：安全写进约束","level":2,"markers":[]},{"anchor":"ch17-s07","text":"验证门与授权梯度：从受命到自主","level":2,"markers":[]},{"anchor":"ch17-s08","text":"越狱攻防与治理","level":2,"markers":["○"]},{"anchor":"ch17-s09","text":"动手：第六站与九条原则","level":2,"markers":[]},{"anchor":"ch17-s10","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch18","label":"§18","title":"§18 一个大目标，怎样拆成能落地、也能反悔的步骤？——规划、成本与实施","part":"drive","mins":10,"sec_mins":{"ch18-s01":2,"ch18-s02":2,"ch18-s03":2,"ch18-s04":2,"ch18-s05":1,"ch18-s06":1},"sections":[{"anchor":"ch18-s01","text":"规划四形态与三判据","level":2,"markers":[]},{"anchor":"ch18-s02","text":"APB：把规划质量拆成四个诊断维度","level":2,"markers":[]},{"anchor":"ch18-s03","text":"技能包与渐进披露","level":2,"markers":[]},{"anchor":"ch18-s04","text":"成本三笔账、自建还是买 API","level":2,"markers":[]},{"anchor":"ch18-s05","text":"动手：给前五站 Agent 估月成本","level":2,"markers":[]},{"anchor":"ch18-s06","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch19","label":"§19","title":"§19 一群智能体一起干活，会多出什么？——协作故障、自演化与社会模拟","part":"drive","mins":17,"sec_mins":{"ch19-s01":6,"ch19-s02":4,"ch19-s03":4,"ch19-s04":1,"ch19-s05":1},"sections":[{"anchor":"ch19-s01","text":"甲部：分工的代价","level":2,"markers":[]},{"anchor":"ch19-s01-1","text":"五种拓扑，只用三种","level":3,"markers":[]},{"anchor":"ch19-s01-2","text":"AgentFail：失败根因离出错的地方可以很远","level":3,"markers":[]},{"anchor":"ch19-s01-3","text":"上下文隔离：子 Agent 的正当理由","level":3,"markers":[]},{"anchor":"ch19-s01-4","text":"人在回路：一等节点，不是过渡","level":3,"markers":[]},{"anchor":"ch19-s02","text":"乙部：让系统自己长","level":2,"markers":[]},{"anchor":"ch19-s02-1","text":"三条路线，一个闭环","level":3,"markers":[]},{"anchor":"ch19-s02-2","text":"三条硬边界","level":3,"markers":[]},{"anchor":"ch19-s02-3","text":"自演化三问：写得出来，才交得出去","level":3,"markers":[]},{"anchor":"ch19-s03","text":"丙部：模拟出来的社会","level":2,"markers":["▽"]},{"anchor":"ch19-s04","text":"动手：Pipeline 失败走查","level":2,"markers":[]},{"anchor":"ch19-s05","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch20","label":"§20","title":"§20 AI 怎样走出屏幕、进入物理世界？——实时交互与具身智能","part":"drive","mins":10,"sec_mins":{"ch20-s01":2,"ch20-s02":1,"ch20-s03":1,"ch20-s04":2,"ch20-s05":1,"ch20-s06":1,"ch20-s07":1,"ch20-s08":1},"sections":[{"anchor":"ch20-s01","text":"延迟拉平之后，看什么区分三种架构","level":2,"markers":[]},{"anchor":"ch20-s02","text":"真委托的三道测试","level":2,"markers":[]},{"anchor":"ch20-s03","text":"会描述不等于会执行","level":2,"markers":[]},{"anchor":"ch20-s04","text":"动作的三条路线","level":2,"markers":[]},{"anchor":"ch20-s05","text":"Sim-to-Real：差距要显式建模","level":2,"markers":[]},{"anchor":"ch20-s06","text":"能力栈收束：两个出口","level":2,"markers":[]},{"anchor":"ch20-s07","text":"结业项目四：跑通一条语音回路","level":2,"markers":[]},{"anchor":"ch20-s08","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"ch21","label":"§21","title":"§21 这一切能走多远？——世界模型、认知与开放问题","part":"drive","mins":18,"sec_mins":{"ch21-s01":1,"ch21-s02":2,"ch21-s03":2,"ch21-s04":3,"ch21-s05":5,"ch21-s06":1,"ch21-s07":3},"sections":[{"anchor":"ch21-s01","text":"世界模型：一半是预测，一半不确定","level":2,"markers":[]},{"anchor":"ch21-s02","text":"两派之争：分歧在损失空间","level":2,"markers":[]},{"anchor":"ch21-s03","text":"开放问题清单","level":2,"markers":[]},{"anchor":"ch21-s04","text":"回收：五维、四层与两张地图","level":2,"markers":[]},{"anchor":"ch21-s05","text":"认知视角：模型知道什么、知道自己知道几分","level":2,"markers":["▽"]},{"anchor":"ch21-s06","text":"三件事","level":2,"markers":[]},{"anchor":"ch21-s07","text":"深究：给一篇论文定证据状态","level":2,"markers":["◌"]}]},{"slug":"intro","label":"支线导言","title":"支线导言 · 生成深潜","part":"branch","mins":6,"sec_mins":{"intro-s01":1,"intro-s02":1,"intro-s03":1,"intro-s04":1,"intro-s05":1,"intro-s06":1},"sections":[{"anchor":"intro-s01","text":"读到哪儿了","level":2,"markers":[]},{"anchor":"intro-s02","text":"工具回收框：主线学的，支线哪里用","level":2,"markers":[]},{"anchor":"intro-s03","text":"对比学习回指框","level":2,"markers":[]},{"anchor":"intro-s04","text":"CFG 与 RLHF：同一枚旋钮的正反两个读数","level":2,"markers":[]},{"anchor":"intro-s05","text":"与主线互指表","level":2,"markers":[]},{"anchor":"intro-s06","text":"支线总览：四步链","level":2,"markers":[]}]},{"slug":"recipe","label":"支线附录","title":"支线附录 · 主线速览版 SD 配方","part":"branch","mins":3,"sec_mins":{},"sections":[]},{"slug":"t1","label":"T1","title":"T1 把图片一步步变成噪声，能得到什么？——破坏与方向","part":"branch","mins":25,"sec_mins":{"t1-s01":6,"t1-s02":4,"t1-s03":1,"t1-s04":1,"t1-s05":2,"t1-s06":3,"t1-s07":1,"t1-s08":3,"t1-s09":1,"t1-s10":1,"t1-s11":1,"t1-s12":1},"sections":[{"anchor":"t1-s01","text":"随机游走与 Langevin：逆转的直觉画面","level":2,"markers":[]},{"anchor":"t1-s02","text":"加噪与闭式跳步","level":2,"markers":[]},{"anchor":"t1-s03","text":"深挖：t=2 的展开，平方和为什么要等于 1","level":2,"markers":["▽"]},{"anchor":"t1-s04","text":"反事实：如果噪声一步依赖一步","level":2,"markers":["▽"]},{"anchor":"t1-s05","text":"动手：手算加噪","level":2,"markers":[]},{"anchor":"t1-s06","text":"分数函数：指向数据的方向","level":2,"markers":[]},{"anchor":"t1-s07","text":"反事实：把方向整个抽走","level":2,"markers":["▽"]},{"anchor":"t1-s08","text":"Tweedie 恒等式","level":2,"markers":[]},{"anchor":"t1-s09","text":"Tweedie 恒等式的证明","level":2,"markers":["▽"]},{"anchor":"t1-s10","text":"混合高斯的分数：一次手算","level":2,"markers":[]},{"anchor":"t1-s11","text":"动手：混合高斯的分数","level":2,"markers":[]},{"anchor":"t1-s12","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"t2","label":"T2","title":"T2 知道了方向，噪声怎样变回数据？——反向扩散与随机性","part":"branch","mins":25,"sec_mins":{"t2-s01":8,"t2-s02":11,"t2-s03":2,"t2-s04":3,"t2-s05":1},"sections":[{"anchor":"t2-s01","text":"反向 SDE：从噪声走回数据","level":2,"markers":[]},{"anchor":"t2-s02","text":"DDPM 与 NCSN：同一回事的两种写法","level":2,"markers":[]},{"anchor":"t2-s03","text":"随机性的必要","level":2,"markers":[]},{"anchor":"t2-s04","text":"动手：一步采样","level":2,"markers":[]},{"anchor":"t2-s05","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"t3","label":"T3","title":"T3 方向怎么学、一千步怎么压到二十步？——学会与加速","part":"branch","mins":39,"sec_mins":{"t3-s01":5,"t3-s02":2,"t3-s03":8,"t3-s04":11,"t3-s05":9,"t3-s06":3,"t3-s07":1},"sections":[{"anchor":"t3-s01","text":"去噪分数匹配：答案是自己采的","level":2,"markers":[]},{"anchor":"t3-s02","text":"Fisher 散度：只比斜率，不比高度","level":2,"markers":[]},{"anchor":"t3-s03","text":"训练循环：三行字，转几千圈","level":2,"markers":[]},{"anchor":"t3-s04","text":"概率流 ODE：把随机性拿掉","level":2,"markers":[]},{"anchor":"t3-s05","text":"DDIM、三源误差与采样器选型","level":2,"markers":[]},{"anchor":"t3-s06","text":"动手：实现训练循环","level":2,"markers":[]},{"anchor":"t3-s07","text":"回望与下一章","level":2,"markers":[]}]},{"slug":"t4","label":"T4","title":"T4 怎样控制生成的内容、还能生成什么？——应用与现状","part":"branch","mins":46,"sec_mins":{"t4-s01":8,"t4-s02":2,"t4-s03":6,"t4-s04":1,"t4-s05":9,"t4-s06":12,"t4-s07":4,"t4-s08":2},"sections":[{"anchor":"t4-s01","text":"CFG 与 KL 框架：w 与 β 是同一个人","level":2,"markers":[]},{"anchor":"t4-s02","text":"ControlNet：给生成装条件","level":2,"markers":[]},{"anchor":"t4-s03","text":"SD v1.5 拆解：零件在真实系统里定位一遍","level":2,"markers":[]},{"anchor":"t4-s04","text":"LoRA：换风格只要一个小文件","level":2,"markers":[]},{"anchor":"t4-s05","text":"离散扩散与视频","level":2,"markers":["◌"]},{"anchor":"t4-s06","text":"技法×工具：一张对照表看懂生成现状","level":2,"markers":[]},{"anchor":"t4-s07","text":"动手：用评审四问读一篇发布稿","level":2,"markers":[]},{"anchor":"t4-s08","text":"回望与上岸","level":2,"markers":[]}]}]}</script>
+<script>
+(function () {
+  var FS_KEY = 'ai-primer-fs', THEME_KEY = 'ai-primer-theme';
+  function setFS(px) { document.documentElement.style.setProperty('--fs', px + 'px');
+    try { localStorage.setItem(FS_KEY, px + 'px'); } catch (e) {} }
+  try { var cur = parseInt(localStorage.getItem(FS_KEY) || '17', 10); } catch (e) { var cur = 17; }
+  document.getElementById('fsUp').addEventListener('click', function () { cur = Math.min(21, cur + 1); setFS(cur); });
+  document.getElementById('fsDown').addEventListener('click', function () { cur = Math.max(14, cur - 1); setFS(cur); });
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  });
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+  document.getElementById('navToggle').addEventListener('click', function () {
+    document.body.classList.toggle('nav-open');
+    this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var t2 = e.target;
+    if (t2 && (t2.tagName === 'INPUT' || t2.tagName === 'TEXTAREA' ||
+               t2.tagName === 'SELECT' || t2.isContentEditable)) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      var a3 = document.querySelector(e.key === 'ArrowRight' ? '.prevnext a.pv-next'
+                                                             : '.prevnext a.pv-prev');
+      if (a3 && a3.href && a3.style.display !== 'none') { location.href = a3.href; }
+    } else if (e.key === '/') {
+      var s2 = document.getElementById('hubSearch') || document.getElementById('termFilter') || document.getElementById('searchInput');
+      if (s2) { e.preventDefault(); s2.focus(); }
+    } else if (e.key === 't' || e.key === 'T') {
+      var b2 = document.getElementById('themeToggle'); if (b2) b2.click();
+    } else if (e.key === 'd' || e.key === 'D') {
+      var d2 = document.getElementById('depthToggle'); if (d2) d2.click();
+    } else if (e.key === 'Escape') {
+      document.body.classList.remove('nav-open');
+      var n2 = document.getElementById('navToggle'); if (n2) n2.setAttribute('aria-expanded', 'false');
+    }
+  });
+  var backTop = document.getElementById('backTop');
+  backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  window.addEventListener('scroll', function () {
+    backTop.style.display = window.scrollY > 600 ? 'block' : 'none';
+  });
+  backTop.style.display = 'none';
+  /* 打印前自动展开折叠块，打印后还原（print.html 构建期已全开，此逻辑对其为空操作） */
+  var openedByPrint = [];
+  window.addEventListener('beforeprint', function () {
+    openedByPrint = [];
+    document.querySelectorAll('details:not([open])').forEach(function (d) {
+      openedByPrint.push(d);
+      d.open = true;
+    });
+  });
+  window.addEventListener('afterprint', function () {
+    openedByPrint.forEach(function (d) { d.open = false; });
+    openedByPrint = [];
+  });
+  /* 目录筛选 */
+  var box = document.getElementById('searchInput');
+  if (box) {
+    box.addEventListener('input', function () {
+      var q = box.value.trim().toLowerCase();
+      document.querySelectorAll('.sidebar li').forEach(function (li) {
+        var hit = !q || li.textContent.toLowerCase().indexOf(q) >= 0;
+        li.style.display = hit ? 'block' : 'none';
+      });
+    });
+  }
+  /* 侧栏滚动高亮当前节（章页内） */
+  var links = document.querySelectorAll('.sidebar ul.sub a');
+  if (links.length && 'IntersectionObserver' in window) {
+    var map = {};
+    links.forEach(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      if (el) map[el.id] = a;
+    });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove('active'); });
+          var a = map[en.target.id];
+          if (a) a.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-60px 0px -70% 0px' });
+    Object.keys(map).forEach(function (id) { obs.observe(document.getElementById(id)); });
+  }
+})();
+</script>
+<script>
+/* ===== 路线层运行时：routes.json 单一来源；默认＝自由读；容量 localStorage ===== */
+(function () {
+  var SD = null;
+  try { SD = JSON.parse(document.getElementById('series-data').textContent); } catch (e) { SD = null; }
+  if (!SD) return;
+  var ROUTE_KEY = 'series-route-v1', DEPTH_KEY = 'series-depth-v1', PROG_KEY = 'series-progress-v1';
+  /* 存储键格式表（测试种子/导出导入必须按此格式；改动须同步 route_js_check/browser_check）：
+       series-route-v1      裸串   route id（如 agent-fast）
+       series-depth-v1      裸串   theory | practice
+       series-focus-v1      JSON 串 "0" | "1"
+       series-progress-v1   JSON 数组（slug）
+       series-exit-v1       JSON 对象
+       series-selftest-v1   JSON 对象
+       series-projects-v1   JSON 数组
+       series-last-v1       JSON 对象 {slug,anchor,at}
+       series-recent-v1     JSON 数组 */
+  function branchReason() {
+    var names = SD.routes.filter(function (r) {
+      return ['t1', 't2', 't3', 't4'].some(function (s) {
+        return r.view.disp[s] && r.view.disp[s] !== 'dim';
+      });
+    }).map(function (r) { return String(r.title).split('（')[0]; });
+    return '生成方向内容，见支线 T1–T4' + (names.length ? '（' + names.join('、') + '）' : '');
+  }
+  var BRANCH_REASON = branchReason();
+  var FREE_REASON = '不在当前路线（自由读中仍可翻开）';
+  var ROUTER_MAP = {
+    'undecided|halfday': 'taste', 'undecided|fast': 'agent-full', 'undecided|slow': 'agent-full', 'undecided|endless': 'deep',
+    'agent|halfday': 'taste', 'agent|fast': 'agent-fast', 'agent|slow': 'agent-full', 'agent|endless': 'deep',
+    'train|halfday': 'taste', 'train|fast': 'train-fast', 'train|slow': 'train-full', 'train|endless': 'research-full',
+    'gen|halfday': 'taste', 'gen|fast': 'gen-fast', 'gen|slow': 'gen-full', 'gen|endless': 'deep',
+    'research|halfday': 'taste', 'research|fast': 'research-full', 'research|slow': 'research-full', 'research|endless': 'deep'
+  };
+
+  function readJSON(key, fallback) {
+    try {
+      var v = JSON.parse(localStorage.getItem(key) || 'null');
+      return (v === null ? fallback : v);
+    } catch (e) { return fallback; }
+  }
+  function writeJSON(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+  function tShort(title) {
+    var s = String(title).split('——')[0];
+    return s.replace(/^(?:§[\d.]+|T\d|支线导言|支线附录)[:：]?\s*/, '');
+  }
+
+  function getRouteId() { try { return localStorage.getItem(ROUTE_KEY) || 'free'; } catch (e) { return 'free'; } }
+  function setRouteId(id) { try { localStorage.setItem(ROUTE_KEY, id); } catch (e) {} }
+  function getDepthPref() { try { return localStorage.getItem(DEPTH_KEY) || ''; } catch (e) { return ''; } }
+  function setDepthPref(d) { try { localStorage.setItem(DEPTH_KEY, d); } catch (e) {} }
+  function getProgress() { var a = readJSON(PROG_KEY, []); return Array.isArray(a) ? a : []; }
+  function setProgress(a) { writeJSON(PROG_KEY, a); }
+  function findRoute(id) { for (var i = 0; i < SD.routes.length; i++) if (SD.routes[i].id === id) return SD.routes[i]; return null; }
+  function bySlug(slug) { for (var i = 0; i < SD.chapters.length; i++) if (SD.chapters[i].slug === slug) return SD.chapters[i]; return null; }
+  function freeDisp() { var d = {}; SD.chapters.forEach(function (c) { d[c.slug] = 'read'; }); return d; }
+
+  function viewOf(id) {
+    if (id === 'free') return { disp: freeDisp(), dimSec: {}, counts: { main: 24, branch: 6 },
+                                open: false, cards: {}, next: {}, pos: {}, total: 0 };
+    var r = findRoute(id);
+    if (!r) return null;
+    return { disp: r.view.disp, dimSec: r.view.dim_sections, counts: r.view.counts,
+             open: !!r.view.open, cards: r.view.cards || {}, next: r.view.next || {},
+             pos: r.view.pos || {}, total: r.view.total || 0 };
+  }
+  function nodeMins(slug, d) {
+    var c = bySlug(slug); if (!c) return c;
+    if (d && d.focus) {
+      var sum = 0; d.focus.forEach(function (a) { sum += (c.sec_mins || {})[a] || 1; });
+      return sum + ' 分钟（全章 ' + c.mins + '）';
+    }
+    return c.mins + ' 分钟';
+  }
+  function applyDepth(open) {
+    var list = document.querySelectorAll('article.chapter details');
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i];
+      if (d.closest('section.sec.dim')) { if (d.open) d.open = false; continue; }
+      d.open = open;
+    }
+  }
+  function setRing(ringId, frac, label) {
+    var fg = document.getElementById(ringId + 'Fg'), n = document.getElementById(ringId + 'N');
+    if (!fg) return;
+    var C = 2 * Math.PI * 15.9;
+    fg.setAttribute('stroke-dasharray', (frac * C).toFixed(1) + ' ' + C.toFixed(1));
+    if (n) n.textContent = label;
+  }
+  function updateRings(view) {
+    if (!document.getElementById('ringMainFg') || !view) return;
+    var prog = getProgress(), mainR = 0, brR = 0;
+    SD.chapters.forEach(function (c) {
+      var d = view.disp[c.slug];
+      var active = (d === 'read') || (d && d.focus);
+      if (!active || prog.indexOf(c.slug) < 0) return;
+      if (c.part === 'branch') brR++; else mainR++;
+    });
+    var mn = view.counts.main || 24, br = view.counts.branch || 0;
+    setRing('ringMain', mainR / mn, mainR + '/' + mn);
+    var elb = document.getElementById('ringBranch');
+    if (elb) {
+      if (!br) elb.style.display = 'none';
+      else { elb.style.display = ''; setRing('ringBranch', brR / br, brR + '/' + br); }
+    }
+  }
+  function updatePathLine(id) {
+    var el = document.getElementById('pathLine');
+    if (!el) return;
+    var r = id === 'free' ? null : findRoute(id);
+    el.textContent = r ? r.title : '自由读';
+  }
+  function refreshDT(open) {
+    var dt = document.getElementById('depthToggle');
+    if (dt) dt.textContent = '深浅：' + (open ? '理论优先（折叠展开）' : '实践优先（折叠收起）') + '（点按切换）';
+  }
+
+  function applyRoute(id) {
+    var view = viewOf(id);
+    if (!view) { id = 'free'; view = viewOf('free'); setRouteId('free'); }
+    var route = id === 'free' ? null : findRoute(id);
+    document.body.classList.remove('show-offroute');
+    document.querySelectorAll('.sidebar li.ch').forEach(function (li) {
+      var slug = li.getAttribute('data-slug');
+      var d = view.disp[slug];
+      li.classList.remove('dim', 'focus');
+      var a = li.querySelector('a');
+      if (a) a.removeAttribute('title');
+      if (d === 'dim') { li.classList.add('dim'); if (a) a.title = (bySlug(slug).part === 'branch') ? BRANCH_REASON : FREE_REASON; }
+      else if (d && d.focus) { li.classList.add('focus'); if (a) a.title = '只读所列节'; }
+    });
+    document.querySelectorAll('article.chapter section.sec').forEach(function (sec) {
+      var an = sec.getAttribute('data-anchor');
+      if (Object.prototype.hasOwnProperty.call(view.dimSec, an)) {
+        var info = view.dimSec[an];
+        sec.classList.add('dim');
+        sec.setAttribute('data-why', info.reason || '');
+        sec.setAttribute('data-kind', info.kind || 'focus');
+      } else {
+        sec.classList.remove('dim');
+        sec.removeAttribute('data-why');
+        sec.removeAttribute('data-kind');
+      }
+    });
+    document.querySelectorAll('.node[data-slug]').forEach(function (nd) {
+      var slug = nd.getAttribute('data-slug');
+      var d = view.disp[slug];
+      nd.classList.remove('dim', 'focus');
+      var old = nd.querySelector('.node-why');
+      if (old) old.remove();
+      var mins = nd.querySelector('.node-mins');
+      if (mins) mins.textContent = nodeMins(slug, d);
+      if (d === 'dim' || (d && d.focus)) {
+        nd.classList.add(d === 'dim' ? 'dim' : 'focus');
+        var sp = document.createElement('span');
+        sp.className = 'node-why';
+        sp.textContent = d === 'dim' ? ((bySlug(slug).part === 'branch') ? BRANCH_REASON : FREE_REASON) : '只读所列节';
+        nd.appendChild(sp);
+      }
+    });
+    /* 补课卡：本路线未读依赖的即时旁注 */
+    document.querySelectorAll('article.chapter section.sec').forEach(function (sec) {
+      var an = sec.getAttribute('data-anchor');
+      var card = sec.querySelector('.catchup-card');
+      var txt = (view.cards && view.cards[an]) || null;
+      if (txt) {
+        if (!card) {
+          card = document.createElement('div');
+          card.className = 'catchup-card';
+          sec.insertBefore(card, sec.firstChild);
+        }
+        card.textContent = '本路线补课：' + txt;
+      } else if (card) {
+        card.remove();
+      }
+    });
+    var b = document.getElementById('routeBanner');
+    if (b) {
+      var slug = b.getAttribute('data-slug');
+      var d = view.disp[slug];
+      if (route && d === 'dim') { b.hidden = false; b.textContent = '本章不在「' + route.title + '」路线上；仍可自由阅读，或回目录换路线。'; }
+      else if (route && d && d.focus) { b.hidden = false; b.textContent = '「' + route.title + '」路线：本章只读所列节，其余节时间宽裕可回补。'; }
+      else b.hidden = true;
+      if (route) {
+        var dimCount = 0;
+        document.querySelectorAll('article.chapter section.sec').forEach(function (sec) {
+          var an = sec.getAttribute('data-anchor');
+          if (Object.prototype.hasOwnProperty.call(view.dimSec, an)) dimCount++;
+        });
+        if (dimCount && focusPref() !== '0') {
+          var ob = document.createElement('button');
+          ob.type = 'button'; ob.className = 'offroute-btn';
+          var label = '显示本章 ' + dimCount + ' 个不在路线上的节';
+          ob.textContent = label;
+          ob.addEventListener('click', function () {
+            var on = document.body.classList.toggle('show-offroute');
+            ob.textContent = on ? '收起不在路线上的节' : label;
+          });
+          b.appendChild(ob);
+        }
+      }
+    }
+    /* 路线下一站 */
+    var rn = document.getElementById('routeNext');
+    if (rn) {
+      var cur = rn.getAttribute('data-slug');
+      var nx = (route && view.next) ? view.next[cur] : null;
+      if (nx) {
+        var nc = bySlug(nx);
+        rn.href = nx + '.html';
+        rn.textContent = '路线下一站：' + (nc ? nc.label + ' ' + tShort(nc.title) : nx);
+        rn.hidden = false;
+      } else if (route && view.pos && view.pos[cur]) {
+        rn.href = 'routes.html#route-' + route.id;
+        rn.textContent = '本路线到此收尾：回路线卡做出口自证 →';
+        rn.hidden = false;
+      } else {
+        rn.hidden = true;
+        rn.removeAttribute('href');
+      }
+    }
+    var cm = document.getElementById('chapterMeta');
+    if (cm) {
+      if (!cm.getAttribute('data-base')) cm.setAttribute('data-base', cm.textContent);
+      var base = cm.getAttribute('data-base');
+      var cs = cm.getAttribute('data-slug');
+      if (route && view.pos && view.pos[cs]) {
+        cm.textContent = base + ' · 本路线第 ' + view.pos[cs] + '/' + view.total + ' 站';
+      } else {
+        cm.textContent = base;
+      }
+    }
+    updatePathLine(id);
+    refreshExitLine(id);
+    refreshProgSummary();
+    refreshPV(route, view);
+    refreshFocus();
+    refreshOffrouteNote();
+    var dp = getDepthPref();
+    var open = dp ? (dp === 'theory') : view.open;
+    applyDepth(open); refreshDT(open);
+    updateRings(view);
+    document.querySelectorAll('.route-card').forEach(function (c) {
+      var on = c.getAttribute('data-route') === id;
+      c.classList.toggle('active', on);
+      if (on) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
+    });
+  }
+
+  /* 两问路由：即选即套 */
+  var rg = document.getElementById('routerGoal'), rtm = document.getElementById('routerTime'), rr = document.getElementById('routerResult');
+  function recommend() {
+    if (!rg || !rtm) return 'free';
+    var rid = ROUTER_MAP[rg.value + '|' + rtm.value] || 'free';
+    var r = rid === 'free' ? null : findRoute(rid);
+    if (rr) rr.textContent = r ? ('推荐：' + r.title + '——' + (r.note || '')) : '这两个答案下没有现成路线，先自由读试试。';
+    var rs = document.getElementById('routerStart');
+    if (rs) {
+      if (r) { rs.href = firstStation(r.id) || '#'; rs.textContent = '开始这条路线 →'; rs.hidden = false; }
+      else { rs.hidden = true; }
+    }
+    return rid;
+  }
+  if (rg && rtm) {
+    var auto = function () {
+      var rid = recommend();
+      if (rid !== getRouteId() && rid !== 'free') seedDepthFor(rid);
+      setRouteId(rid); applyRoute(rid);
+    };
+    rg.addEventListener('change', auto); rtm.addEventListener('change', auto);
+    recommend();
+  }
+  /* 路线卡 */
+  document.querySelectorAll('.route-card').forEach(function (c) {
+    c.addEventListener('click', function (e) {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      var id = c.getAttribute('data-route');
+      if (id !== 'free') seedDepthFor(id);
+      setRouteId(id); applyRoute(id);
+      if (id !== 'free') {
+        var r = findRoute(id);
+        if (rr && r) rr.textContent = '已切换：' + r.title;
+        var dest = firstStation(id);
+        if (dest) location.href = dest;
+      }
+    });
+  });
+  /* 出口自证：勾选存本机；Hub 显示当前路线进度 */
+  var EXIT_KEY = 'series-exit-v1';
+  function getExit() {
+    var o = readJSON(EXIT_KEY, {});
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  }
+  function setExit(o) { writeJSON(EXIT_KEY, o); }
+  function refreshExitLine(id) {
+    var el = document.getElementById('exitLine');
+    if (!el) return;
+    id = id || getRouteId();
+    var r = id === 'free' ? null : findRoute(id);
+    if (!r) { el.hidden = true; el.textContent = ''; return; }
+    var arr = (getExit()[r.id] || []);
+    el.hidden = false;
+    el.textContent = '本路线自证：' + arr.length + '/' + r.selfcheck.length + '（在「路线与论文清单」页勾选）';
+  }
+  document.querySelectorAll('.exit-check input').forEach(function (inp) {
+    var rid = inp.getAttribute('data-route'), idx = inp.getAttribute('data-idx');
+    var store = getExit();
+    inp.checked = !!(store[rid] && store[rid].indexOf(idx) >= 0);
+    inp.addEventListener('change', function () {
+      var s = getExit(), arr = s[rid] || [], i = arr.indexOf(idx);
+      if (inp.checked && i < 0) arr.push(idx);
+      if (!inp.checked && i >= 0) arr.splice(i, 1);
+      s[rid] = arr; setExit(s); refreshExitLine();
+    });
+  });
+
+  /* 深浅开关：只管折叠块开合 */
+  var dt = document.getElementById('depthToggle');
+  if (dt) {
+    dt.addEventListener('click', function () {
+      var open = dt.textContent.indexOf('理论') < 0;
+      setDepthPref(open ? 'theory' : 'practice');
+      applyDepth(open); refreshDT(open);
+    });
+  }
+  /* 已读勾选 */
+  var rk = document.getElementById('readToggle');
+  if (rk) {
+    var slug = rk.getAttribute('data-slug');
+    var refreshRT = function () {
+      var on = getProgress().indexOf(slug) >= 0;
+      rk.textContent = on ? '已读 ✓（点按取消）' : '标记已读';
+      rk.classList.toggle('on', on);
+    };
+    rk.addEventListener('click', function () {
+      var a = getProgress(), i = a.indexOf(slug);
+      if (i >= 0) a.splice(i, 1); else a.push(slug);
+      setProgress(a); refreshRT(); updateRings(viewOf(getRouteId())); refreshReview();
+    });
+    refreshRT();
+  }
+  /* 章页阅读进度条 */
+  (function () {
+    var bar = document.getElementById('readProgress');
+    var art = document.querySelector('article.chapter');
+    if (!bar || !art) return;
+    var raf = false;
+    function upd() {
+      raf = false;
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var y = window.scrollY || doc.scrollTop || 0;
+      var p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+      bar.style.width = (p * 100).toFixed(1) + '%';
+    }
+    window.addEventListener('scroll', function () {
+      if (raf) return;
+      raf = true;
+      if (window.requestAnimationFrame) window.requestAnimationFrame(upd); else upd();
+    }, { passive: true });
+    upd();
+  })();
+  /* 章页：抽查链接（隐藏节临时展开后定位） */
+  var rl = document.getElementById('reviewLink');
+  if (rl) {
+    rl.addEventListener('click', function (e) {
+      var an = rl.getAttribute('data-anchor');
+      if (!an) return;
+      var sec = document.querySelector('article.chapter section[data-anchor="' + an + '"]');
+      if (sec && sec.classList.contains('dim')) sec.classList.add('offroute-shown');
+      var el2 = document.getElementById(an);
+      if (el2 && el2.scrollIntoView) { e.preventDefault(); el2.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  }
+  /* 检索：章与节标题（数据即内嵌块） */
+  var si = document.getElementById('hubSearch');
+  if (si) {
+    var res = document.getElementById('searchResults');
+    si.addEventListener('input', function () {
+      var q = si.value.trim().toLowerCase();
+      while (res.firstChild) res.removeChild(res.firstChild);
+      if (!q) { res.style.display = 'none'; return; }
+      var hitN = 0;
+      SD.chapters.forEach(function (c) {
+        var hits = [];
+        if ((c.label + ' ' + c.title).toLowerCase().indexOf(q) >= 0) hits.push({ anchor: c.slug, text: '章首' });
+        (c.sections || []).forEach(function (s) {
+          if (s.text.toLowerCase().indexOf(q) >= 0) hits.push({ anchor: s.anchor, text: s.text });
+        });
+        if (!hits.length) return;
+        hitN += hits.length;
+        var g = document.createElement('div'); g.className = 'sgroup';
+        var t = document.createElement('a'); t.className = 'stitle';
+        t.href = c.slug + '.html'; t.textContent = c.label + ' ' + c.title;
+        g.appendChild(t);
+        hits.slice(0, 5).forEach(function (h) {
+          var a = document.createElement('a'); a.className = 'shit';
+          a.href = c.slug + '.html#' + h.anchor; a.textContent = h.text;
+          g.appendChild(a);
+        });
+        res.appendChild(g);
+      });
+      if (!hitN) {
+        var d = document.createElement('div'); d.className = 'snone';
+        d.appendChild(document.createTextNode('标题里没找到——'));
+        var ta = document.createElement('a');
+        ta.href = 'terms.html?q=' + encodeURIComponent(q);
+        ta.textContent = '去术语总表查「' + q + '」';
+        d.appendChild(ta);
+        res.appendChild(d);
+      }
+      res.style.display = '';
+    });
+  }
+
+  /* 继续阅读 / 最近读过（H2-7） */
+  var LAST_KEY = 'series-last-v1', RECENT_KEY = 'series-recent-v1';
+  function secTitle(anchor) {
+    if (!anchor) return '';
+    for (var i = 0; i < SD.chapters.length; i++) {
+      var ss = SD.chapters[i].sections || [];
+      for (var j = 0; j < ss.length; j++) if (ss[j].anchor === anchor) return ss[j].text;
+    }
+    return '';
+  }
+  function refreshResume() {
+    var block = document.getElementById('resumeBlock');
+    if (!block) return;
+    var last = readJSON(LAST_KEY, null), rec = readJSON(RECENT_KEY, []);
+    if (!Array.isArray(rec)) rec = [];
+    if (!last && !rec.length) { block.hidden = true; return; }
+    block.hidden = false;
+    var a = document.getElementById('resumeLink');
+    if (a && last && last.slug) {
+      var c = bySlug(last.slug);
+      a.href = last.slug + '.html' + (last.anchor ? ('#' + last.anchor) : '');
+      var tt = secTitle(last.anchor);
+      a.textContent = '继续阅读：' + (c ? c.label + ' ' + tShort(c.title) : last.slug)
+                    + (tt ? '（从「' + String(tt).split('：')[0] + '」）' : '');
+      a.hidden = false;
+    } else if (a) { a.hidden = true; }
+    var ul = document.getElementById('recentList');
+    if (ul) {
+      while (ul.firstChild) ul.removeChild(ul.firstChild);
+      rec.slice(0, 3).forEach(function (s) {
+        var c = bySlug(s); if (!c) return;
+        var li = document.createElement('li'), l = document.createElement('a');
+        l.href = s + '.html'; l.textContent = c.label + ' ' + tShort(c.title);
+        li.appendChild(l); ul.appendChild(li);
+      });
+    }
+  }
+  /* 复习：已读章抽查（Hub 我的区） */
+  function reviewAnchorOf(slug) {
+    var c = bySlug(slug);
+    if (!c) return null;
+    var h2 = (c.sections || []).filter(function (s) { return s.level === 2; });
+    return h2.length ? h2[h2.length - 1].anchor : null;
+  }
+  function refreshReview() {
+    var block = document.getElementById('reviewBlock');
+    if (!block) return;
+    var pool = getProgress().filter(function (s) { return reviewAnchorOf(s); });
+    if (!pool.length) { block.hidden = true; return; }
+    block.hidden = false;
+    var copy = pool.slice(), picks = [];
+    while (picks.length < 3 && copy.length) {
+      var i = Math.floor(Math.random() * copy.length);
+      picks.push(copy.splice(i, 1)[0]);
+    }
+    var ul = document.getElementById('reviewList');
+    if (!ul) return;
+    while (ul.firstChild) ul.removeChild(ul.firstChild);
+    picks.forEach(function (s) {
+      var c = bySlug(s);
+      var li = document.createElement('li'), a2 = document.createElement('a');
+      a2.href = s + '.html#' + reviewAnchorOf(s);
+      a2.textContent = c.label + ' ' + tShort(c.title);
+      li.appendChild(a2); ul.appendChild(li);
+    });
+  }
+  var rvBtn = document.getElementById('reviewRefresh');
+  if (rvBtn) rvBtn.addEventListener('click', refreshReview);
+  refreshReview();
+  refreshResume();
+
+  /* 章页：记录最近读过与上次位置（节级锚） */
+  (function () {
+    var art = document.querySelector('article.chapter');
+    if (!art) return;
+    var ref = document.getElementById('routeBanner') || document.getElementById('readToggle');
+    var slug = ref ? ref.getAttribute('data-slug') : null;
+    if (!slug) return;
+    var rec = readJSON(RECENT_KEY, []);
+    if (!Array.isArray(rec)) rec = [];
+    rec = rec.filter(function (x) { return x !== slug; });
+    rec.unshift(slug);
+    writeJSON(RECENT_KEY, rec.slice(0, 5));
+    function saveLast() {
+      var anchor = null;
+      var secs = document.querySelectorAll('article.chapter section.sec');
+      for (var i = 0; i < secs.length; i++) {
+        var r = secs[i].getBoundingClientRect ? secs[i].getBoundingClientRect() : null;
+        if (r && r.top <= 140) anchor = secs[i].getAttribute('data-anchor');
+        else if (r) break;
+      }
+      writeJSON(LAST_KEY, { slug: slug, anchor: anchor, at: new Date().toISOString().slice(0, 10) });
+    }
+    var timer = null;
+    window.addEventListener('scroll', function () {
+      if (timer) return;
+      timer = setTimeout(function () { timer = null; saveLast(); }, 900);
+    }, { passive: true });
+    window.addEventListener('pagehide', saveLast);
+    saveLast();
+  })();
+
+  /* 代码块复制按钮（H2.5） */
+  document.querySelectorAll('article.chapter pre').forEach(function (pre) {
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'copy-btn'; btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var codeEl = pre.querySelector('code');
+      var code = ((codeEl ? codeEl.innerText : pre.innerText) || '').replace(/\n复制$/, '');
+      var done = function () { btn.textContent = '已复制'; setTimeout(function () { btn.textContent = '复制'; }, 1200); };
+      var fb = function () {
+        var ta = document.createElement('textarea'); ta.value = code;
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(done, fb);
+      } else { fb(); }
+    });
+    pre.appendChild(btn);
+  });
+
+  /* 图点击放大（H2.5） */
+  document.querySelectorAll('figure.book-fig img').forEach(function (img) {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', function () {
+      var d = document.createElement('dialog'); d.className = 'fig-dialog';
+      var big = document.createElement('img'); big.src = img.src; big.alt = img.alt || '';
+      d.appendChild(big);
+      d.addEventListener('click', function () { if (d.close) d.close(); if (d.remove) d.remove(); });
+      document.body.appendChild(d);
+      if (d.showModal) d.showModal(); else window.open(img.src);
+    });
+  });
+
+  /* 路线聚焦与自动跳站（2026-10-15 读者反馈批） */
+  function focusPref() {
+    var v = readJSON('series-focus-v1', null);
+    return (v === null || v === '') ? '1' : String(v);
+  }
+  function refreshFocus() {
+    var active = getRouteId() !== 'free';
+    var hide = active && focusPref() !== '0';
+    document.body.classList.toggle('focus-hide', hide);
+    if (!hide) document.body.classList.remove('show-offroute');
+    var on = focusPref() !== '0';
+    ['focusHide', 'focusHideHub'].forEach(function (eid) {
+      var cb = document.getElementById(eid);
+      if (cb) cb.checked = on;
+    });
+    var row = document.getElementById('focusRow');
+    if (row) row.hidden = !active;
+  }
+  function refreshOffrouteNote() {
+    var note = document.getElementById('offrouteNote');
+    if (!note) return;
+    var id = getRouteId(), r = id === 'free' ? null : findRoute(id);
+    if (!r) { note.hidden = true; return; }
+    var v = r.view, n = 0;
+    SD.chapters.forEach(function (c) { if (v.disp[c.slug] === 'dim') n++; });
+    if (!n) { note.hidden = true; return; }
+    note.hidden = false;
+    note.textContent = focusPref() !== '0'
+      ? ('已隐藏 ' + n + ' 页不在路线上；取消「隐藏非路线内容」即显示。')
+      : (n + ' 页不在路线上（已降灰）。');
+  }
+  function refreshPV(route, view) {
+    var next = document.querySelector('.prevnext a.pv-next');
+    var prev = document.querySelector('.prevnext a.pv-prev');
+    if (!next && !prev) return;
+    [next, prev].forEach(function (el) {
+      if (el && !el.getAttribute('data-orig')) {
+        el.setAttribute('data-orig', el.getAttribute('href') || '');
+        el.setAttribute('data-orig-text', el.textContent || '');
+      }
+    });
+    function restore(el) {
+      if (!el) return;
+      var o = el.getAttribute('data-orig');
+      if (o) el.setAttribute('href', o);
+      var ot = el.getAttribute('data-orig-text');
+      if (ot) el.textContent = ot;
+      el.style.display = '';
+    }
+    function labelOf(slug) {
+      var c = bySlug(slug);
+      return c ? c.label + ' ' + tShort(c.title) : slug;
+    }
+    var slug = null, ref = document.getElementById('routeBanner');
+    if (ref) slug = ref.getAttribute('data-slug');
+    var inRoute = route && slug && view.pos && view.pos[slug];
+    if (!inRoute) { restore(next); restore(prev); return; }
+    var order = Object.keys(view.pos).sort(function (a, b) { return view.pos[a] - view.pos[b]; });
+    var i = order.indexOf(slug);
+    var p = i > 0 ? order[i - 1] : null, n = i < order.length - 1 ? order[i + 1] : null;
+    if (next) {
+      if (n) { next.setAttribute('href', n + '.html'); next.textContent = labelOf(n) + ' →'; next.style.display = ''; }
+      else { next.style.display = 'none'; }
+    }
+    if (prev) {
+      if (p) { prev.setAttribute('href', p + '.html'); prev.textContent = '← ' + labelOf(p); prev.style.display = ''; }
+      else { prev.style.display = 'none'; }
+    }
+  }
+  function seedDepthFor(id) {
+    var r = findRoute(id);
+    if (!r) return;
+    setDepthPref(r.view.open ? 'theory' : 'practice');
+  }
+  function firstStation(id) {
+    var r = findRoute(id);
+    if (!r) return null;
+    var v = r.view;
+    var order = Object.keys(v.pos).sort(function (a, b) { return v.pos[a] - v.pos[b]; });
+    if (!order.length) return null;
+    var read = getProgress(), target = null;
+    for (var i = 0; i < order.length; i++) {
+      if (read.indexOf(order[i]) < 0) { target = order[i]; break; }
+    }
+    if (!target) target = order[0];
+    var d = v.disp[target];
+    var anchor = (d && d.focus && d.focus.length) ? ('#' + d.focus[0]) : '';
+    return target + '.html' + anchor;
+  }
+  ['focusHide', 'focusHideHub'].forEach(function (eid) {
+    var cb = document.getElementById(eid);
+    if (!cb) return;
+    cb.addEventListener('change', function () {
+      writeJSON('series-focus-v1', cb.checked ? '1' : '0');
+      refreshFocus(); refreshOffrouteNote();
+    });
+  });
+
+  /* 自测存档（H2-1） */
+  var ST_KEY = 'series-selftest-v1';
+  function getSt() { return readJSON(ST_KEY, null); }
+  function refreshSt() {
+    var s = getSt(), out = document.getElementById('stSaved');
+    if (out) out.textContent = s ? ('已保存：' + s.score + '/10（' + s.at + '）') : '';
+    var sel = document.getElementById('stScore');
+    if (sel && s) sel.value = String(s.score);
+  }
+  function refreshSelftestNote() {
+    var el = document.getElementById('selftestNote');
+    if (!el) return;
+    var s = getSt();
+    while (el.firstChild) el.removeChild(el.firstChild);
+    if (!s) {
+      el.appendChild(document.createTextNode('拿不准数学底子？'));
+      var a2 = document.createElement('a'); a2.href = 'selftest.html';
+      a2.textContent = '做一页数学自修自测'; el.appendChild(a2);
+      return;
+    }
+    var band = s.score >= 8 ? '按路线直接走'
+             : s.score >= 5 ? '到 §2–§4 时把手算放慢'
+             : '建议走快线，或先补 §2–§4 再走完整线';
+    el.textContent = '数学自测 ' + s.score + '/10：' + band + '。';
+  }
+  var stBtn = document.getElementById('stSave'), stSel = document.getElementById('stScore');
+  if (stBtn && stSel) {
+    stBtn.addEventListener('click', function () {
+      var v = stSel.value; if (v === '') return;
+      writeJSON(ST_KEY, { score: parseInt(v, 10), at: new Date().toISOString().slice(0, 10) });
+      refreshSt(); refreshSelftestNote();
+    });
+  }
+  refreshSt(); refreshSelftestNote();
+
+  /* 结业项目勾选（H2-3） */
+  var PROJ_KEY = 'series-projects-v1';
+  function getProj() { var a = readJSON(PROJ_KEY, []); return Array.isArray(a) ? a : []; }
+  function refreshProjLine() {
+    var el = document.getElementById('projLine'); if (!el) return;
+    var inputs = document.querySelectorAll('input[data-pid]');
+    if (!inputs.length) return;
+    el.hidden = false;
+    el.textContent = '结业项目：' + getProj().length + '/' + inputs.length + ' 完成';
+  }
+  document.querySelectorAll('input[data-pid]').forEach(function (inp) {
+    var pid = inp.getAttribute('data-pid');
+    inp.checked = getProj().indexOf(pid) >= 0;
+    inp.addEventListener('change', function () {
+      var arr = getProj(), i = arr.indexOf(pid);
+      if (inp.checked && i < 0) arr.push(pid);
+      if (!inp.checked && i >= 0) arr.splice(i, 1);
+      writeJSON(PROJ_KEY, arr);
+      refreshProjLine();
+    });
+  });
+  refreshProjLine();
+
+  /* 进度导出/导入（H2-5，textarea 主通道） */
+  var IO_KEYS = ['series-route-v1', 'series-depth-v1', 'series-progress-v1',
+                 'series-exit-v1', 'series-selftest-v1', 'series-projects-v1',
+                 'series-focus-v1', 'series-last-v1', 'series-recent-v1'];
+  function refreshProgSummary() {
+    var el = document.getElementById('progSummary'); if (!el) return;
+    var id = getRouteId(), r = id === 'free' ? null : findRoute(id);
+    var ex = getExit(), exN = 0;
+    for (var k in ex) if (Array.isArray(ex[k])) exN += ex[k].length;
+    el.textContent = '当前路线：' + (r ? r.title : '自由读') + '｜已读 ' + getProgress().length
+                   + ' 章｜自证 ' + exN + ' 项｜项目 ' + getProj().length + '/4';
+  }
+  var ioExport = document.getElementById('progExport'), ioImport = document.getElementById('progImport'),
+      ioText = document.getElementById('progText'), ioMsg = document.getElementById('progMsg');
+  if (ioExport && ioText) {
+    ioExport.addEventListener('click', function () {
+      var o = { v: 1 };
+      IO_KEYS.forEach(function (k) { var v = null; try { v = localStorage.getItem(k); } catch (e) {}
+                                     if (v !== null) o[k] = v; });
+      ioText.value = JSON.stringify(o, null, 1);
+      if (ioMsg) ioMsg.textContent = '已生成：复制这段保存即可。';
+    });
+  }
+  if (ioImport && ioText) {
+    ioImport.addEventListener('click', function () {
+      var o = null;
+      try { o = JSON.parse(ioText.value || ''); } catch (e) {}
+      if (!o || typeof o !== 'object') { if (ioMsg) ioMsg.textContent = '解析失败：请粘贴完整 JSON。'; return; }
+      var n = 0;
+      IO_KEYS.forEach(function (k) { if (typeof o[k] === 'string') {
+        try { localStorage.setItem(k, o[k]); n++; } catch (e) {} } });
+      if (ioMsg) ioMsg.textContent = '已导入 ' + n + ' 项，已在本页生效。';
+      refreshProgSummary(); refreshResume(); refreshSt(); refreshSelftestNote();
+      refreshProjLine(); applyRoute(getRouteId()); refreshReview();
+    });
+  }
+  refreshProgSummary();
+  refreshFocus();
+  refreshOffrouteNote();
+
+  window.addEventListener('storage', function () {
+    applyRoute(getRouteId());
+    refreshResume(); refreshSt(); refreshSelftestNote(); refreshProjLine(); refreshProgSummary(); refreshReview();
+  });
+  applyRoute(getRouteId());
+})();
+</script>
+</body>
+</html>

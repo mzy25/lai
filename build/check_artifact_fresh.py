@@ -2,7 +2,7 @@
 """产物新鲜度门禁：工作区产物是否与 HEAD 提交的一致（CI/本地同源）。
 
 用途：源稿（*.md）改了却忘记重建产物时，本门禁报红。比较对象是**已跟踪的产物**
-（html/ cards/ docs/），不是源稿——源稿改动由 lint/仪器负责。
+（series/dist/），不是源稿——源稿改动由 series_check/仪器负责。
 
 两种比较口径（2026-10-03 实测得出，不是猜的）：
 - 文本类（.html/.tsv/.css/.js）：**逐字节**比。实测重建后无差异，可作硬门禁。
@@ -13,8 +13,8 @@
 
 退出码：0 全部新鲜；1 有陈旧/缺失/内容漂移；2 用法或环境错误。
 
-    python3 build/check_artifact_fresh.py                 # 默认查 html cards docs
-    python3 build/check_artifact_fresh.py --paths html    # 限范围
+    python3 build/check_artifact_fresh.py                 # 默认查 series/dist
+    python3 build/check_artifact_fresh.py --paths series/dist  # 限范围
     python3 build/check_artifact_fresh.py --selftest       # 合成夹具自测
 """
 
@@ -29,7 +29,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_PATHS = ("html", "cards", "docs")
+DEFAULT_PATHS = ("series/dist",)
 # DOCX 里与内容无关的元数据（时间戳/生成工具版本）
 DOCX_META_SKIP = ("docProps/core.xml", "docProps/app.xml")
 ZIP_MAGIC = b"PK\x03\x04"
@@ -45,8 +45,8 @@ def _git(*args: str) -> bytes:
 def tracked(prefixes: tuple[str, ...]) -> list[str]:
     """已跟踪文件清单。
 
-    必须用 `-z`：默认输出对非 ASCII 路径做 C 风格转义（"docs/\\346\\225\\260..."），
-    直接拼 ROOT 会得到不存在的路径——五篇 docx 会全被误报"工作区缺失"（2026-10-03 实测）。
+    必须用 `-z`：默认输出对非 ASCII 路径做 C 风格转义（"series/dist/\\302\\247..."），
+    直接拼 ROOT 会得到不存在的路径——中文产物会全被误报"工作区缺失"（2026-10-03 实测）。
     """
     out: set[str] = set()
     for p in prefixes:
@@ -140,15 +140,15 @@ def _selftest() -> int:
     case("文本逐字节异 → stale", compare("a.html", b"<html>2", b"<html>")[0] == "stale")
     case("HEAD 无 → missing_head", compare("a.html", b"x", None)[0] == "missing_head")
     # 兜底：真实仓库里 html/ 必须全部新鲜（本脚本不能自己空转）
-    bad, _ = scan(("html",))
-    case(f"真实 html/ 新鲜（bad={bad}）", bad == 0)
+    bad, _ = scan(("series/dist",))
+    case(f"真实 series/dist 新鲜（bad={bad}）", bad == 0)
     print("check_artifact_fresh selftest:", "all pass" if ok else "FAILED")
     return 0 if ok else 1
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="产物新鲜度门禁（与 HEAD 比对）")
-    ap.add_argument("--paths", nargs="*", default=list(DEFAULT_PATHS), help="要检查的产物目录（默认 html cards docs）")
+    ap.add_argument("--paths", nargs="*", default=list(DEFAULT_PATHS), help="要检查的产物目录（默认 series/dist）")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
     if args.selftest:
@@ -161,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         print(line)
     n_tracked = len(tracked(tuple(args.paths)))
     print(f"检查 {n_tracked} 个已跟踪产物（{' '.join(args.paths)}）："
-          f"陈旧 {bad}" + ("　——源稿改了需重建（build_html/build_docx/build_cards）" if bad else "　全部新鲜"))
+          f"陈旧 {bad}" + ("　——源稿改了需重建（series/tools/build_site.py）" if bad else "　全部新鲜"))
     return 1 if bad else 0
 
 

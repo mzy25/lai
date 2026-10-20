@@ -17,5 +17,20 @@ tmp*.md
 tmp*/
 *.tmp
 
+# series 私有工作区（不随公开仓分发）
+series/.tmp/
+series/packs/
+series/plan*.md
+series/学习路径重设计方案.md
+series/知识点清单全集.md
+series/AGENTS.md
+series/edit/*
+!series/edit/*.tsv
+series/tools/pack_rebuild.py
+series/tools/hw_scan.py
+series/tools/browser_check.py
+series/tools/browser_check.sh
+series/tools/visual_pack.py
+
 # 系统
 .DS_Store

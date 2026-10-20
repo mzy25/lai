@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page="aux-page">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>应用与 Agent·快线 · 打印版 · AI 系列读物</title>
+<script>
+/* 主题/字号引导（沿用五篇键位，跨站无缝） */
+(function () {
+  try {
+    var t = localStorage.getItem('ai-primer-theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.dataset.theme = t;
+    var f = localStorage.getItem('ai-primer-fs');
+    if (f) document.documentElement.style.setProperty('--fs', f);
+  } catch (e) {}
+})();
+</script>
+<style>
+/* ===== tokens（与五篇同一视觉语言）===== */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  color-scheme: light;
+  --bg:#fafaf8; --card:#ffffff; --ink:#1f2937; --ink-soft:#4b5563;
+  --line:#e5e7eb; --accent:#2563eb; --accent-soft:#eff6ff;
+  --code-bg:#f3f4f6; --pre-bg:#f6f8fa; --th-bg:#f3f4f6; --row-alt:#fafafa;
+  --sidebar-w:290px; --fs:17px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#111827; --card:#1f2937; --ink:#e5e7eb; --ink-soft:#9ca3af;
+  --line:#374151; --accent:#60a5fa; --accent-soft:#1e3a5f;
+  --code-bg:#273244; --pre-bg:#282c34; --th-bg:#273244; --row-alt:#1a2332;
+}
+:root[data-theme="dark"] img { filter: brightness(0.92); }
+html { font-size: var(--fs, 17px); scroll-behavior: smooth; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","DejaVu Sans",system-ui,sans-serif;
+       background:var(--bg); color:var(--ink); line-height:1.9; }
+a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; }
+a:hover { text-decoration:underline; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+.skip-link { position:absolute; left:-9999px; top:0; background:var(--card); color:var(--accent);
+  padding:8px 12px; border:1px solid var(--line); border-radius:0 0 8px 0; z-index:999; }
+.skip-link:focus { left:0; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); }
+
+/* ===== 布局 ===== */
+.topbar { position:fixed; top:0; left:0; right:0; height:46px; z-index:60;
+  display:flex; align-items:center; gap:10px; padding:0 14px;
+  background:var(--card); border-bottom:1px solid var(--line); }
+.topbar .brand { font-weight:700; font-size:0.92rem; color:var(--ink); }
+.topbar .brand a { color:var(--ink); }
+.topbar .spacer { flex:1; }
+.topbar button, .topbar a.btn { border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+  border-radius:999px; padding:3px 10px; font-size:0.78rem; cursor:pointer; line-height:1.5; }
+.topbar button:hover, .topbar a.btn:hover { color:var(--accent); border-color:var(--accent); text-decoration:none; }
+.layout { display:flex; max-width:1500px; margin:0 auto; min-height:100vh; padding-top:46px; }
+.sidebar { width:var(--sidebar-w); flex-shrink:0; background:var(--card);
+  border-right:1px solid var(--line); position:sticky; top:46px; height:calc(100vh - 46px);
+  overflow-y:auto; padding:14px 12px; z-index:50; }
+.sidebar .search-box input { width:100%; padding:6px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--bg); color:var(--ink); font-size:0.85rem; }
+.sidebar .part { margin:10px 0 2px; padding:4px 8px; font-size:0.72rem; letter-spacing:0.04em;
+  color:var(--ink-soft); text-transform:none; border-top:1px solid var(--line); }
+.sidebar .part:first-of-type { border-top:none; }
+.sidebar ul { list-style:none; }
+.sidebar li.ch a { display:block; padding:4px 8px; border-radius:6px; font-size:0.85rem;
+  color:var(--ink-soft); border-left:2px solid transparent; }
+.sidebar li.ch a:hover { background:var(--accent-soft); color:var(--accent); text-decoration:none; }
+.sidebar li.ch.current > a { color:var(--accent); font-weight:700; background:var(--accent-soft); }
+.sidebar ul.sub { margin:0 0 4px 10px; }
+.sidebar ul.sub a { display:block; padding:2px 8px; font-size:0.78rem; color:var(--ink-soft); border-radius:6px; }
+.sidebar ul.sub a:hover { background:var(--accent-soft); color:var(--accent); text-decoration:none; }
+.sidebar ul.sub a.active { color:var(--accent); }
+.sidebar .mk { margin-left:4px; }
+.main { flex:1; min-width:0; padding:26px 34px 60px; }
+/* 无目录的页面（Hub / 打印 / 辅助页）：整条侧栏与目录开关不渲染 */
+html[data-page="hub-page"] .sidebar, html[data-page="print-page"] .sidebar,
+html[data-page="aux-page"] .sidebar,
+html[data-page="hub-page"] #navToggle, html[data-page="print-page"] #navToggle,
+html[data-page="aux-page"] #navToggle { display:none; }
+.content { max-width:46em; margin:0 auto; }
+.main.wide .content { max-width:none; }
+
+/* ===== 章头 / 正文 ===== */
+.chapter-head { margin:6px 0 18px; padding-bottom:12px; border-bottom:2px solid var(--line); }
+.chapter-head h1 { font-size:1.5rem; line-height:1.5; }
+.doc-meta { font-size:0.83rem; color:var(--ink-soft); margin-top:6px; }
+article.chapter p, article.chapter li, article.chapter blockquote { max-width:44em; }
+/* 正文内链：颜色之外再给下划线（WCAG 1.4.1；axe link-in-text-block）；
+   卡片/按钮型组件豁免（它们不是文内链接，靠形态区分） */
+.content a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.content a.route-card, .content a.route-next, .content a.review-link, .content a.router-start,
+.content a.pv-prev, .content a.pv-next, .content .hub-nav a { text-decoration: none; }
+h2 { font-size:1.22rem; margin:1.6em 0 0.6em; padding-bottom:0.2em; border-bottom:1px solid var(--line); }
+h3 { font-size:1.06rem; margin:1.3em 0 0.5em; }
+h1, h2, h3 { scroll-margin-top:60px; }
+p { margin:0.65em 0; }
+ul, ol { margin:0.6em 0 0.6em 1.5em; }
+li { margin:0.25em 0; }
+strong { font-weight:700; }
+hr { border:none; border-top:1px solid var(--line); margin:1.6em 0; }
+blockquote { border-left:3px solid var(--accent); background:var(--bg);
+  padding:6px 14px; margin:0.9em 0; color:var(--ink); border-radius:0 8px 8px 0; }
+blockquote p { margin:0.35em 0; }
+code { background:var(--code-bg); padding:0.1em 0.35em; border-radius:5px;
+  font-family:"SF Mono",Consolas,"DejaVu Sans Mono",monospace; font-size:0.88em; }
+pre { background:var(--pre-bg); border:1px solid var(--line); border-radius:10px;
+  padding:10px 14px; overflow-x:auto; margin:0.9em 0; line-height:1.6; }
+pre code { background:none; padding:0; font-size:0.85em; }
+.table-wrap { overflow-x:auto; margin:0.9em 0; }
+table { border-collapse:collapse; font-size:0.9rem; width:100%; }
+th, td { border:1px solid var(--line); padding:5px 10px; text-align:left; vertical-align:top; }
+th { background:var(--th-bg); font-weight:700; }
+tbody tr:nth-child(even) { background:var(--row-alt); }
+/* ===== 表格容器：宽表横向滚动（普通表零变化） ===== */
+.table-wrap { overflow-x: auto; margin: 1.1em 0; }
+.table-wrap > table.wide { width: max-content; min-width: 100%; }
+@media print { .table-wrap { overflow: visible; } }
+
+/* ===== 标记徽章（读法标记）===== */
+.mk { display:inline-block; font-size:0.72em; line-height:1.5; padding:0 6px; margin-left:6px;
+  border:1px solid currentColor; border-radius:999px; vertical-align:middle; cursor:help;
+  color:var(--ink-soft); background:var(--card); }
+.mk-▽ { color:#0369a1; }
+.mk-○ { color:#7c3aed; }
+.mk-◌ { color:#b45309; }
+.mk-◇ { color:#be123c; }
+:root[data-theme="dark"] .mk-▽ { color:#7dd3fc; }
+:root[data-theme="dark"] .mk-○ { color:#c4b5fd; }
+:root[data-theme="dark"] .mk-◌ { color:#fcd34d; }
+:root[data-theme="dark"] .mk-◇ { color:#fda4af; }
+
+/* ===== 资产索引：类型标签与注记 ===== */
+.tag { display:inline-block; font-size:0.72em; line-height:1.5; padding:0 6px; margin-right:6px;
+  border:1px solid var(--line); border-radius:999px; vertical-align:middle; color:var(--ink-soft); }
+.meta { color:var(--ink-soft); font-size:0.85em; }
+
+/* ===== 折叠块 ===== */
+details { border:1px dashed var(--line); border-radius:10px; padding:8px 14px; margin:0.9em 0;
+  background:var(--card); }
+details summary { cursor:pointer; font-weight:600; color:var(--ink-soft); }
+details[open] summary { margin-bottom:6px; }
+
+/* ===== 章尾导航 / 资产卡 ===== */
+.prevnext { display:flex; justify-content:space-between; gap:12px; margin:30px 0 6px;
+  padding-top:14px; border-top:1px solid var(--line); font-size:0.86rem; }
+.prevnext a { border:1px solid var(--line); border-radius:10px; padding:6px 12px; background:var(--card); }
+.asset-card { margin:16px 0; padding:10px 14px; border:1px solid var(--line); border-radius:10px;
+  background:var(--card); font-size:0.85rem; }
+.asset-card b { color:var(--ink); }
+.footer { margin-top:34px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:0.75rem; color:var(--ink-soft); }
+
+/* ===== 首页 ===== */
+.hero { margin:10px 0 22px; }
+.hero h1 { font-size:1.5rem; margin-bottom:8px; }
+.legend { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 20px; font-size:0.85rem; color:var(--ink-soft); }
+.legend span.item { border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--card); }
+
+/* ===== 代码高亮（pandoc skylighting 类，亮/暗两套）===== */
+.sourceCode { background:var(--pre-bg); }
+pre.sourceCode { padding:10px 14px; }
+.sourceCode .kw, .sourceCode .cf { color:#7c3aed; font-weight:600; }
+.sourceCode .dt { color:#0f766e; }
+.sourceCode .dv, .sourceCode .bn, .sourceCode .fl { color:#b45309; }
+.sourceCode .st, .sourceCode .ch { color:#16a34a; }
+.sourceCode .co, .sourceCode .an { color:#6b7280; font-style:italic; }
+.sourceCode .fu, .sourceCode .va { color:#2563eb; }
+.sourceCode .op { color:#6b7280; }
+.sourceCode .at { color:#be123c; }
+:root[data-theme="dark"] .sourceCode .kw, :root[data-theme="dark"] .sourceCode .cf { color:#c4b5fd; }
+:root[data-theme="dark"] .sourceCode .dt { color:#5eead4; }
+:root[data-theme="dark"] .sourceCode .dv, :root[data-theme="dark"] .sourceCode .bn, :root[data-theme="dark"] .sourceCode .fl { color:#fcd34d; }
+:root[data-theme="dark"] .sourceCode .st, :root[data-theme="dark"] .sourceCode .ch { color:#86efac; }
+:root[data-theme="dark"] .sourceCode .fu, :root[data-theme="dark"] .sourceCode .va { color:#93c5fd; }
+
+/* ===== B3：路径 UI ===== */
+.path-line { margin:6px 4px 4px; font-size:0.8rem; color:var(--ink-soft); }
+.depth-toggle, .read-toggle { border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+  border-radius:8px; padding:3px 10px; font-size:0.78rem; cursor:pointer; }
+.depth-toggle { margin:0 4px 8px; }
+.depth-toggle:hover, .read-toggle:hover { color:var(--accent); border-color:var(--accent); }
+
+.read-toggle.on { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+.migration { margin:20px 0 4px; padding:10px 14px; border:1px solid var(--accent); border-left-width:4px;
+  border-radius:10px; background:var(--accent-soft); font-size:0.9rem; }
+.sidebar li.ch.dim > a { opacity:.5; }
+.sidebar li.ch.focus > a { opacity:.85; }
+.sidebar ul.sub li.dim a { opacity:.5; }
+section.sec.dim { opacity:.62; }
+section.sec.dim > h2::after { content:"未纳入当前路径"; font-size:.72em; font-weight:400;
+  color:var(--ink-soft); margin-left:8px; border:1px solid var(--line); border-radius:999px;
+  padding:0 8px; vertical-align:middle; }
+section.sec.dim[data-kind="depth"] > h2::after { content:"实践优先：跳过（理论优先可读）"; }
+section.sec.dim[data-kind="focus"] > h2::after { content: attr(data-why); }
+section.sec.dim[data-kind="focus"]:not([data-why]) > h2::after { content:"本路线只读所列节"; }
+/* path 类降灰显示具体原因（长原因截断显示；广场通用句兜底） */
+section.sec.dim[data-kind="path"] > h2::after { content: attr(data-why);
+  display:inline-block; max-width:26em; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; vertical-align:middle; }
+section.sec.dim[data-kind="path"]:not([data-why]) > h2::after { content:"未纳入当前路径"; }
+.wizard { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:14px 16px; margin:18px 0; }
+.wiz-title { font-weight:700; margin-bottom:8px; }
+.wiz-group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }
+.wiz-label { min-width:13em; color:var(--ink-soft); font-size:0.88rem; }
+.wiz-opt { border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:0.84rem;
+  cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.wiz-opt:hover { border-color:var(--accent); }
+.wiz-result { margin-top:10px; font-size:0.9rem; color:var(--accent); font-weight:600; }
+.route { margin:18px 0; }
+.route-part { margin:14px 0 6px; font-weight:700; font-size:0.95rem; }
+.route-note { font-size:0.8rem; color:var(--ink-soft); margin:-2px 0 6px; }
+.node { display:block; border:1px solid var(--line); border-radius:10px; background:var(--card);
+  padding:7px 12px; margin:5px 0 5px 12px; font-size:0.9rem; color:var(--ink); }
+.node::after { content:""; display:block; clear:both; }
+.node:hover { border-color:var(--accent); text-decoration:none; }
+.node .node-mins { float:right; font-size:0.75rem; color:var(--ink-soft); margin-left:8px; }
+.node.dim { opacity:.55; }
+.node.focus { border-style:dashed; }
+.node-why { display:block; font-size:0.76rem; color:var(--ink-soft); margin-top:2px; }
+.route-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin:14px 0; }
+.route-card { display:flex; flex-direction:column; gap:4px; border:1px solid var(--line);
+  border-radius:10px; background:var(--card); padding:10px 12px; color:var(--ink); text-decoration:none; }
+.route-card:hover { border-color:var(--accent); }
+.route-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.route-card .rc-t { font-weight:700; }
+.route-card .rc-tag { font-size:0.72em; color:var(--accent); }
+.route-card .rc-aud { font-size:0.8em; color:var(--ink-soft); }
+.route-card .rc-exit { font-size:0.8em; }
+.route-card .rc-hours { font-size:0.76em; color:var(--ink-soft); }
+#routerGoal, #routerTime { padding:3px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+.route-banner { margin:10px 0; padding:8px 12px; border:1px dashed var(--line); border-radius:8px;
+  font-size:0.88em; color:var(--ink-soft); background:var(--accent-soft); }
+.catchup-card { margin:10px 0 6px; padding:8px 12px; border:1px dashed var(--line);
+  border-radius:8px; font-size:0.86em; color:var(--ink-soft); background:var(--accent-soft); }
+.route-next { border:1px solid var(--line); border-radius:10px; padding:6px 12px; background:var(--card);
+  color:var(--accent); text-decoration:none; font-size:0.9em; }
+.route-next:hover { border-color:var(--accent); }
+.read-row { margin:18px 0 4px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.exit-check { display:block; margin:4px 0; font-size:0.9em; }
+.exit-list { margin:6px 0 10px; }
+.chapter-terms { margin:18px 0 8px; font-size:0.9em; color:var(--ink-soft); }
+.chapter-terms ul { margin:6px 0 0 1.2em; }
+.exit-line { margin:6px 0 0; font-size:0.88rem; color:var(--accent); font-weight:600; }
+.rc-plan { font-size:0.78em; color:var(--ink-soft); }
+.resume { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:10px 14px; margin:14px 0; }
+.resume-link { font-weight:700; color:var(--accent); }
+.recent { margin:6px 0 0 1.1em; font-size:0.88em; }
+.chapter-meta { margin:6px 0 14px; font-size:0.86rem; color:var(--ink-soft); }
+pre { position:relative; }
+.copy-btn { position:absolute; top:6px; right:6px; font-size:0.72rem; padding:2px 8px;
+  border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink-soft);
+  cursor:pointer; opacity:0.55; }
+.copy-btn:hover { opacity:1; border-color:var(--accent); }
+.fig-dialog { border:none; background:transparent; padding:0; max-width:96vw; }
+.fig-dialog img { max-width:92vw; max-height:88vh; }
+.term-hit td { background: var(--accent-soft); }
+@media print { .copy-btn { display:none !important; } }
+.selftest-note { margin-top:6px; font-size:0.88rem; color:var(--ink-soft); }
+.selftest-note a { color:var(--accent); }
+.selftest-save { margin:16px 0 4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.selftest-save select { padding:3px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+.selftest-save button, .prog-btns button { padding:4px 10px; border:1px solid var(--line);
+  border-radius:8px; background:var(--card); color:var(--ink); cursor:pointer; }
+.selftest-save button:hover, .prog-btns button:hover { border-color:var(--accent); }
+.st-saved { font-size:0.86rem; color:var(--accent); }
+.progress-io { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:12px 16px; margin:18px 0; }
+.progress-io textarea { width:100%; font-family:ui-monospace,monospace; font-size:0.82rem;
+  padding:8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
+.prog-btns { margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.hub-nav { margin:10px 0 4px; font-size:0.9rem; color:var(--ink-soft); }
+.hub-nav a { color:var(--accent); }
+.hub-sec { margin-top:26px; }
+.hub-h { font-size:1.05rem; border-bottom:1px solid var(--line); padding-bottom:4px; margin-bottom:10px; }
+.read-progress { position:fixed; top:0; left:0; height:3px; width:0; background:var(--accent); z-index:70; }
+.review-link { border:1px solid var(--line); border-radius:10px; padding:6px 12px; background:var(--card);
+  color:var(--accent); text-decoration:none; font-size:0.9em; }
+.review-link:hover { border-color:var(--accent); }
+.review ul { margin:6px 0; font-size:0.9em; }
+.review button { padding:4px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card);
+  color:var(--ink); cursor:pointer; }
+.review button:hover { border-color:var(--accent); }
+body.focus-hide section.sec.dim.offroute-shown { display:block !important; }
+.focus-toggle { display:block; margin:6px 0 0; font-size:0.88rem; color:var(--ink-soft); }
+.focus-row { margin:4px 0 12px; font-size:0.86rem; color:var(--ink-soft); }
+.router-start { display:inline-block; margin-top:8px; color:var(--accent); font-weight:600; }
+.offroute-btn { margin-left:8px; font-size:0.8em; padding:2px 8px; border:1px solid var(--line);
+  border-radius:8px; background:var(--card); color:var(--accent); cursor:pointer; }
+body.focus-hide .sidebar li.ch.dim:not(.current) { display:none; }
+
+body.focus-hide .node.dim { display:none; }
+body.focus-hide article.chapter section.sec.dim { display:none; }
+body.show-offroute article.chapter section.sec.dim { display:block; }
+@media print { .offroute-btn, .focus-toggle, .focus-row, .router-start,
+  .route-banner { display:none !important; }
+  body.focus-hide article.chapter section.sec.dim { display:block !important; } }
+@media (max-width: 640px) {
+  .route-cards { grid-template-columns:1fr; }
+  .topbar { flex-wrap:wrap; row-gap:6px; }
+  .content { padding-left:14px; padding-right:14px; }
+  .prevnext { flex-direction:column; gap:8px; }
+  .wiz-group { align-items:flex-start; flex-direction:column; }
+  .wiz-label { min-width:0; }
+}
+.schedule { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:14px 16px; margin:18px 0; }
+.course-tabs { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.course-tab { border:1px solid var(--line); background:var(--bg); border-radius:999px; padding:3px 12px;
+  font-size:0.84rem; cursor:pointer; color:var(--ink-soft); }
+.course-tab.active { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); font-weight:600; }
+.course-body p { font-size:0.88rem; }
+.sched-sub { font-weight:700; font-size:0.9rem; margin:10px 0 2px; }
+.schedule ul { margin-left:1.2em; font-size:0.88rem; }
+.rings { display:flex; flex-wrap:wrap; gap:22px; align-items:center; margin:18px 0; }
+.ring { position:relative; width:86px; height:86px; flex-shrink:0; }
+.ring svg { transform:rotate(-90deg); width:86px; height:86px; }
+.ring-bg { fill:none; stroke:var(--line); stroke-width:3.4; }
+.ring-fg { fill:none; stroke:var(--accent); stroke-width:3.4; stroke-linecap:round; stroke-dasharray:0 99.9; }
+.ring-txt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; font-size:0.72rem; color:var(--ink-soft); }
+.ring-txt b { font-size:0.82rem; color:var(--ink); }
+.ring-note { font-size:0.78rem; color:var(--ink-soft); }
+.search-area { margin:18px 0; }
+.search-area input { width:100%; padding:8px 12px; border:1px solid var(--line); border-radius:10px;
+  background:var(--card); color:var(--ink); font-size:0.9rem; }
+.search-results { border:1px solid var(--line); border-radius:10px; background:var(--card);
+  margin-top:6px; padding:8px 12px; }
+.sgroup { margin:6px 0; }
+.stitle { font-weight:600; display:block; font-size:0.88rem; }
+.shit { display:block; font-size:0.82rem; color:var(--ink-soft); padding-left:12px; }
+.snone { color:var(--ink-soft); font-size:0.85rem; }
+
+/* ===== 打印 ===== */
+@media print {
+  .topbar, .sidebar, .prevnext, .skip-link, .back-top,
+  .wizard, .route, .schedule, .rings, .search-area, .read-row, .migration,
+  .progress-io, .resume, .exit-line, .selftest-note, .hub-nav, .review,
+  .read-progress { display:none !important; }
+  .layout { display:block; padding-top:0; }
+  .main { padding:0; }
+  .content { max-width:none; }
+  body { font-size:11pt; line-height:1.65; }
+  a, .content a { color:inherit; text-decoration:none; }
+  details { break-inside:avoid; }
+  details > summary { display:none; }
+  .print-page .chapter { break-before:page; }
+  .print-page .chapter:first-of-type { break-before:auto; }
+}
+@media (max-width: 960px) {
+  .sidebar { position:fixed; left:0; top:46px; bottom:0; transform:translateX(-100%);
+    transition:transform .25s ease; box-shadow:0 0 24px rgba(0,0,0,.18); }
+  body.nav-open .sidebar { transform:none; }
+  .main { padding:20px 18px 50px; }
+}
+.back-top { position:fixed; right:16px; bottom:18px; z-index:70; border:1px solid var(--line);
+  background:var(--card); color:var(--ink-soft); border-radius:999px; padding:6px 12px; cursor:pointer; }
+.back-top:hover { color:var(--accent); border-color:var(--accent); }
+/* ===== 配图（series/figures，单一来源配图管线）===== */
+figure.book-fig { margin: 1.35em auto; text-align: center; }
+figure.book-fig img { max-width: 100%; height: auto; border-radius: 6px; }
+figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em; line-height: 1.6; }
+@media print { figure.book-fig img { max-width: 92%; } }
+</style>
+</head>
+<body class="aux-page">
+<a class="skip-link" href="#main">跳到正文</a>
+<div class="read-progress" id="readProgress" aria-hidden="true"></div>
+<header class="topbar">
+  <div class="brand"><a href="index.html">AI 系列读物</a></div>
+  <button id="navToggle" aria-label="切换目录" aria-expanded="false">☰ 目录</button>
+  <div class="spacer"></div>
+  <button id="fsDown" aria-label="减小字号">A−</button>
+  <button id="fsUp" aria-label="增大字号">A+</button>
+  <button id="themeToggle" aria-label="切换深浅色">◐</button>
+  <button id="printBtn" aria-label="打印本页">打印</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="search-box"><input type="search" id="searchInput" placeholder="筛选章节…" autocomplete="off"></div>
+    <div class="path-line" id="pathLine"></div>
+    <button type="button" class="depth-toggle" id="depthToggle">深度：（点按切换）</button>
+
+  </aside>
+  <main class="main" id="main">
+    <div class="content">
+<div class="chapter-head"><h1>应用与 Agent·快线</h1><p class="doc-meta">时间紧（集中两三周或业余四到六周），要把 Agent 用起来的人｜读 ≈3.6h ＋ 练 ≈2h ＋ 项目 ≈0h｜全职 2–3 周或业余 4–6 周；六站止步第 3 站，4–6 站回补｜预计：每周 5h≈2 周｜每周 10h≈1 周｜每周 15h≈1 周</p><p class="doc-meta"><a href="routes.html#route-agent-fast">← 回路线卡</a> · <a href="index.html">目录</a></p></div>
+<h2>读全章（10）</h2><p>§0.1、§0.2、§0.3、§1、§2、§3、§4、§15、§16、§17</p>
+<h2>只读所列节（10）</h2><p>§5（两种&quot;联&quot;——动态加…、Q、K、V、组装成 Block、KV Cache 原…）；§6（next-token、压缩即理解、Scaling 数字…）；§7（从续写到听话、可验证奖励 RLVR、什么时候用哪种、约束登场、脊柱、检索增强生成）；§8（大矩阵可以瘦身、LoRA）；§9（自回归循环、采样、KV 显存账、服务层三标配＋约束解…）；§10（两条奇怪的曲线、两速度分解、边界）；§14（可验证性 razor、六类边界）；§18（成本三笔账、自建还是…）；§19（甲部、乙部）；§21（三件事）</p>
+<p class="doc-meta">其余 10 页不读（自由读中仍可翻开）。</p>
+<h2>补课卡</h2><p>§9-s03 KV 账→已含（本路线读）；§16-s06 RAG 四问→已含（本路线读）；ch10-s04 两速度分解（慢针/快针）→已含（本路线读）；§17-s06 λ／影子价格→已含（本路线读）；ch15 最小结论→规律部五条只作名词索引；§12 缩放细节可后补</p>
+<h2>豁免</h2><p>§11–§13、§20 不读；项目一/二/四不做（留给对应完整线）；六站止步第 3 站；ch19-s04 走查可回补（用甲部工具，在完整线里做）</p>
+<h2>读完能（出口）</h2><ul><li>搭得出最小 Agent（六站前 3 站）并写下三条断言</li><li>说得出双轴表两轴与最小权限缓解</li><li>估得出一次任务的成本乘数</li><li>判得出什么时候不需要 Agent</li></ul>
+<h2>自证题</h2><ul><li>六站前 3 站跑通＋三条断言</li><li>写一条反注入缓解（半句自含）</li><li>说出「每步都问更危险」的机制与疏的设计</li><li>说出 razor 的一半：验证便宜为什么进展快</li></ul>
+<p class="doc-meta">六站与结业项目按路线卡与正文；勾选进度在阅读版里（本页为打印版）。</p>
+      <footer class="footer">v0.3.0 · 构建 2026-10-20 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
+    </div>
+  </main>
+</div>
+<button class="back-top" id="backTop" title="回到顶部">↑</button>
+
+<script>
+(function () {
+  var FS_KEY = 'ai-primer-fs', THEME_KEY = 'ai-primer-theme';
+  function setFS(px) { document.documentElement.style.setProperty('--fs', px + 'px');
+    try { localStorage.setItem(FS_KEY, px + 'px'); } catch (e) {} }
+  try { var cur = parseInt(localStorage.getItem(FS_KEY) || '17', 10); } catch (e) { var cur = 17; }
+  document.getElementById('fsUp').addEventListener('click', function () { cur = Math.min(21, cur + 1); setFS(cur); });
+  document.getElementById('fsDown').addEventListener('click', function () { cur = Math.max(14, cur - 1); setFS(cur); });
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  });
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+  document.getElementById('navToggle').addEventListener('click', function () {
+    document.body.classList.toggle('nav-open');
+    this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var t2 = e.target;
+    if (t2 && (t2.tagName === 'INPUT' || t2.tagName === 'TEXTAREA' ||
+               t2.tagName === 'SELECT' || t2.isContentEditable)) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      var a3 = document.querySelector(e.key === 'ArrowRight' ? '.prevnext a.pv-next'
+                                                             : '.prevnext a.pv-prev');
+      if (a3 && a3.href && a3.style.display !== 'none') { location.href = a3.href; }
+    } else if (e.key === '/') {
+      var s2 = document.getElementById('hubSearch') || document.getElementById('termFilter') || document.getElementById('searchInput');
+      if (s2) { e.preventDefault(); s2.focus(); }
+    } else if (e.key === 't' || e.key === 'T') {
+      var b2 = document.getElementById('themeToggle'); if (b2) b2.click();
+    } else if (e.key === 'd' || e.key === 'D') {
+      var d2 = document.getElementById('depthToggle'); if (d2) d2.click();
+    } else if (e.key === 'Escape') {
+      document.body.classList.remove('nav-open');
+      var n2 = document.getElementById('navToggle'); if (n2) n2.setAttribute('aria-expanded', 'false');
+    }
+  });
+  var backTop = document.getElementById('backTop');
+  backTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  window.addEventListener('scroll', function () {
+    backTop.style.display = window.scrollY > 600 ? 'block' : 'none';
+  });
+  backTop.style.display = 'none';
+  /* 打印前自动展开折叠块，打印后还原（print.html 构建期已全开，此逻辑对其为空操作） */
+  var openedByPrint = [];
+  window.addEventListener('beforeprint', function () {
+    openedByPrint = [];
+    document.querySelectorAll('details:not([open])').forEach(function (d) {
+      openedByPrint.push(d);
+      d.open = true;
+    });
+  });
+  window.addEventListener('afterprint', function () {
+    openedByPrint.forEach(function (d) { d.open = false; });
+    openedByPrint = [];
+  });
+  /* 目录筛选 */
+  var box = document.getElementById('searchInput');
+  if (box) {
+    box.addEventListener('input', function () {
+      var q = box.value.trim().toLowerCase();
+      document.querySelectorAll('.sidebar li').forEach(function (li) {
+        var hit = !q || li.textContent.toLowerCase().indexOf(q) >= 0;
+        li.style.display = hit ? 'block' : 'none';
+      });
+    });
+  }
+  /* 侧栏滚动高亮当前节（章页内） */
+  var links = document.querySelectorAll('.sidebar ul.sub a');
+  if (links.length && 'IntersectionObserver' in window) {
+    var map = {};
+    links.forEach(function (a) {
+      var el = document.getElementById(a.getAttribute('href').slice(1));
+      if (el) map[el.id] = a;
+    });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove('active'); });
+          var a = map[en.target.id];
+          if (a) a.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-60px 0px -70% 0px' });
+    Object.keys(map).forEach(function (id) { obs.observe(document.getElementById(id)); });
+  }
+})();
+</script>
+<script>
+/* ===== 路线层运行时：routes.json 单一来源；默认＝自由读；容量 localStorage ===== */
+(function () {
+  var SD = null;
+  try { SD = JSON.parse(document.getElementById('series-data').textContent); } catch (e) { SD = null; }
+  if (!SD) return;
+  var ROUTE_KEY = 'series-route-v1', DEPTH_KEY = 'series-depth-v1', PROG_KEY = 'series-progress-v1';
+  /* 存储键格式表（测试种子/导出导入必须按此格式；改动须同步 route_js_check/browser_check）：
+       series-route-v1      裸串   route id（如 agent-fast）
+       series-depth-v1      裸串   theory | practice
+       series-focus-v1      JSON 串 "0" | "1"
+       series-progress-v1   JSON 数组（slug）
+       series-exit-v1       JSON 对象
+       series-selftest-v1   JSON 对象
+       series-projects-v1   JSON 数组
+       series-last-v1       JSON 对象 {slug,anchor,at}
+       series-recent-v1     JSON 数组 */
+  function branchReason() {
+    var names = SD.routes.filter(function (r) {
+      return ['t1', 't2', 't3', 't4'].some(function (s) {
+        return r.view.disp[s] && r.view.disp[s] !== 'dim';
+      });
+    }).map(function (r) { return String(r.title).split('（')[0]; });
+    return '生成方向内容，见支线 T1–T4' + (names.length ? '（' + names.join('、') + '）' : '');
+  }
+  var BRANCH_REASON = branchReason();
+  var FREE_REASON = '不在当前路线（自由读中仍可翻开）';
+  var ROUTER_MAP = {
+    'undecided|halfday': 'taste', 'undecided|fast': 'agent-full', 'undecided|slow': 'agent-full', 'undecided|endless': 'deep',
+    'agent|halfday': 'taste', 'agent|fast': 'agent-fast', 'agent|slow': 'agent-full', 'agent|endless': 'deep',
+    'train|halfday': 'taste', 'train|fast': 'train-fast', 'train|slow': 'train-full', 'train|endless': 'research-full',
+    'gen|halfday': 'taste', 'gen|fast': 'gen-fast', 'gen|slow': 'gen-full', 'gen|endless': 'deep',
+    'research|halfday': 'taste', 'research|fast': 'research-full', 'research|slow': 'research-full', 'research|endless': 'deep'
+  };
+
+  function readJSON(key, fallback) {
+    try {
+      var v = JSON.parse(localStorage.getItem(key) || 'null');
+      return (v === null ? fallback : v);
+    } catch (e) { return fallback; }
+  }
+  function writeJSON(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+  function tShort(title) {
+    var s = String(title).split('——')[0];
+    return s.replace(/^(?:§[\d.]+|T\d|支线导言|支线附录)[:：]?\s*/, '');
+  }
+
+  function getRouteId() { try { return localStorage.getItem(ROUTE_KEY) || 'free'; } catch (e) { return 'free'; } }
+  function setRouteId(id) { try { localStorage.setItem(ROUTE_KEY, id); } catch (e) {} }
+  function getDepthPref() { try { return localStorage.getItem(DEPTH_KEY) || ''; } catch (e) { return ''; } }
+  function setDepthPref(d) { try { localStorage.setItem(DEPTH_KEY, d); } catch (e) {} }
+  function getProgress() { var a = readJSON(PROG_KEY, []); return Array.isArray(a) ? a : []; }
+  function setProgress(a) { writeJSON(PROG_KEY, a); }
+  function findRoute(id) { for (var i = 0; i < SD.routes.length; i++) if (SD.routes[i].id === id) return SD.routes[i]; return null; }
+  function bySlug(slug) { for (var i = 0; i < SD.chapters.length; i++) if (SD.chapters[i].slug === slug) return SD.chapters[i]; return null; }
+  function freeDisp() { var d = {}; SD.chapters.forEach(function (c) { d[c.slug] = 'read'; }); return d; }
+
+  function viewOf(id) {
+    if (id === 'free') return { disp: freeDisp(), dimSec: {}, counts: { main: 24, branch: 6 },
+                                open: false, cards: {}, next: {}, pos: {}, total: 0 };
+    var r = findRoute(id);
+    if (!r) return null;
+    return { disp: r.view.disp, dimSec: r.view.dim_sections, counts: r.view.counts,
+             open: !!r.view.open, cards: r.view.cards || {}, next: r.view.next || {},
+             pos: r.view.pos || {}, total: r.view.total || 0 };
+  }
+  function nodeMins(slug, d) {
+    var c = bySlug(slug); if (!c) return c;
+    if (d && d.focus) {
+      var sum = 0; d.focus.forEach(function (a) { sum += (c.sec_mins || {})[a] || 1; });
+      return sum + ' 分钟（全章 ' + c.mins + '）';
+    }
+    return c.mins + ' 分钟';
+  }
+  function applyDepth(open) {
+    var list = document.querySelectorAll('article.chapter details');
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i];
+      if (d.closest('section.sec.dim')) { if (d.open) d.open = false; continue; }
+      d.open = open;
+    }
+  }
+  function setRing(ringId, frac, label) {
+    var fg = document.getElementById(ringId + 'Fg'), n = document.getElementById(ringId + 'N');
+    if (!fg) return;
+    var C = 2 * Math.PI * 15.9;
+    fg.setAttribute('stroke-dasharray', (frac * C).toFixed(1) + ' ' + C.toFixed(1));
+    if (n) n.textContent = label;
+  }
+  function updateRings(view) {
+    if (!document.getElementById('ringMainFg') || !view) return;
+    var prog = getProgress(), mainR = 0, brR = 0;
+    SD.chapters.forEach(function (c) {
+      var d = view.disp[c.slug];
+      var active = (d === 'read') || (d && d.focus);
+      if (!active || prog.indexOf(c.slug) < 0) return;
+      if (c.part === 'branch') brR++; else mainR++;
+    });
+    var mn = view.counts.main || 24, br = view.counts.branch || 0;
+    setRing('ringMain', mainR / mn, mainR + '/' + mn);
+    var elb = document.getElementById('ringBranch');
+    if (elb) {
+      if (!br) elb.style.display = 'none';
+      else { elb.style.display = ''; setRing('ringBranch', brR / br, brR + '/' + br); }
+    }
+  }
+  function updatePathLine(id) {
+    var el = document.getElementById('pathLine');
+    if (!el) return;
+    var r = id === 'free' ? null : findRoute(id);
+    el.textContent = r ? r.title : '自由读';
+  }
+  function refreshDT(open) {
+    var dt = document.getElementById('depthToggle');
+    if (dt) dt.textContent = '深浅：' + (open ? '理论优先（折叠展开）' : '实践优先（折叠收起）') + '（点按切换）';
+  }
+
+  function applyRoute(id) {
+    var view = viewOf(id);
+    if (!view) { id = 'free'; view = viewOf('free'); setRouteId('free'); }
+    var route = id === 'free' ? null : findRoute(id);
+    document.body.classList.remove('show-offroute');
+    document.querySelectorAll('.sidebar li.ch').forEach(function (li) {
+      var slug = li.getAttribute('data-slug');
+      var d = view.disp[slug];
+      li.classList.remove('dim', 'focus');
+      var a = li.querySelector('a');
+      if (a) a.removeAttribute('title');
+      if (d === 'dim') { li.classList.add('dim'); if (a) a.title = (bySlug(slug).part === 'branch') ? BRANCH_REASON : FREE_REASON; }
+      else if (d && d.focus) { li.classList.add('focus'); if (a) a.title = '只读所列节'; }
+    });
+    document.querySelectorAll('article.chapter section.sec').forEach(function (sec) {
+      var an = sec.getAttribute('data-anchor');
+      if (Object.prototype.hasOwnProperty.call(view.dimSec, an)) {
+        var info = view.dimSec[an];
+        sec.classList.add('dim');
+        sec.setAttribute('data-why', info.reason || '');
+        sec.setAttribute('data-kind', info.kind || 'focus');
+      } else {
+        sec.classList.remove('dim');
+        sec.removeAttribute('data-why');
+        sec.removeAttribute('data-kind');
+      }
+    });
+    document.querySelectorAll('.node[data-slug]').forEach(function (nd) {
+      var slug = nd.getAttribute('data-slug');
+      var d = view.disp[slug];
+      nd.classList.remove('dim', 'focus');
+      var old = nd.querySelector('.node-why');
+      if (old) old.remove();
+      var mins = nd.querySelector('.node-mins');
+      if (mins) mins.textContent = nodeMins(slug, d);
+      if (d === 'dim' || (d && d.focus)) {
+        nd.classList.add(d === 'dim' ? 'dim' : 'focus');
+        var sp = document.createElement('span');
+        sp.className = 'node-why';
+        sp.textContent = d === 'dim' ? ((bySlug(slug).part === 'branch') ? BRANCH_REASON : FREE_REASON) : '只读所列节';
+        nd.appendChild(sp);
+      }
+    });
+    /* 补课卡：本路线未读依赖的即时旁注 */
+    document.querySelectorAll('article.chapter section.sec').forEach(function (sec) {
+      var an = sec.getAttribute('data-anchor');
+      var card = sec.querySelector('.catchup-card');
+      var txt = (view.cards && view.cards[an]) || null;
+      if (txt) {
+        if (!card) {
+          card = document.createElement('div');
+          card.className = 'catchup-card';
+          sec.insertBefore(card, sec.firstChild);
+        }
+        card.textContent = '本路线补课：' + txt;
+      } else if (card) {
+        card.remove();
+      }
+    });
+    var b = document.getElementById('routeBanner');
+    if (b) {
+      var slug = b.getAttribute('data-slug');
+      var d = view.disp[slug];
+      if (route && d === 'dim') { b.hidden = false; b.textContent = '本章不在「' + route.title + '」路线上；仍可自由阅读，或回目录换路线。'; }
+      else if (route && d && d.focus) { b.hidden = false; b.textContent = '「' + route.title + '」路线：本章只读所列节，其余节时间宽裕可回补。'; }
+      else b.hidden = true;
+      if (route) {
+        var dimCount = 0;
+        document.querySelectorAll('article.chapter section.sec').forEach(function (sec) {
+          var an = sec.getAttribute('data-anchor');
+          if (Object.prototype.hasOwnProperty.call(view.dimSec, an)) dimCount++;
+        });
+        if (dimCount && focusPref() !== '0') {
+          var ob = document.createElement('button');
+          ob.type = 'button'; ob.className = 'offroute-btn';
+          var label = '显示本章 ' + dimCount + ' 个不在路线上的节';
+          ob.textContent = label;
+          ob.addEventListener('click', function () {
+            var on = document.body.classList.toggle('show-offroute');
+            ob.textContent = on ? '收起不在路线上的节' : label;
+          });
+          b.appendChild(ob);
+        }
+      }
+    }
+    /* 路线下一站 */
+    var rn = document.getElementById('routeNext');
+    if (rn) {
+      var cur = rn.getAttribute('data-slug');
+      var nx = (route && view.next) ? view.next[cur] : null;
+      if (nx) {
+        var nc = bySlug(nx);
+        rn.href = nx + '.html';
+        rn.textContent = '路线下一站：' + (nc ? nc.label + ' ' + tShort(nc.title) : nx);
+        rn.hidden = false;
+      } else if (route && view.pos && view.pos[cur]) {
+        rn.href = 'routes.html#route-' + route.id;
+        rn.textContent = '本路线到此收尾：回路线卡做出口自证 →';
+        rn.hidden = false;
+      } else {
+        rn.hidden = true;
+        rn.removeAttribute('href');
+      }
+    }
+    var cm = document.getElementById('chapterMeta');
+    if (cm) {
+      if (!cm.getAttribute('data-base')) cm.setAttribute('data-base', cm.textContent);
+      var base = cm.getAttribute('data-base');
+      var cs = cm.getAttribute('data-slug');
+      if (route && view.pos && view.pos[cs]) {
+        cm.textContent = base + ' · 本路线第 ' + view.pos[cs] + '/' + view.total + ' 站';
+      } else {
+        cm.textContent = base;
+      }
+    }
+    updatePathLine(id);
+    refreshExitLine(id);
+    refreshProgSummary();
+    refreshPV(route, view);
+    refreshFocus();
+    refreshOffrouteNote();
+    var dp = getDepthPref();
+    var open = dp ? (dp === 'theory') : view.open;
+    applyDepth(open); refreshDT(open);
+    updateRings(view);
+    document.querySelectorAll('.route-card').forEach(function (c) {
+      var on = c.getAttribute('data-route') === id;
+      c.classList.toggle('active', on);
+      if (on) c.setAttribute('aria-current', 'true'); else c.removeAttribute('aria-current');
+    });
+  }
+
+  /* 两问路由：即选即套 */
+  var rg = document.getElementById('routerGoal'), rtm = document.getElementById('routerTime'), rr = document.getElementById('routerResult');
+  function recommend() {
+    if (!rg || !rtm) return 'free';
+    var rid = ROUTER_MAP[rg.value + '|' + rtm.value] || 'free';
+    var r = rid === 'free' ? null : findRoute(rid);
+    if (rr) rr.textContent = r ? ('推荐：' + r.title + '——' + (r.note || '')) : '这两个答案下没有现成路线，先自由读试试。';
+    var rs = document.getElementById('routerStart');
+    if (rs) {
+      if (r) { rs.href = firstStation(r.id) || '#'; rs.textContent = '开始这条路线 →'; rs.hidden = false; }
+      else { rs.hidden = true; }
+    }
+    return rid;
+  }
+  if (rg && rtm) {
+    var auto = function () {
+      var rid = recommend();
+      if (rid !== getRouteId() && rid !== 'free') seedDepthFor(rid);
+      setRouteId(rid); applyRoute(rid);
+    };
+    rg.addEventListener('change', auto); rtm.addEventListener('change', auto);
+    recommend();
+  }
+  /* 路线卡 */
+  document.querySelectorAll('.route-card').forEach(function (c) {
+    c.addEventListener('click', function (e) {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      var id = c.getAttribute('data-route');
+      if (id !== 'free') seedDepthFor(id);
+      setRouteId(id); applyRoute(id);
+      if (id !== 'free') {
+        var r = findRoute(id);
+        if (rr && r) rr.textContent = '已切换：' + r.title;
+        var dest = firstStation(id);
+        if (dest) location.href = dest;
+      }
+    });
+  });
+  /* 出口自证：勾选存本机；Hub 显示当前路线进度 */
+  var EXIT_KEY = 'series-exit-v1';
+  function getExit() {
+    var o = readJSON(EXIT_KEY, {});
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  }
+  function setExit(o) { writeJSON(EXIT_KEY, o); }
+  function refreshExitLine(id) {
+    var el = document.getElementById('exitLine');
+    if (!el) return;
+    id = id || getRouteId();
+    var r = id === 'free' ? null : findRoute(id);
+    if (!r) { el.hidden = true; el.textContent = ''; return; }
+    var arr = (getExit()[r.id] || []);
+    el.hidden = false;
+    el.textContent = '本路线自证：' + arr.length + '/' + r.selfcheck.length + '（在「路线与论文清单」页勾选）';
+  }
+  document.querySelectorAll('.exit-check input').forEach(function (inp) {
+    var rid = inp.getAttribute('data-route'), idx = inp.getAttribute('data-idx');
+    var store = getExit();
+    inp.checked = !!(store[rid] && store[rid].indexOf(idx) >= 0);
+    inp.addEventListener('change', function () {
+      var s = getExit(), arr = s[rid] || [], i = arr.indexOf(idx);
+      if (inp.checked && i < 0) arr.push(idx);
+      if (!inp.checked && i >= 0) arr.splice(i, 1);
+      s[rid] = arr; setExit(s); refreshExitLine();
+    });
+  });
+
+  /* 深浅开关：只管折叠块开合 */
+  var dt = document.getElementById('depthToggle');
+  if (dt) {
+    dt.addEventListener('click', function () {
+      var open = dt.textContent.indexOf('理论') < 0;
+      setDepthPref(open ? 'theory' : 'practice');
+      applyDepth(open); refreshDT(open);
+    });
+  }
+  /* 已读勾选 */
+  var rk = document.getElementById('readToggle');
+  if (rk) {
+    var slug = rk.getAttribute('data-slug');
+    var refreshRT = function () {
+      var on = getProgress().indexOf(slug) >= 0;
+      rk.textContent = on ? '已读 ✓（点按取消）' : '标记已读';
+      rk.classList.toggle('on', on);
+    };
+    rk.addEventListener('click', function () {
+      var a = getProgress(), i = a.indexOf(slug);
+      if (i >= 0) a.splice(i, 1); else a.push(slug);
+      setProgress(a); refreshRT(); updateRings(viewOf(getRouteId())); refreshReview();
+    });
+    refreshRT();
+  }
+  /* 章页阅读进度条 */
+  (function () {
+    var bar = document.getElementById('readProgress');
+    var art = document.querySelector('article.chapter');
+    if (!bar || !art) return;
+    var raf = false;
+    function upd() {
+      raf = false;
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var y = window.scrollY || doc.scrollTop || 0;
+      var p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+      bar.style.width = (p * 100).toFixed(1) + '%';
+    }
+    window.addEventListener('scroll', function () {
+      if (raf) return;
+      raf = true;
+      if (window.requestAnimationFrame) window.requestAnimationFrame(upd); else upd();
+    }, { passive: true });
+    upd();
+  })();
+  /* 章页：抽查链接（隐藏节临时展开后定位） */
+  var rl = document.getElementById('reviewLink');
+  if (rl) {
+    rl.addEventListener('click', function (e) {
+      var an = rl.getAttribute('data-anchor');
+      if (!an) return;
+      var sec = document.querySelector('article.chapter section[data-anchor="' + an + '"]');
+      if (sec && sec.classList.contains('dim')) sec.classList.add('offroute-shown');
+      var el2 = document.getElementById(an);
+      if (el2 && el2.scrollIntoView) { e.preventDefault(); el2.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  }
+  /* 检索：章与节标题（数据即内嵌块） */
+  var si = document.getElementById('hubSearch');
+  if (si) {
+    var res = document.getElementById('searchResults');
+    si.addEventListener('input', function () {
+      var q = si.value.trim().toLowerCase();
+      while (res.firstChild) res.removeChild(res.firstChild);
+      if (!q) { res.style.display = 'none'; return; }
+      var hitN = 0;
+      SD.chapters.forEach(function (c) {
+        var hits = [];
+        if ((c.label + ' ' + c.title).toLowerCase().indexOf(q) >= 0) hits.push({ anchor: c.slug, text: '章首' });
+        (c.sections || []).forEach(function (s) {
+          if (s.text.toLowerCase().indexOf(q) >= 0) hits.push({ anchor: s.anchor, text: s.text });
+        });
+        if (!hits.length) return;
+        hitN += hits.length;
+        var g = document.createElement('div'); g.className = 'sgroup';
+        var t = document.createElement('a'); t.className = 'stitle';
+        t.href = c.slug + '.html'; t.textContent = c.label + ' ' + c.title;
+        g.appendChild(t);
+        hits.slice(0, 5).forEach(function (h) {
+          var a = document.createElement('a'); a.className = 'shit';
+          a.href = c.slug + '.html#' + h.anchor; a.textContent = h.text;
+          g.appendChild(a);
+        });
+        res.appendChild(g);
+      });
+      if (!hitN) {
+        var d = document.createElement('div'); d.className = 'snone';
+        d.appendChild(document.createTextNode('标题里没找到——'));
+        var ta = document.createElement('a');
+        ta.href = 'terms.html?q=' + encodeURIComponent(q);
+        ta.textContent = '去术语总表查「' + q + '」';
+        d.appendChild(ta);
+        res.appendChild(d);
+      }
+      res.style.display = '';
+    });
+  }
+
+  /* 继续阅读 / 最近读过（H2-7） */
+  var LAST_KEY = 'series-last-v1', RECENT_KEY = 'series-recent-v1';
+  function secTitle(anchor) {
+    if (!anchor) return '';
+    for (var i = 0; i < SD.chapters.length; i++) {
+      var ss = SD.chapters[i].sections || [];
+      for (var j = 0; j < ss.length; j++) if (ss[j].anchor === anchor) return ss[j].text;
+    }
+    return '';
+  }
+  function refreshResume() {
+    var block = document.getElementById('resumeBlock');
+    if (!block) return;
+    var last = readJSON(LAST_KEY, null), rec = readJSON(RECENT_KEY, []);
+    if (!Array.isArray(rec)) rec = [];
+    if (!last && !rec.length) { block.hidden = true; return; }
+    block.hidden = false;
+    var a = document.getElementById('resumeLink');
+    if (a && last && last.slug) {
+      var c = bySlug(last.slug);
+      a.href = last.slug + '.html' + (last.anchor ? ('#' + last.anchor) : '');
+      var tt = secTitle(last.anchor);
+      a.textContent = '继续阅读：' + (c ? c.label + ' ' + tShort(c.title) : last.slug)
+                    + (tt ? '（从「' + String(tt).split('：')[0] + '」）' : '');
+      a.hidden = false;
+    } else if (a) { a.hidden = true; }
+    var ul = document.getElementById('recentList');
+    if (ul) {
+      while (ul.firstChild) ul.removeChild(ul.firstChild);
+      rec.slice(0, 3).forEach(function (s) {
+        var c = bySlug(s); if (!c) return;
+        var li = document.createElement('li'), l = document.createElement('a');
+        l.href = s + '.html'; l.textContent = c.label + ' ' + tShort(c.title);
+        li.appendChild(l); ul.appendChild(li);
+      });
+    }
+  }
+  /* 复习：已读章抽查（Hub 我的区） */
+  function reviewAnchorOf(slug) {
+    var c = bySlug(slug);
+    if (!c) return null;
+    var h2 = (c.sections || []).filter(function (s) { return s.level === 2; });
+    return h2.length ? h2[h2.length - 1].anchor : null;
+  }
+  function refreshReview() {
+    var block = document.getElementById('reviewBlock');
+    if (!block) return;
+    var pool = getProgress().filter(function (s) { return reviewAnchorOf(s); });
+    if (!pool.length) { block.hidden = true; return; }
+    block.hidden = false;
+    var copy = pool.slice(), picks = [];
+    while (picks.length < 3 && copy.length) {
+      var i = Math.floor(Math.random() * copy.length);
+      picks.push(copy.splice(i, 1)[0]);
+    }
+    var ul = document.getElementById('reviewList');
+    if (!ul) return;
+    while (ul.firstChild) ul.removeChild(ul.firstChild);
+    picks.forEach(function (s) {
+      var c = bySlug(s);
+      var li = document.createElement('li'), a2 = document.createElement('a');
+      a2.href = s + '.html#' + reviewAnchorOf(s);
+      a2.textContent = c.label + ' ' + tShort(c.title);
+      li.appendChild(a2); ul.appendChild(li);
+    });
+  }
+  var rvBtn = document.getElementById('reviewRefresh');
+  if (rvBtn) rvBtn.addEventListener('click', refreshReview);
+  refreshReview();
+  refreshResume();
+
+  /* 章页：记录最近读过与上次位置（节级锚） */
+  (function () {
+    var art = document.querySelector('article.chapter');
+    if (!art) return;
+    var ref = document.getElementById('routeBanner') || document.getElementById('readToggle');
+    var slug = ref ? ref.getAttribute('data-slug') : null;
+    if (!slug) return;
+    var rec = readJSON(RECENT_KEY, []);
+    if (!Array.isArray(rec)) rec = [];
+    rec = rec.filter(function (x) { return x !== slug; });
+    rec.unshift(slug);
+    writeJSON(RECENT_KEY, rec.slice(0, 5));
+    function saveLast() {
+      var anchor = null;
+      var secs = document.querySelectorAll('article.chapter section.sec');
+      for (var i = 0; i < secs.length; i++) {
+        var r = secs[i].getBoundingClientRect ? secs[i].getBoundingClientRect() : null;
+        if (r && r.top <= 140) anchor = secs[i].getAttribute('data-anchor');
+        else if (r) break;
+      }
+      writeJSON(LAST_KEY, { slug: slug, anchor: anchor, at: new Date().toISOString().slice(0, 10) });
+    }
+    var timer = null;
+    window.addEventListener('scroll', function () {
+      if (timer) return;
+      timer = setTimeout(function () { timer = null; saveLast(); }, 900);
+    }, { passive: true });
+    window.addEventListener('pagehide', saveLast);
+    saveLast();
+  })();
+
+  /* 代码块复制按钮（H2.5） */
+  document.querySelectorAll('article.chapter pre').forEach(function (pre) {
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'copy-btn'; btn.textContent = '复制';
+    btn.addEventListener('click', function () {
+      var codeEl = pre.querySelector('code');
+      var code = ((codeEl ? codeEl.innerText : pre.innerText) || '').replace(/\n复制$/, '');
+      var done = function () { btn.textContent = '已复制'; setTimeout(function () { btn.textContent = '复制'; }, 1200); };
+      var fb = function () {
+        var ta = document.createElement('textarea'); ta.value = code;
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(done, fb);
+      } else { fb(); }
+    });
+    pre.appendChild(btn);
+  });
+
+  /* 图点击放大（H2.5） */
+  document.querySelectorAll('figure.book-fig img').forEach(function (img) {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', function () {
+      var d = document.createElement('dialog'); d.className = 'fig-dialog';
+      var big = document.createElement('img'); big.src = img.src; big.alt = img.alt || '';
+      d.appendChild(big);
+      d.addEventListener('click', function () { if (d.close) d.close(); if (d.remove) d.remove(); });
+      document.body.appendChild(d);
+      if (d.showModal) d.showModal(); else window.open(img.src);
+    });
+  });
+
+  /* 路线聚焦与自动跳站（2026-10-15 读者反馈批） */
+  function focusPref() {
+    var v = readJSON('series-focus-v1', null);
+    return (v === null || v === '') ? '1' : String(v);
+  }
+  function refreshFocus() {
+    var active = getRouteId() !== 'free';
+    var hide = active && focusPref() !== '0';
+    document.body.classList.toggle('focus-hide', hide);
+    if (!hide) document.body.classList.remove('show-offroute');
+    var on = focusPref() !== '0';
+    ['focusHide', 'focusHideHub'].forEach(function (eid) {
+      var cb = document.getElementById(eid);
+      if (cb) cb.checked = on;
+    });
+    var row = document.getElementById('focusRow');
+    if (row) row.hidden = !active;
+  }
+  function refreshOffrouteNote() {
+    var note = document.getElementById('offrouteNote');
+    if (!note) return;
+    var id = getRouteId(), r = id === 'free' ? null : findRoute(id);
+    if (!r) { note.hidden = true; return; }
+    var v = r.view, n = 0;
+    SD.chapters.forEach(function (c) { if (v.disp[c.slug] === 'dim') n++; });
+    if (!n) { note.hidden = true; return; }
+    note.hidden = false;
+    note.textContent = focusPref() !== '0'
+      ? ('已隐藏 ' + n + ' 页不在路线上；取消「隐藏非路线内容」即显示。')
+      : (n + ' 页不在路线上（已降灰）。');
+  }
+  function refreshPV(route, view) {
+    var next = document.querySelector('.prevnext a.pv-next');
+    var prev = document.querySelector('.prevnext a.pv-prev');
+    if (!next && !prev) return;
+    [next, prev].forEach(function (el) {
+      if (el && !el.getAttribute('data-orig')) {
+        el.setAttribute('data-orig', el.getAttribute('href') || '');
+        el.setAttribute('data-orig-text', el.textContent || '');
+      }
+    });
+    function restore(el) {
+      if (!el) return;
+      var o = el.getAttribute('data-orig');
+      if (o) el.setAttribute('href', o);
+      var ot = el.getAttribute('data-orig-text');
+      if (ot) el.textContent = ot;
+      el.style.display = '';
+    }
+    function labelOf(slug) {
+      var c = bySlug(slug);
+      return c ? c.label + ' ' + tShort(c.title) : slug;
+    }
+    var slug = null, ref = document.getElementById('routeBanner');
+    if (ref) slug = ref.getAttribute('data-slug');
+    var inRoute = route && slug && view.pos && view.pos[slug];
+    if (!inRoute) { restore(next); restore(prev); return; }
+    var order = Object.keys(view.pos).sort(function (a, b) { return view.pos[a] - view.pos[b]; });
+    var i = order.indexOf(slug);
+    var p = i > 0 ? order[i - 1] : null, n = i < order.length - 1 ? order[i + 1] : null;
+    if (next) {
+      if (n) { next.setAttribute('href', n + '.html'); next.textContent = labelOf(n) + ' →'; next.style.display = ''; }
+      else { next.style.display = 'none'; }
+    }
+    if (prev) {
+      if (p) { prev.setAttribute('href', p + '.html'); prev.textContent = '← ' + labelOf(p); prev.style.display = ''; }
+      else { prev.style.display = 'none'; }
+    }
+  }
+  function seedDepthFor(id) {
+    var r = findRoute(id);
+    if (!r) return;
+    setDepthPref(r.view.open ? 'theory' : 'practice');
+  }
+  function firstStation(id) {
+    var r = findRoute(id);
+    if (!r) return null;
+    var v = r.view;
+    var order = Object.keys(v.pos).sort(function (a, b) { return v.pos[a] - v.pos[b]; });
+    if (!order.length) return null;
+    var read = getProgress(), target = null;
+    for (var i = 0; i < order.length; i++) {
+      if (read.indexOf(order[i]) < 0) { target = order[i]; break; }
+    }
+    if (!target) target = order[0];
+    var d = v.disp[target];
+    var anchor = (d && d.focus && d.focus.length) ? ('#' + d.focus[0]) : '';
+    return target + '.html' + anchor;
+  }
+  ['focusHide', 'focusHideHub'].forEach(function (eid) {
+    var cb = document.getElementById(eid);
+    if (!cb) return;
+    cb.addEventListener('change', function () {
+      writeJSON('series-focus-v1', cb.checked ? '1' : '0');
+      refreshFocus(); refreshOffrouteNote();
+    });
+  });
+
+  /* 自测存档（H2-1） */
+  var ST_KEY = 'series-selftest-v1';
+  function getSt() { return readJSON(ST_KEY, null); }
+  function refreshSt() {
+    var s = getSt(), out = document.getElementById('stSaved');
+    if (out) out.textContent = s ? ('已保存：' + s.score + '/10（' + s.at + '）') : '';
+    var sel = document.getElementById('stScore');
+    if (sel && s) sel.value = String(s.score);
+  }
+  function refreshSelftestNote() {
+    var el = document.getElementById('selftestNote');
+    if (!el) return;
+    var s = getSt();
+    while (el.firstChild) el.removeChild(el.firstChild);
+    if (!s) {
+      el.appendChild(document.createTextNode('拿不准数学底子？'));
+      var a2 = document.createElement('a'); a2.href = 'selftest.html';
+      a2.textContent = '做一页数学自修自测'; el.appendChild(a2);
+      return;
+    }
+    var band = s.score >= 8 ? '按路线直接走'
+             : s.score >= 5 ? '到 §2–§4 时把手算放慢'
+             : '建议走快线，或先补 §2–§4 再走完整线';
+    el.textContent = '数学自测 ' + s.score + '/10：' + band + '。';
+  }
+  var stBtn = document.getElementById('stSave'), stSel = document.getElementById('stScore');
+  if (stBtn && stSel) {
+    stBtn.addEventListener('click', function () {
+      var v = stSel.value; if (v === '') return;
+      writeJSON(ST_KEY, { score: parseInt(v, 10), at: new Date().toISOString().slice(0, 10) });
+      refreshSt(); refreshSelftestNote();
+    });
+  }
+  refreshSt(); refreshSelftestNote();
+
+  /* 结业项目勾选（H2-3） */
+  var PROJ_KEY = 'series-projects-v1';
+  function getProj() { var a = readJSON(PROJ_KEY, []); return Array.isArray(a) ? a : []; }
+  function refreshProjLine() {
+    var el = document.getElementById('projLine'); if (!el) return;
+    var inputs = document.querySelectorAll('input[data-pid]');
+    if (!inputs.length) return;
+    el.hidden = false;
+    el.textContent = '结业项目：' + getProj().length + '/' + inputs.length + ' 完成';
+  }
+  document.querySelectorAll('input[data-pid]').forEach(function (inp) {
+    var pid = inp.getAttribute('data-pid');
+    inp.checked = getProj().indexOf(pid) >= 0;
+    inp.addEventListener('change', function () {
+      var arr = getProj(), i = arr.indexOf(pid);
+      if (inp.checked && i < 0) arr.push(pid);
+      if (!inp.checked && i >= 0) arr.splice(i, 1);
+      writeJSON(PROJ_KEY, arr);
+      refreshProjLine();
+    });
+  });
+  refreshProjLine();
+
+  /* 进度导出/导入（H2-5，textarea 主通道） */
+  var IO_KEYS = ['series-route-v1', 'series-depth-v1', 'series-progress-v1',
+                 'series-exit-v1', 'series-selftest-v1', 'series-projects-v1',
+                 'series-focus-v1', 'series-last-v1', 'series-recent-v1'];
+  function refreshProgSummary() {
+    var el = document.getElementById('progSummary'); if (!el) return;
+    var id = getRouteId(), r = id === 'free' ? null : findRoute(id);
+    var ex = getExit(), exN = 0;
+    for (var k in ex) if (Array.isArray(ex[k])) exN += ex[k].length;
+    el.textContent = '当前路线：' + (r ? r.title : '自由读') + '｜已读 ' + getProgress().length
+                   + ' 章｜自证 ' + exN + ' 项｜项目 ' + getProj().length + '/4';
+  }
+  var ioExport = document.getElementById('progExport'), ioImport = document.getElementById('progImport'),
+      ioText = document.getElementById('progText'), ioMsg = document.getElementById('progMsg');
+  if (ioExport && ioText) {
+    ioExport.addEventListener('click', function () {
+      var o = { v: 1 };
+      IO_KEYS.forEach(function (k) { var v = null; try { v = localStorage.getItem(k); } catch (e) {}
+                                     if (v !== null) o[k] = v; });
+      ioText.value = JSON.stringify(o, null, 1);
+      if (ioMsg) ioMsg.textContent = '已生成：复制这段保存即可。';
+    });
+  }
+  if (ioImport && ioText) {
+    ioImport.addEventListener('click', function () {
+      var o = null;
+      try { o = JSON.parse(ioText.value || ''); } catch (e) {}
+      if (!o || typeof o !== 'object') { if (ioMsg) ioMsg.textContent = '解析失败：请粘贴完整 JSON。'; return; }
+      var n = 0;
+      IO_KEYS.forEach(function (k) { if (typeof o[k] === 'string') {
+        try { localStorage.setItem(k, o[k]); n++; } catch (e) {} } });
+      if (ioMsg) ioMsg.textContent = '已导入 ' + n + ' 项，已在本页生效。';
+      refreshProgSummary(); refreshResume(); refreshSt(); refreshSelftestNote();
+      refreshProjLine(); applyRoute(getRouteId()); refreshReview();
+    });
+  }
+  refreshProgSummary();
+  refreshFocus();
+  refreshOffrouteNote();
+
+  window.addEventListener('storage', function () {
+    applyRoute(getRouteId());
+    refreshResume(); refreshSt(); refreshSelftestNote(); refreshProjLine(); refreshProgSummary(); refreshReview();
+  });
+  applyRoute(getRouteId());
+})();
+</script>
+</body>
+</html>

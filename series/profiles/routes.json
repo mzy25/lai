@@ -1,0 +1,1482 @@
+{
+ "schema": "series-routes/v1",
+ "_note": "路线库（2026-10-14 批 0 裁决）：取代三维组合网格；路线命名不含旧档位词「标准」。sequence 未列出的章一律 skip（自由读中仍可翻阅）。note＝两问路由推荐短语。",
+ "default_route": "free",
+ "markers": {
+  "▽": {
+   "label": "可后读",
+   "rule": "在你路线上；时间紧就缓，不影响后续"
+  },
+  "○": {
+   "label": "支线先补",
+   "rule": "只走主线可跳；读支线前要先补"
+  },
+  "◌": {
+   "label": "延伸选读",
+   "rule": "不在默认路线上；任何路线都可后读"
+  },
+  "◇": {
+   "label": "主线依赖",
+   "rule": "可跳；读主线相关章之前要补"
+  }
+ },
+ "rhythm": {
+  "courseA": {
+   "label": "节奏示例 A（项目 1–3 全做＋项目四按方向）",
+   "weeks": 24,
+   "note": "按每周约 10 小时排：第 1–6 周＝第〇部＋§1–§4＋巩固半周；第 7–23 周＝§5–§21 每周一章；第 24 周收尾。逐周表随发布批认定。"
+  },
+  "courseB": {
+   "label": "节奏示例 B（项目选做）",
+   "weeks": 18,
+   "note": "前 6 周同上；后 12 周约每周一章半，结业项目按方向选做。"
+  },
+  "milestones": [
+   {
+    "weeks": "第 2–3 周",
+    "text": "两个「跑起来」：§1 实验、§2 脚本",
+    "chapters": [
+     "ch01",
+     "ch02"
+    ]
+   },
+   {
+    "weeks": "第 4–6 周",
+    "text": "里程碑：梯度检查通过（含巩固半周）",
+    "chapters": [
+     "ch04"
+    ]
+   }
+  ],
+  "stations": {
+   "label": "六站拆批",
+   "note": "零 key、全程约 100 分钟；§16 带 1–5 站、§17 带第 6 站；快线可只做前 3 站",
+   "chapters": [
+    "ch16",
+    "ch17"
+   ]
+  },
+  "projects": [
+   {
+    "id": "p1",
+    "label": "MiniMind-V",
+    "chapter": "ch07"
+   },
+   {
+    "id": "p2",
+    "label": "QLoRA 微调 7B 对比秩 r",
+    "chapter": "ch08"
+   },
+   {
+    "id": "p3",
+    "label": "写最小 eval",
+    "chapter": "ch14"
+   },
+   {
+    "id": "p4",
+    "label": "MiniMind-O＋全双工论文精读（默认仅语音/具身方向）",
+    "chapter": "ch20"
+   }
+  ]
+ },
+ "routes": [
+  {
+   "id": "taste",
+   "order": 1,
+   "tag": "尝鲜",
+   "title": "尝鲜速览",
+   "audience": "只有半天，想先看清这套书值不值得读的人",
+   "goal": "用一次半天拿到全貌与边界感，并选出下一步路线",
+   "exit": [
+    "能复述训练回路（旋钮—山—下山）与四级火箭",
+    "能区分自回归与扩散两条生成路线",
+    "能把「做不到」分成定理锁死与还没做到两类",
+    "能说出自己下一步想走哪条线"
+   ],
+   "selfcheck": [
+    "§0.1/§0.2/§0.3 各三题",
+    "自找三个「做不到」的流行说法，各判定理/未做到"
+   ],
+   "hours": {
+    "read": 0.8,
+    "practice": 0,
+    "project": 0
+   },
+   "open_default": false,
+   "pace_note": "一次半天即可读完；不需要排课表",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "focus",
+     "sections": [
+      "ch14-s05",
+      "ch14-s06"
+     ]
+    }
+   ],
+   "catchups": [
+    {
+     "where": "ch14-s05/s06",
+     "need": "§7 KL 账、§6 三条根",
+     "fix": "已内联半句；数据墙四名目随 s05 补齐"
+    },
+    {
+     "where": "ch14-s06 数据墙",
+     "need": "§10 双下降",
+     "fix": "已内联（不可约损失一句）"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "selftest.html"
+   ],
+   "exempt": [
+    "零动手为设计（试读包）；三题自查在 §0 各章章末"
+   ],
+   "_fulfills": [
+    "主表 L159 半日档",
+    "§0.3 尝鲜定位"
+   ],
+   "cards": [
+    {
+     "anchor": "ch14-s05",
+     "text": "本节引用的 §7 KL 账与 §6 三条根，都已在本节句内给了半句解释；按旁注读即可。"
+    },
+    {
+     "anchor": "ch14-s06",
+     "text": "本节提到 §10 的双下降：只需记住「损失地板」这一句，细节留给以后。"
+    }
+   ],
+   "note": "一次半天拿全貌与边界感；方向定下后再换对应路线。"
+  },
+  {
+   "id": "agent-full",
+   "order": 2,
+   "tag": "完整线",
+   "title": "应用与 Agent·完整线（推荐）",
+   "audience": "做产品/工程，要把模型用成可靠 Agent 系统的人",
+   "goal": "获得模型全貌＋驾驭部重点，能搭、能守、能估、能判",
+   "exit": [
+    "搭得出六站 Agent 并写下三条断言",
+    "守得住护栏：双轴表、最小权限、间接注入缓解、验证门",
+    "估得出六站 Agent 的月成本（三笔账）",
+    "判得出什么时候不需要 Agent",
+    "说得清可验证性 razor，并举一类边界（如表达力上界）"
+   ],
+   "selfcheck": [
+    "六站全站跑通＋三条断言",
+    "写一条反注入缓解：落在哪一层、失败信号是什么、怎么复验",
+    "给前五站 Agent 估月成本（四档各一遍）",
+    "说出定理级四类边界各一例（表达力／泛化／验证／对齐）"
+   ],
+   "hours": {
+    "read": 6.6,
+    "practice": 2.5,
+    "project": 6
+   },
+   "open_default": false,
+   "pace_note": "按每周 5–10 小时约 2–4 个月；节奏示例见下",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "read"
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "read"
+    },
+    {
+     "ch": "ch06",
+     "mode": "read"
+    },
+    {
+     "ch": "ch07",
+     "mode": "read"
+    },
+    {
+     "ch": "ch08",
+     "mode": "read"
+    },
+    {
+     "ch": "ch09",
+     "mode": "read"
+    },
+    {
+     "ch": "ch10",
+     "mode": "read"
+    },
+    {
+     "ch": "ch11",
+     "mode": "read"
+    },
+    {
+     "ch": "ch12",
+     "mode": "read"
+    },
+    {
+     "ch": "ch13",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "read"
+    },
+    {
+     "ch": "ch15",
+     "mode": "read"
+    },
+    {
+     "ch": "ch16",
+     "mode": "read"
+    },
+    {
+     "ch": "ch17",
+     "mode": "read"
+    },
+    {
+     "ch": "ch18",
+     "mode": "read"
+    },
+    {
+     "ch": "ch19",
+     "mode": "read"
+    },
+    {
+     "ch": "ch20",
+     "mode": "read"
+    },
+    {
+     "ch": "ch21",
+     "mode": "read"
+    }
+   ],
+   "catchups": [],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "selftest.html",
+    "assets.html"
+   ],
+   "exempt": [
+    "支线六页（导言、配方、T1–T4）不读；§21-s04 回收地图含 T3/T4 门牌，作索引略过；论文精读按方向做项目四"
+   ],
+   "_fulfills": [
+    "主表 L161 应用与 Agent 线",
+    "主表 L167 成就锚点/六站/结业四件",
+    "B2 §19 修订裁决（Q4）"
+   ],
+   "cards": [
+    {
+     "anchor": "ch21-s04",
+     "text": "支线 T3/T4 未读：回收地图里的扩散链作索引略过。"
+    }
+   ],
+   "note": "默认线：24 章全走，驾驭部重点，含六站与结业项目。"
+  },
+  {
+   "id": "train-full",
+   "order": 3,
+   "tag": "完整线",
+   "title": "训练与调参·完整线",
+   "audience": "做预训练/微调/评测，要读懂训练动力学与配方的人",
+   "goal": "懂训练凭什么有效、怎么配、怎么评，并能动手完成微调与最小 eval",
+   "exit": [
+    "读懂损失曲线、配比（Chinchilla）与稳定性（EoS/临界步长）",
+    "完成一次 QLoRA 微调并对比秩",
+    "写得出最小 eval（五件）并说出 eval-driven",
+    "知道 μP 与幂律外推解决什么问题"
+   ],
+   "selfcheck": [
+    "项目二：微调对比秩，交出两档口径",
+    "项目三：最小 eval 五件＋换序评判实测",
+    "手算：拟合幂律外推四个点",
+    "说出失效两路径各一例"
+   ],
+   "hours": {
+    "read": 5.0,
+    "practice": 3,
+    "project": 6
+   },
+   "open_default": false,
+   "pace_note": "按每周 5–10 小时约 1.5–3 个月",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "read"
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "read"
+    },
+    {
+     "ch": "ch06",
+     "mode": "read"
+    },
+    {
+     "ch": "ch07",
+     "mode": "read"
+    },
+    {
+     "ch": "ch08",
+     "mode": "read"
+    },
+    {
+     "ch": "ch09",
+     "mode": "read"
+    },
+    {
+     "ch": "ch10",
+     "mode": "read"
+    },
+    {
+     "ch": "ch11",
+     "mode": "read"
+    },
+    {
+     "ch": "ch12",
+     "mode": "read"
+    },
+    {
+     "ch": "ch13",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "focus",
+     "sections": [
+      "ch14-s01",
+      "ch14-s03",
+      "ch14-s04",
+      "ch14-s08"
+     ]
+    },
+    {
+     "ch": "ch21",
+     "mode": "focus",
+     "sections": [
+      "ch21-s03"
+     ]
+    }
+   ],
+   "catchups": [
+    {
+     "where": "ch21-s03",
+     "need": "§10/§12 前文",
+     "fix": "已含 §10/§12 全读，无需补"
+    },
+    {
+     "where": "ch21-s03 自动科研注",
+     "need": "§19 三问",
+     "fix": "已内联「评估器写不写得出来」一句；如需细节，自由读 §19"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "assets.html"
+   ],
+   "exempt": [
+    "§15–§20（驾驭部）不读；§13 全读但以机制理解为目标"
+   ],
+   "_fulfills": [
+    "主表 L161 训练与调参线",
+    "§0.3 岗位出口（项目二、三必做）"
+   ],
+   "cards": [
+    {
+     "anchor": "ch21-s03",
+     "text": "§19 未读：只需记住「评估器写不写得出来」这句，细节可后补。"
+    }
+   ],
+   "note": "建造＋规律（训练向）＋§14 评估节与项目二/三。"
+  },
+  {
+   "id": "gen-full",
+   "order": 4,
+   "tag": "完整线",
+   "title": "生成方向·完整线",
+   "audience": "做生成/多模态，要吃透扩散路线的人",
+   "goal": "从第一原理走到训练与控制一条扩散生成系统",
+   "exit": [
+    "训得动一条玩具扩散训练回路（自动微分版）",
+    "压得下采样步数并说清三源误差",
+    "用 CFG/ControlNet 的思路控制生成，并评一个配方（四把尺子）",
+    "说出两派之争各三行"
+   ],
+   "selfcheck": [
+    "T3 训练循环真跑＋梯度检查",
+    "手算：一步采样／混合高斯分数",
+    "四把尺子评一个真实配方",
+    "说出生成派 vs JEPA 三栏各一行"
+   ],
+   "hours": {
+    "read": 5.7,
+    "practice": 2.5,
+    "project": 0
+   },
+   "open_default": false,
+   "pace_note": "按每周 5–10 小时约 1–2 个月",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "read"
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "read"
+    },
+    {
+     "ch": "ch06",
+     "mode": "read"
+    },
+    {
+     "ch": "ch07",
+     "mode": "read"
+    },
+    {
+     "ch": "ch08",
+     "mode": "read"
+    },
+    {
+     "ch": "ch09",
+     "mode": "read"
+    },
+    {
+     "ch": "intro",
+     "mode": "read"
+    },
+    {
+     "ch": "recipe",
+     "mode": "read"
+    },
+    {
+     "ch": "t1",
+     "mode": "read"
+    },
+    {
+     "ch": "t2",
+     "mode": "read"
+    },
+    {
+     "ch": "t3",
+     "mode": "read"
+    },
+    {
+     "ch": "t4",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "focus",
+     "sections": [
+      "ch14-s05",
+      "ch14-s06"
+     ]
+    },
+    {
+     "ch": "ch21",
+     "mode": "focus",
+     "sections": [
+      "ch21-s02",
+      "ch21-s04"
+     ]
+    }
+   ],
+   "catchups": [
+    {
+     "where": "t4-s04",
+     "need": "§8 LoRA 记号",
+     "fix": "t4-s04 已自带回指半句"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "assets.html"
+   ],
+   "exempt": [
+    "§10–§13、§15–§20 不读（除结论节）；论文精读无",
+    "§21-s04 回收地图含 §11/§12/§14-s07 门牌，未读部分作索引略过",
+    "§21 六条线表含 §16、§17、§18、§19 门牌，生成线未读，作索引略过"
+   ],
+   "_fulfills": [
+    "主表 L161 生成方向线",
+    "§0.3 岗位出口",
+    "plan.支线附录 L40-41 动线（导言→配方→T1–T4）"
+   ],
+   "cards": [
+    {
+     "anchor": "ch14-s06",
+     "text": "本节提到 §10 的双下降：只需记住「损失地板」这一句，细节留给以后。"
+    },
+    {
+     "anchor": "ch21-s02",
+     "text": "§12、§20 未读：「测试时算力」与 V-JEPA 2-AC 细节可后补；这里按表读结论。"
+    },
+    {
+     "anchor": "ch21-s04",
+     "text": "回收地图含 §11/§12/§14-s07 门牌：生成线未读，作索引略过。"
+    }
+   ],
+   "note": "建造＋支线六页＋§14/§21 结论节。"
+  },
+  {
+   "id": "research-full",
+   "order": 5,
+   "tag": "完整线",
+   "title": "研究与理论·完整线",
+   "audience": "做研究/读论文，要能按证据档位独立判断的人",
+   "goal": "获得规律部全貌＋书末方法层，能读论文、能定档、能指出开放问题",
+   "exit": [
+    "按证据档位评一篇论文并交一页证据卡",
+    "说清五个为什么各自的证据状态",
+    "说清六类边界中哪些是定理墙、各自的前提与活口",
+    "指出至少两条开放问题并给出定位"
+   ],
+   "selfcheck": [
+    "给一篇论文定档：档位指得回 §14 六类边界表",
+    "自拟一个「做不到」并判定理/未做到",
+    "把 §12 失效两路径各举一例",
+    "按 §21 五维回收框的格式，说一条开放问题综述"
+   ],
+   "hours": {
+    "read": 5.5,
+    "practice": 3,
+    "project": 3
+   },
+   "open_default": true,
+   "pace_note": "按每周 5–10 小时约 2 个月；折叠块默认展开（理论优先）",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "read"
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "read"
+    },
+    {
+     "ch": "ch06",
+     "mode": "read"
+    },
+    {
+     "ch": "ch07",
+     "mode": "read"
+    },
+    {
+     "ch": "ch08",
+     "mode": "read"
+    },
+    {
+     "ch": "ch09",
+     "mode": "read"
+    },
+    {
+     "ch": "ch10",
+     "mode": "read"
+    },
+    {
+     "ch": "ch11",
+     "mode": "read"
+    },
+    {
+     "ch": "ch12",
+     "mode": "read"
+    },
+    {
+     "ch": "ch13",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "read"
+    },
+    {
+     "ch": "ch21",
+     "mode": "read"
+    }
+   ],
+   "catchups": [
+    {
+     "where": "ch21-s04",
+     "need": "T3/T4 回指名",
+     "fix": "s04 已内联点名不重推；如需底层证据，自由读 T3/T4"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "selftest.html",
+    "§21-s07 候选论文框"
+   ],
+   "exempt": [
+    "§15–§20 不读；支线不读（生成两派之争保留在 §21-s02 可自由读）",
+    "§21 收束与部末十题含 §15–§20 全覆盖（§16、§17、§18、§19 等回话题；研究线未读，作跨部索引略过）"
+   ],
+   "_fulfills": [
+    "主表 L161 研究与理论线",
+    "§0.3 岗位出口（论文按证据档位读）"
+   ],
+   "cards": [
+    {
+     "anchor": "ch21-s01",
+     "text": "§20 未读：「动作空间与评估器」两件只需知道有这个雏形。"
+    },
+    {
+     "anchor": "ch21-s06",
+     "text": "§19/§16/§17 未读：「三条硬边界」与 Harness、契约、护栏按名词读，细节可后补。"
+    },
+    {
+     "anchor": "ch21-s07",
+     "text": "部末十题含 §15–§20 回话题：未读部分作跨部索引略过。"
+    }
+   ],
+   "note": "建造＋规律部全＋§21 全＋论文清单；折叠默认展开。"
+  },
+  {
+   "id": "agent-fast",
+   "order": 6,
+   "tag": "快线",
+   "title": "应用与 Agent·快线",
+   "audience": "时间紧（集中两三周或业余四到六周），要把 Agent 用起来的人",
+   "goal": "拿到可用的最小 Agent 能力：搭骨架、守护栏、估成本、不过度工程",
+   "exit": [
+    "搭得出最小 Agent（六站前 3 站）并写下三条断言",
+    "说得出双轴表两轴与最小权限缓解",
+    "估得出一次任务的成本乘数",
+    "判得出什么时候不需要 Agent"
+   ],
+   "selfcheck": [
+    "六站前 3 站跑通＋三条断言",
+    "写一条反注入缓解（半句自含）",
+    "说出「每步都问更危险」的机制与疏的设计",
+    "说出 razor 的一半：验证便宜为什么进展快"
+   ],
+   "hours": {
+    "read": 3.6,
+    "practice": 2,
+    "project": 0
+   },
+   "open_default": false,
+   "pace_note": "全职 2–3 周或业余 4–6 周；六站止步第 3 站，4–6 站回补",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "read"
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "focus",
+     "sections": [
+      "ch05-s01",
+      "ch05-s02",
+      "ch05-s04",
+      "ch05-s05"
+     ]
+    },
+    {
+     "ch": "ch06",
+     "mode": "focus",
+     "sections": [
+      "ch06-s01",
+      "ch06-s02",
+      "ch06-s04"
+     ]
+    },
+    {
+     "ch": "ch07",
+     "mode": "focus",
+     "sections": [
+      "ch07-s01",
+      "ch07-s02",
+      "ch07-s03",
+      "ch07-s04",
+      "ch07-s05",
+      "ch07-s06"
+     ]
+    },
+    {
+     "ch": "ch08",
+     "mode": "focus",
+     "sections": [
+      "ch08-s01",
+      "ch08-s03"
+     ]
+    },
+    {
+     "ch": "ch09",
+     "mode": "focus",
+     "sections": [
+      "ch09-s01",
+      "ch09-s02",
+      "ch09-s03",
+      "ch09-s05"
+     ]
+    },
+    {
+     "ch": "ch10",
+     "mode": "focus",
+     "sections": [
+      "ch10-s01",
+      "ch10-s02",
+      "ch10-s04"
+     ]
+    },
+    {
+     "ch": "ch14",
+     "mode": "focus",
+     "sections": [
+      "ch14-s03",
+      "ch14-s05"
+     ]
+    },
+    {
+     "ch": "ch15",
+     "mode": "read"
+    },
+    {
+     "ch": "ch16",
+     "mode": "read"
+    },
+    {
+     "ch": "ch17",
+     "mode": "read"
+    },
+    {
+     "ch": "ch18",
+     "mode": "focus",
+     "sections": [
+      "ch18-s04"
+     ]
+    },
+    {
+     "ch": "ch19",
+     "mode": "focus",
+     "sections": [
+      "ch19-s01",
+      "ch19-s02"
+     ]
+    },
+    {
+     "ch": "ch21",
+     "mode": "focus",
+     "sections": [
+      "ch21-s06"
+     ]
+    }
+   ],
+   "catchups": [
+    {
+     "where": "§9-s03 KV 账",
+     "need": "§5-s05",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "§16-s06 RAG 四问",
+     "need": "§7-s06",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "ch10-s04 两速度分解（慢针/快针）",
+     "need": "ch10-s01/s02",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "§17-s06 λ／影子价格",
+     "need": "ch07-s04",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "ch15 最小结论",
+     "need": "§10–§14 规律部",
+     "fix": "规律部五条只作名词索引；§12 缩放细节可后补"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "selftest.html"
+   ],
+   "exempt": [
+    "§11–§13、§20 不读；项目一/二/四不做（留给对应完整线）；六站止步第 3 站",
+    "ch19-s04 走查可回补（用甲部工具，在完整线里做）"
+   ],
+   "_fulfills": [
+    "设计 L159 速成档（六站前 3 站）",
+    "§0.3 双入口之 §15 顺读"
+   ],
+   "cards": [
+    {
+     "anchor": "ch17-s08",
+     "text": "§13 未读：本节只需记住「模型内部有一条拒绝方向，可以被压掉」。"
+    }
+   ],
+   "note": "快线：关键节直达 §15–§18；六站止步第 3 站。"
+  },
+  {
+   "id": "train-fast",
+   "order": 7,
+   "tag": "快线",
+   "title": "训练与调参·快线",
+   "audience": "时间紧，要尽快能微调与自评的人",
+   "goal": "拿到最小训练闭环：懂损失与配比，能微调，能写最小 eval",
+   "exit": [
+    "微调一个模型并对比秩（项目二）",
+    "写得出最小 eval 五件（项目三）",
+    "说得出幂律/Chinchilla/μP 各一行",
+    "说得出 EoS 两旋钮表与临界批"
+   ],
+   "selfcheck": [
+    "项目二：链路＋玩具秩扫描（免费档）；两秩对比的完整训练按租卡档",
+    "项目三：最小 eval＋换序评判",
+    "手算：幂律外推四个点",
+    "说出失效两路径各一例"
+   ],
+   "hours": {
+    "read": 4.5,
+    "practice": 3,
+    "project": 5
+   },
+   "open_default": false,
+   "pace_note": "全职 2–3 周或业余 4–6 周",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "focus",
+     "sections": [
+      "ch03-s01",
+      "ch03-s04",
+      "ch03-s05",
+      "ch03-s06"
+     ]
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "focus",
+     "sections": [
+      "ch05-s02",
+      "ch05-s04",
+      "ch05-s05"
+     ]
+    },
+    {
+     "ch": "ch06",
+     "mode": "read"
+    },
+    {
+     "ch": "ch07",
+     "mode": "focus",
+     "sections": [
+      "ch07-s01",
+      "ch07-s02",
+      "ch07-s03",
+      "ch07-s04",
+      "ch07-s05"
+     ]
+    },
+    {
+     "ch": "ch08",
+     "mode": "read"
+    },
+    {
+     "ch": "ch09",
+     "mode": "focus",
+     "sections": [
+      "ch09-s01",
+      "ch09-s02",
+      "ch09-s03",
+      "ch09-s07"
+     ]
+    },
+    {
+     "ch": "ch10",
+     "mode": "focus",
+     "sections": [
+      "ch10-s01",
+      "ch10-s02",
+      "ch10-s03",
+      "ch10-s04"
+     ]
+    },
+    {
+     "ch": "ch11",
+     "mode": "focus",
+     "sections": [
+      "ch11-s01",
+      "ch11-s03",
+      "ch11-s05",
+      "ch11-s07"
+     ]
+    },
+    {
+     "ch": "ch12",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "focus",
+     "sections": [
+      "ch14-s01",
+      "ch14-s03",
+      "ch14-s04",
+      "ch14-s08"
+     ]
+    },
+    {
+     "ch": "ch21",
+     "mode": "focus",
+     "sections": [
+      "ch21-s03"
+     ]
+    }
+   ],
+   "catchups": [
+    {
+     "where": "§9-s03 KV 账",
+     "need": "§5-s05",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "§10-s03 权重衰减",
+     "need": "§7-s04",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "§8-s04 MLA 门牌",
+     "need": "§9-s07",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "ch21-s03 自动科研注",
+     "need": "§19 三问",
+     "fix": "已内联「评估器写不写得出来」一句；如需细节，自由读 §19"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "assets.html"
+   ],
+   "exempt": [
+    "§13、§15–§20 不读；项目一/四不做"
+   ],
+   "_fulfills": [
+    "§0.3 岗位出口（项目二、三必做）",
+    "设计 L159 速成档·训练向"
+   ],
+   "cards": [
+    {
+     "anchor": "ch21-s03",
+     "text": "第 13 章未读：清单里「解码算不算看见」一条，记住大意即可；§19 未读：只需记住「评估器写不写得出来」这句，细节可后补。"
+    }
+   ],
+   "note": "快线：训练主干＋项目二/三。"
+  },
+  {
+   "id": "gen-fast",
+   "order": 8,
+   "tag": "快线",
+   "title": "生成方向·快线",
+   "audience": "时间紧，要吃透扩散并能真跑训练回路的人",
+   "goal": "拿到最小生成闭环：训得动、压得下、控得住",
+   "exit": [
+    "训得动玩具扩散训练回路（T3 真跑）",
+    "用 CFG/ControlNet 的思路控制生成，并评一个配方（四把尺子）",
+    "说得出三源误差与 DDIM 各一行",
+    "评得了一个配方（四把尺子）"
+   ],
+   "selfcheck": [
+    "T3 训练循环真跑",
+    "手算：一步采样／混合高斯分数",
+    "四把尺子评一个配方",
+    "说出 CFG 的 w 与 §7 的 β 关系"
+   ],
+   "hours": {
+    "read": 4.6,
+    "practice": 2,
+    "project": 0
+   },
+   "open_default": false,
+   "pace_note": "全职 2–3 周或业余 4–6 周",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "focus",
+     "sections": [
+      "ch01-s01",
+      "ch01-s02",
+      "ch01-s03",
+      "ch01-s04"
+     ]
+    },
+    {
+     "ch": "ch02",
+     "mode": "focus",
+     "sections": [
+      "ch02-s01",
+      "ch02-s05"
+     ]
+    },
+    {
+     "ch": "ch03",
+     "mode": "focus",
+     "sections": [
+      "ch03-s04",
+      "ch03-s05",
+      "ch03-s06"
+     ]
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "focus",
+     "sections": [
+      "ch05-s01",
+      "ch05-s02",
+      "ch05-s04"
+     ]
+    },
+    {
+     "ch": "ch07",
+     "mode": "focus",
+     "sections": [
+      "ch07-s02",
+      "ch07-s09"
+     ]
+    },
+    {
+     "ch": "ch08",
+     "mode": "focus",
+     "sections": [
+      "ch08-s01",
+      "ch08-s03"
+     ]
+    },
+    {
+     "ch": "ch09",
+     "mode": "focus",
+     "sections": [
+      "ch09-s01",
+      "ch09-s02"
+     ]
+    },
+    {
+     "ch": "intro",
+     "mode": "read"
+    },
+    {
+     "ch": "recipe",
+     "mode": "read"
+    },
+    {
+     "ch": "t1",
+     "mode": "read"
+    },
+    {
+     "ch": "t2",
+     "mode": "read"
+    },
+    {
+     "ch": "t3",
+     "mode": "read"
+    },
+    {
+     "ch": "t4",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "focus",
+     "sections": [
+      "ch14-s05"
+     ]
+    },
+    {
+     "ch": "ch21",
+     "mode": "focus",
+     "sections": [
+      "ch21-s02",
+      "ch21-s04"
+     ]
+    }
+   ],
+   "catchups": [
+    {
+     "where": "T4-s04 LoRA 回指",
+     "need": "§8-s03",
+     "fix": "已含（本路线读，且排在 T4 前）"
+    },
+    {
+     "where": "T3 的 KL 记号",
+     "need": "§3-s05",
+     "fix": "已含（本路线读）"
+    },
+    {
+     "where": "T3-s156 RLVR 半句",
+     "need": "§7-s02",
+     "fix": "已含（本路线读）"
+    }
+   ],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "assets.html"
+   ],
+   "exempt": [
+    "§6、§10–§13、§15–§20 不读（§8 只读 LoRA 核心两节）",
+    "§21-s04 回收地图含 §11/§12/§14-s07 门牌，未读部分作索引略过",
+    "§21 六条线表含 §16、§17、§18、§19 门牌，生成线未读，作索引略过"
+   ],
+   "_fulfills": [
+    "设计 L159 速成档·生成向",
+    "导言 L7 前置表（§4/§5 关键节已含）"
+   ],
+   "cards": [
+    {
+     "anchor": "ch14-s05",
+     "text": "§6、§7 未读：幻觉条与 KL 账都已内联半句，按旁注读。"
+    },
+    {
+     "anchor": "ch21-s02",
+     "text": "§12、§20 未读：「测试时算力」与 V-JEPA 2-AC 细节可后补；这里按表读结论。"
+    }
+   ],
+   "note": "快线：前置关键节＋T1–T4＋结论节。"
+  },
+  {
+   "id": "deep",
+   "order": 9,
+   "tag": "深究线",
+   "title": "深究线（全取选读＋论文）",
+   "audience": "有余力、要把全部选读与前沿论文走完的人",
+   "goal": "在主线之上取尽 ○/◌/◇ 与支线，并按证据档位读前沿论文",
+   "exit": [
+    "交一页论文证据卡（档位指得回 §14 六类边界表）",
+    "写一条开放问题综述（用 §21 五维回收框的格式）",
+    "说得出全部 ○/◌/◇ 中最看重的三个机制"
+   ],
+   "selfcheck": [
+    "挑一篇论文定档（名称＋会议/编号入清单）",
+    "给 §10-s05 五理论各标证据状态",
+    "说出 JEPA 三行与生成四要点",
+    "复述理论四层各一例"
+   ],
+   "hours": {
+    "read": 9.1,
+    "practice": 3,
+    "project": 6
+   },
+   "open_default": true,
+   "pace_note": "长期；折叠块默认展开（理论优先）",
+   "sequence": [
+    {
+     "ch": "s0a",
+     "mode": "read"
+    },
+    {
+     "ch": "s0b",
+     "mode": "read"
+    },
+    {
+     "ch": "s0c",
+     "mode": "read"
+    },
+    {
+     "ch": "ch01",
+     "mode": "read"
+    },
+    {
+     "ch": "ch02",
+     "mode": "read"
+    },
+    {
+     "ch": "ch03",
+     "mode": "read"
+    },
+    {
+     "ch": "ch04",
+     "mode": "read"
+    },
+    {
+     "ch": "ch05",
+     "mode": "read"
+    },
+    {
+     "ch": "ch06",
+     "mode": "read"
+    },
+    {
+     "ch": "ch07",
+     "mode": "read"
+    },
+    {
+     "ch": "ch08",
+     "mode": "read"
+    },
+    {
+     "ch": "ch09",
+     "mode": "read"
+    },
+    {
+     "ch": "intro",
+     "mode": "read"
+    },
+    {
+     "ch": "t1",
+     "mode": "read"
+    },
+    {
+     "ch": "t2",
+     "mode": "read"
+    },
+    {
+     "ch": "t3",
+     "mode": "read"
+    },
+    {
+     "ch": "t4",
+     "mode": "read"
+    },
+    {
+     "ch": "recipe",
+     "mode": "read"
+    },
+    {
+     "ch": "ch10",
+     "mode": "read"
+    },
+    {
+     "ch": "ch11",
+     "mode": "read"
+    },
+    {
+     "ch": "ch12",
+     "mode": "read"
+    },
+    {
+     "ch": "ch13",
+     "mode": "read"
+    },
+    {
+     "ch": "ch14",
+     "mode": "read"
+    },
+    {
+     "ch": "ch15",
+     "mode": "read"
+    },
+    {
+     "ch": "ch16",
+     "mode": "read"
+    },
+    {
+     "ch": "ch17",
+     "mode": "read"
+    },
+    {
+     "ch": "ch18",
+     "mode": "read"
+    },
+    {
+     "ch": "ch19",
+     "mode": "read"
+    },
+    {
+     "ch": "ch20",
+     "mode": "read"
+    },
+    {
+     "ch": "ch21",
+     "mode": "read"
+    }
+   ],
+   "catchups": [],
+   "supply": [
+    "terms.html",
+    "env.html",
+    "selftest.html",
+    "assets.html",
+    "§21-s07 候选论文框"
+   ],
+   "exempt": [],
+   "_fulfills": [
+    "设计 L159 深究档（全部选读＋论文）",
+    "§0.3 研究与理论出口（论文定档）"
+   ],
+   "note": "全 30 章＋选读＋论文清单；折叠默认展开。"
+  }
+ ],
+ "lint": {
+  "fwd_policy": "前向门牌惯例：指向未读章的未来阅读提示，不构成前置依赖，按书内门牌惯例豁免（报告仍列出抽查）"
+ }
+}
