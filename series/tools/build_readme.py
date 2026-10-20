@@ -42,7 +42,7 @@ def render() -> str:
     out: list[str] = []
     out.append(f"# AI 系列读物 · 重写版 v{version}")
     out.append("")
-    out.append("> 30 个阅读单元：第〇部 3 节＋第一部 9 章＋支线 T1–T4＋第二部 5 章＋第三部 7 章。")
+    out.append("> 30 个阅读单元：第〇部 3 节＋第一部 9 章＋支线导言/配方页＋T1–T4＋第二部 5 章＋第三部 7 章。")
     out.append(f"> 构建日期：{date}。旧五篇参考版见根仓 tag `five-books-final`，已停止维护。")
     out.append("")
     out.append("## 在线阅读")

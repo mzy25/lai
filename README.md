@@ -1,6 +1,6 @@
 # AI 大模型技术导引（重写版 v0.3.0）
 
-> **在线阅读**：<https://mzy25.github.io/lai/> —— 30 个阅读单元的 hub、分章阅读、全文打印、术语总表与路线卡，浏览器打开即读，可离线。
+> **在线阅读**：<https://mzy25.github.io/lai/> —— 30 个阅读单元（含导言与配方页）的 hub、分章阅读、全文打印、术语总表与路线卡，浏览器打开即读，可离线。
 >
 > **源稿**：`series/`。**旧五篇参考版**：tag [`five-books-final`](https://github.com/mzy25/lai/tree/five-books-final)，已停止维护。
 
@@ -11,7 +11,7 @@
    ↓
 第一部 建造：模型怎样获得能力（§1–§9）
    ↓
-支线 生成深潜（T1–T4，选修）
+支线 生成深潜（导言＋配方页＋T1–T4，选修）
    ↓
 第二部 规律：能力为什么可信（§10–§14）
    ↓
@@ -67,15 +67,10 @@ python3 build/check_artifact_fresh.py    # 与 HEAD 比对，源稿改了忘重�
 
 ## 写稿与门禁
 
-- 语言与体例：`internal/notes/style_guide.md`（本地私有仓，不随公开仓分发）
 - 系列文风：`series/style/写作声音.md`、`series/style/句长基准.md`、`series/style/喻体台账.md`
 - 术语/符号/伏笔：`series/edit/*.tsv`
 - 改稿收尾：`python3 series/tools/finish_round.py`（首现、句长、表格、路线、构建双跑）
 - 实验三条铁律：引用旧数字必复算；新实验必真跑并留档 `series/assets/`；正文数字与运行记录逐条对账
-
-## 旧版
-
-旧五篇（AI数学／扩散／基座模型／用好AI／AI规律）的源稿、DOCX 参考副本与学习卡保留在 tag [`five-books-final`](https://github.com/mzy25/lai/tree/five-books-final)。这一版不再维护旧路径；新读者从上面的 hub 进入即可。
 
 ## 勘误与反馈
 
