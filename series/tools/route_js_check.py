@@ -67,6 +67,15 @@ function mkEl(tag, attrs) {
       add(c) { el._cls.add(c); }, remove(c) { el._cls.delete(c); },
       contains(c) { return el._cls.has(c); }, toggle(c, f) { if (f === undefined ? !el._cls.has(c) : f) el._cls.add(c); else el._cls.delete(c); },
     },
+    closest(sel) {
+      let n = el;
+      while (n) {
+        if (sel === 'section.sec' && n.tag === 'section' && n._cls.has('sec')) return n;
+        n = n._parent;
+      }
+      return null;
+    },
+    scrollIntoView() { el._scrolled = true; },
     setAttribute(k, v) { el.attrs[k] = String(v); },
     getAttribute(k) { return Object.prototype.hasOwnProperty.call(el.attrs, k) ? el.attrs[k] : null; },
     removeAttribute(k) { delete el.attrs[k]; },
@@ -118,6 +127,7 @@ const reviewBlock = register('reviewBlock', mkEl('div'));
 const reviewList = register('reviewList', mkEl('ul'));
 register('reviewRefresh', mkEl('button'));
 const reviewLink = register('reviewLink', mkEl('a', { 'data-anchor': 'ch17-s01' }));
+const selfcheckJump = mkEl('a', { href: '#selfcheck', class: 'selfcheck-jump' });
 const pvNext = mkEl('a', { href: 'orig-next.html' });
 pvNext.textContent = 'orig-next 文案 →';
 const pvPrev = mkEl('a', { href: 'orig-prev.html' });
@@ -145,9 +155,17 @@ SD.chapters.forEach(c => {
   if (STUB_CH.indexOf(c.slug) < 0) return;
   (c.sections || []).forEach(s => {
     if (s.level !== 2) return;
-    sections.push(mkEl('section', { 'data-anchor': s.anchor }));
+    const sec = mkEl('section', { 'data-anchor': s.anchor });
+    sec.className = 'sec';
+    sec.attrs.id = s.anchor;
+    byId[s.anchor] = sec;
+    sections.push(sec);
   });
 });
+const selfcheckSec = sections.find(s => s.getAttribute('data-anchor') === 'ch17-s10');
+if (!selfcheckSec) throw new Error('stub missing ch17-s10');
+const selfcheck = register('selfcheck', mkEl('p'));
+selfcheckSec.appendChild(selfcheck);
 const exitInputs = SD.routes.map(r => {
   const inp = mkEl('input', { 'data-route': r.id, 'data-idx': '0' });
   inp.checked = false;
@@ -164,6 +182,7 @@ global.document = {
     if (sel === '.route-card') return cards;
     if (sel === '.exit-check input') return exitInputs;
     if (sel === 'input[data-pid]') return projInputs;
+    if (sel === 'a.selfcheck-jump') return [selfcheckJump];
     return [];
   },
   createElement: tag => mkEl(tag),
@@ -366,6 +385,19 @@ reviewLink.dispatch('click');
 if (!secA.classList.contains('offroute-shown')) fail('review link reveal');
 secA.classList.remove('dim'); secA.classList.remove('offroute-shown');
 
+// 3.11b) 自查锚在节内：reviewLink 与 selfcheck-jump 都要先展开所属节
+selfcheckSec.classList.add('dim');
+global.document.body.classList.add('focus-hide');
+reviewLink.setAttribute('data-anchor', 'selfcheck');
+reviewLink.dispatch('click');
+if (!selfcheckSec.classList.contains('offroute-shown')) fail('review selfcheck reveal');
+selfcheckSec.classList.remove('offroute-shown');
+selfcheckJump.dispatch('click');
+if (!selfcheckSec.classList.contains('offroute-shown')) fail('selfcheck jump reveal');
+selfcheckSec.classList.remove('dim');
+selfcheckSec.classList.remove('offroute-shown');
+global.document.body.classList.remove('focus-hide');
+
 // 3.12) 支线理由从数据计算（无 R 编号；含路线名）
 const br = T.branchReason();
 if (/R[0-9]/.test(br)) fail('branch reason still has R codes: ' + br);
@@ -419,7 +451,7 @@ def main() -> int:
     out = (r.stdout or "").strip()
     print(out if out else (r.stderr or "").strip()[-600:])
     if "PASS" in out and r.returncode == 0:
-        print("· 路线层 JS 对拍：viewOf≡视图 9/9｜banner/降灰/补课卡/下一站/环/自证/站位/继续阅读 逐路线 ✓｜自测三档/项目计数/导出导入 ✓｜自由读复原 ✓")
+        print("· 路线层 JS 对拍：viewOf≡视图 9/9｜banner/降灰/补课卡/下一站/环/自证/站位/继续阅读 逐路线 ✓｜自查节内锚/自测三档/项目计数/导出导入 ✓｜自由读复原 ✓")
         return 0
     print("route_js_check: FAIL")
     return 1

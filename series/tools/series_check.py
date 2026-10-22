@@ -396,7 +396,8 @@ def check_b3(chapters: list[dict]) -> None:
             fail(f"{p.name}: 缺翻章类 pv-next/pv-prev")
         if f'id="focusHide"' not in h:
             fail(f"{p.name}: 缺聚焦开关 #focusHide")
-        if f'id="reviewLink"' not in h and '<h2 id="' in h:
+        # 支线导言没有章末自查，不挂抽查链接；其余有 H2 的页都要有。
+        if f'id="reviewLink"' not in h and '<h2 id="' in h and p.name != "intro.html":
             fail(f"{p.name}: 缺抽查链接 #reviewLink")
     if dim_anchors:
         fail(f"默认自由读视图不应有节级降灰：{sorted(dim_anchors)[:5]}")
@@ -504,6 +505,54 @@ def check_supply_pages() -> None:
     print("· 供给页：术语/环境/自测/路线——存在性、新词块对账、自证勾选数校验")
 
 
+def check_part_answers(chapters: list[dict]) -> None:
+    """部末答案完整性：源答案块计数 = 部末折叠数；章页不再留内联答案。"""
+    summary_re = re.compile(
+        r'<details>\s*<summary>\s*先写，再看：答案与去处\s*</summary>', re.S)
+    expected: dict[str, list[tuple[dict, int]]] = {}
+    for ch in chapters:
+        src = (SERIES / ch["file"]).read_text(encoding="utf-8")
+        n = len(summary_re.findall(src))
+        if n:
+            expected.setdefault(ch["part"], []).append((ch, n))
+
+    for part, entries in expected.items():
+        end = bs.PART_END.get(part)
+        if not end:
+            fail(f"有答案的部没有 PART_END：{part}")
+            continue
+        page = DIST / f"{end}.html"
+        if not page.exists():
+            fail(f"缺部末页：{page.name}（{part}）")
+            continue
+        html = page.read_text(encoding="utf-8")
+        want = sum(n for _, n in entries)
+        got = html.count('class="selfcheck-answer part-answer"')
+        if got != want:
+            fail(f"{page.name}: 部末答案 {got} ≠ 源答案 {want}（{part}）")
+        if f'id="answers-{part}"' not in html:
+            fail(f"{page.name}: 缺部末答案锚 #answers-{part}")
+        for ch, _ in entries:
+            if ch["slug"] == end:
+                continue
+            chapter_page = DIST / f"{ch['slug']}.html"
+            if not chapter_page.exists():
+                continue
+            chapter_html = chapter_page.read_text(encoding="utf-8")
+            if f'{end}.html#answers-{part}' not in chapter_html:
+                fail(f"{ch['slug']}.html: 缺部末答案链接 {end}.html#answers-{part}")
+            if '<details class="selfcheck-answer">' in chapter_html:
+                fail(f"{ch['slug']}.html: 答案仍在章内，未搬到部末")
+
+    print_page = DIST / "print.html"
+    if print_page.exists():
+        total = sum(n for entries in expected.values() for _, n in entries)
+        got = print_page.read_text(encoding="utf-8").count('class="selfcheck-answer part-answer"')
+        if got != total:
+            fail(f"print.html: 部末答案 {got} ≠ 源答案 {total}")
+    print("· 部末答案：源块计数、部末折叠、章页指路、print 收口——逐项校验")
+
+
 def check_route_lint() -> None:
     """路线断链审计（tools/route_lint.py --check）：后向候选/供给/G1G3 未过即拦。"""
     tool = HERE / "route_lint.py"
@@ -606,6 +655,7 @@ def main() -> int:
     check_print(chapters)
     check_assets_page()
     check_supply_pages()
+    check_part_answers(chapters)
     check_routes(chapters)
     check_route_lint()
     check_route_js()

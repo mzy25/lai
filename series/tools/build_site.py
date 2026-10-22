@@ -244,17 +244,11 @@ def apply_section_dim(html: str, dim_map: dict) -> str:
 
 
 def migration_callout(ch: dict) -> str:
-    """部末章（ch09/14/21）章尾提醒：指向章末含「十题自查」的末节
-    （ch21 的十题在 s08「深究：给一篇论文分级」内，不是 s07「三件事」；
-    原按「回望/三件事」找节会指错，2026-10-14 修为「取末节」）。"""
+    """部末章（ch09/14/21）章尾提醒：直接指向章末自查标签。"""
     if ch["slug"] not in ("ch09", "ch14", "ch21"):
         return ""
-    h2s = [s for s in ch["sections"] if s["level"] == 2]
-    if not h2s:
-        raise RuntimeError(f"迁移提醒目标节未找到：{ch['slug']}")
-    target = h2s[-1]
-    return (f'<div class="migration"><b>部末提醒：</b>读完记得做'
-            f'<a href="#{target["anchor"]}">部末十题自查</a>（本章三题＋前章回话题）。</div>')
+    return ('<div class="migration"><b>部末提醒：</b>读完记得做'
+            '<a class="selfcheck-jump" href="#selfcheck">部末十题自查</a>（本章三题＋前章回话题）。</div>')
 
 
 def build_site_data(chapters: list[dict], parts: list[dict], routes: dict,
@@ -571,7 +565,7 @@ def terms_content(chapters: list[dict]) -> str:
         trs.append(f'<tr id="{_term_anchor(name)}"><td>{H.escape(name)}</td><td>{first_html}</td>'
                    f'<td>{_link_refs_inline(_clean_note(note), chapters)}</td></tr>')
     table = ('<table id="termTable"><thead><tr><th>名词</th><th>首现</th>'
-             '<th>说明与门牌</th></tr></thead><tbody>' + "".join(trs) + "</tbody></table>")
+             '<th>说明</th></tr></thead><tbody>' + "".join(trs) + "</tbody></table>")
     script = ('<script>(function(){var i=document.getElementById("termFilter");'
               'var t=document.getElementById("termTable");if(!i||!t)return;'
               'i.addEventListener("input",function(){var q=i.value.trim().toLowerCase();'
@@ -583,7 +577,7 @@ def terms_content(chapters: list[dict]) -> str:
               'if(tr){tr.classList.add("term-hit");}}}catch(e){}'
               '})();</script>')
     return (f'<div class="chapter-head"><h1>术语总表</h1>'
-            f'<p class="doc-meta">按词条收录全部术语与门牌，共 {len(items)} 条；'
+            f'<p class="doc-meta">按词条收录全部术语，共 {len(items)} 条；'
             f'按首现章排序（同章按字序），「首现」可点跳章。筛词用下方输入框，或浏览器 Ctrl+F。回 <a href="index.html">目录</a>。</p></div>'
             f'<p><input type="search" id="termFilter" placeholder="筛词…（如：注意力、幂律、护栏）" '
             f'autocomplete="off" style="width:100%;max-width:460px;padding:6px 10px;'
@@ -911,6 +905,109 @@ def wrap_tables(html: str) -> str:
         return f'<div class="table-wrap" tabindex="0">{table}</div>'
     return re.sub(r"<table[^>]*>.*?</table>", repl, html, flags=re.S)
 
+
+SELFCHECK_LABEL = re.compile(r'<p>(三题自查。|部末回望，十题自查.*?)</p>', re.S)
+
+# 自查答案按部收口：章末只留一句“答案见本部末”，答案集中在部末页。
+PART_END = {"zero": "s0c", "build": "ch09", "branch": "t4", "law": "ch14", "drive": "ch21"}
+PART_END_LABEL = {"build": "§9", "law": "§14", "drive": "§21"}
+PART_ANSWER_TITLE = {"build": "第一部自查答案", "law": "第二部自查答案", "drive": "第三部自查答案"}
+
+SELFCHECK_ANSWER = re.compile(
+    r'<details class="selfcheck-answer">\s*<summary>.*?</summary>\s*'
+    r'(<ol type="1">.*?</ol>)\s*</details>', re.S)
+
+
+def take_selfcheck_answer(html: str, replacement: str = "") -> tuple[str, str | None]:
+    """抽出章末答案块；原位置换成一句指向部末的提示，或直接留空。"""
+    m = SELFCHECK_ANSWER.search(html)
+    if not m:
+        return html, None
+    return html[:m.start()] + replacement + html[m.end():], m.group(1)
+
+
+def answers_note(ch: dict, print_mode: bool = False) -> str:
+    """非部末章：指向部末答案。部末章不挂链接，答案就在本章最末。"""
+    part = ch["part"]
+    end = PART_END.get(part)
+    if not end or ch["slug"] == end:
+        return ""
+    label = PART_END_LABEL.get(part, end)
+    href = f"#answers-{part}" if print_mode else f"{end}.html#answers-{part}"
+    return (f'<p class="selfcheck-answers-link">答案见<a href="{href}">'
+            f'本部末（{label}）</a>。</p>')
+
+
+def part_answers_html(part: str, blocks: list[tuple[dict, str]]) -> str:
+    """部末答案区：每章一个折叠，标题用章名，不再用“先写，再看”。"""
+    if not blocks:
+        return ""
+    title = PART_ANSWER_TITLE.get(part, "本部自查答案")
+    body = []
+    for ch, ol in blocks:
+        summary = f'{ch["label"]} {short_title(ch["title"], 40)}'
+        body.append(f'<details class="selfcheck-answer part-answer">'
+                    f'<summary>{summary}</summary>{ol}</details>')
+    return (f'<div class="part-answers" id="answers-{part}">'
+            f'<p class="part-answers-title">{title}</p>'
+            f'<p class="part-answers-note">先做完有答案的各章三题，再对答案。</p>'
+            + "\n".join(body) + '</div>')
+
+
+def part_answers_marker(part: str) -> str:
+    """Deferred part-answer slot: answers can arrive after the part-end page."""
+    return f"<!--PART_ANSWERS:{part}-->"
+
+
+def stitch_part_answers(html: str, blocks: dict[str, list[tuple[dict, str]]]) -> str:
+    """Replace deferred slots after the whole chapter order has been collected."""
+    for part in PART_END:
+        marker = part_answers_marker(part)
+        if marker in html:
+            html = html.replace(marker, part_answers_html(part, blocks.get(part, [])))
+    if "<!--PART_ANSWERS:" in html:
+        left = re.findall(r"<!--PART_ANSWERS:([^>]+)-->", html)
+        raise RuntimeError(f"部末答案槽未收口：{left}")
+    return html
+
+
+def mark_selfcheck(html: str, anchor_id: str | None = "selfcheck") -> str:
+    """给章末自查一个可跳转的锚点，并把提示与答案折叠分层。
+
+    - “三题自查”段落加 class/id，作为自查入口与视觉分隔；
+    - 题干末尾的括号提示包成 .hint，视觉上退后一层；
+    - “先写，再看：答案与去处”折叠加 class，网页轻量、打印带标题。
+    """
+    m = SELFCHECK_LABEL.search(html)
+    if not m:
+        return html
+    attrs = f' id="{anchor_id}"' if anchor_id else ""
+    text = m.group(1)
+    if text.startswith("部末回望"):
+        head, sep, tail = text.partition("：")
+        body = f'<strong>{head}{sep}</strong>{tail}'
+    else:
+        body = f'<strong>{text}</strong>'
+    label = f'<p{attrs} class="selfcheck-label">{body}</p>'
+    html = html[:m.start()] + label + html[m.end():]
+
+    # 只处理自查标签后的第一张有序表：题目列表；答案列表在 details 里，不动。
+    start = html.find('class="selfcheck-label"')
+    if start != -1:
+        ol_start = html.find('<ol type="1">', start)
+        ol_end = html.find('</ol>', ol_start) if ol_start != -1 else -1
+        if ol_start != -1 and ol_end != -1:
+            block = html[ol_start:ol_end + 5]
+            block = re.sub(r'（([^（）]*)）(?=\s*</li>)',
+                           r'<span class="hint">（\1）</span>', block)
+            html = html[:ol_start] + block + html[ol_end + 5:]
+
+    html = re.sub(
+        r'<details>\s*<summary>\s*先写，再看：答案与去处\s*</summary>',
+        '<details class="selfcheck-answer">\n<summary>先写，再看：答案与去处</summary>',
+        html, count=1)
+    return html
+
 # ---------------------------------------------------------------- 页面装配层
 
 def load_chapters() -> tuple[list[dict], list[dict]]:
@@ -1175,6 +1272,7 @@ def main() -> int:
     missing_assets: list[str] = []
     skipped_sec_refs = 0
     build_date = RELEASE.get("date") or datetime.date.today().isoformat()
+    answers_by_part: dict[str, list[tuple[dict, str]]] = {}
 
     for ch in todo:
         slug = ch["slug"]
@@ -1190,13 +1288,28 @@ def main() -> int:
         html = wrap_tables(html)
         html = wrap_sections(html)
         html = apply_section_dim(html, default_dim_sections)
+        html = mark_selfcheck(html)
+        part_answers = ""
+        if args.only:
+            # 单章预览不搬答案：部末页可能没重建，搬走会留下死链或丢答案。
+            answer_ol = None
+        else:
+            html, answer_ol = take_selfcheck_answer(html, answers_note(ch))
+            if answer_ol:
+                answers_by_part.setdefault(ch["part"], []).append((ch, answer_ol))
+            if ch["slug"] == PART_END.get(ch["part"]):
+                # 延迟到循环结束后再填：后面的章可能还有答案。
+                part_answers = part_answers_marker(ch["part"])
         prev, nxt, special = prevnext_of(slug)
         footer = footer_html(build_date, f"本章源稿校验和 {ch['hash']}")
         h2s = [s for s in ch["sections"] if s["level"] == 2]
-        review_anchor = h2s[-1]["anchor"] if h2s else ""
+        review_anchor = "selfcheck" if 'id="selfcheck"' in html else (h2s[-1]["anchor"] if h2s else "")
         review_label = "抽查部末十题" if slug in ("ch09", "ch14", "ch21") else "抽查本章三题"
+        # 支线导言没有章末自查，别给它挂“抽查本章三题”的空链接。
+        if slug == "intro":
+            review_label = ""
         review_link = (f'<a class="review-link" id="reviewLink" href="#{review_anchor}" '
-                       f'data-anchor="{review_anchor}">{review_label}</a>') if review_anchor else ""
+                       f'data-anchor="{review_anchor}">{review_label}</a>') if review_anchor and review_label else ""
         content = (f'<article class="chapter">\n'
                    f'<div class="route-banner" id="routeBanner" data-slug="{slug}" hidden></div>\n'
                    f'<div class="chapter-meta" id="chapterMeta" data-slug="{slug}">{ch["stats"]}</div>\n'
@@ -1205,6 +1318,7 @@ def main() -> int:
                    f'{html}\n'
                    f'{migration_callout(ch)}\n'
                    f'{chapter_terms_block(slug, terms_all, chapters)}\n'
+                   f'{part_answers}\n'
                    f'<div class="read-row"><button type="button" id="readToggle" '
                    f'data-slug="{slug}">标记已读</button>'
                    f'{review_link}'
@@ -1221,12 +1335,25 @@ def main() -> int:
             anchors[sec["anchor"]] = {"ch": slug, "title": sec["text"], "level": sec["level"]}
         anchors[slug] = {"ch": slug, "title": ch["title"], "level": 1}
 
+    if set(answers_by_part) - set(PART_END):
+        raise RuntimeError(f"有答案的部没有 PART_END：{sorted(set(answers_by_part) - set(PART_END))}")
+    for part, end in PART_END.items():
+        page_path = DIST / f"{end}.html"
+        if not page_path.exists():
+            if answers_by_part.get(part):
+                raise RuntimeError(f"部末页不存在：{end}.html（{part}）")
+            continue
+        page = page_path.read_text(encoding="utf-8")
+        if part_answers_marker(part) in page:
+            page = stitch_part_answers(page, answers_by_part)
+            page_path.write_text(page, encoding="utf-8", newline="\n")
     if args.only:
-        print(f"（--only 模式：未重建 print/index/assets/anchors；未链节引用 {skipped_sec_refs} 处）")
+        print(f"（--only 模式：未重建 print/index/assets/anchors；答案保留章内；未链节引用 {skipped_sec_refs} 处）")
         return 0
 
     # ---- print.html（details 全开；§N 同页锚）
     print_frags: list[str] = []
+    print_answers: dict[str, list[tuple[dict, str]]] = {}
     for ch in chapters:
         html = pandoc_html(ch["md"], SERIES)
         html = prefix_cb(html, ch["slug"])
@@ -1238,15 +1365,25 @@ def main() -> int:
         html = embed_figures(html, ch["slug"])
         html = wrap_tables(html)
         html = wrap_sections(html)
-        html = html.replace("<details>", "<details open>")
+        html = mark_selfcheck(html, anchor_id=None)
+        html, answer_ol = take_selfcheck_answer(html, answers_note(ch, print_mode=True))
+        if answer_ol:
+            print_answers.setdefault(ch["part"], []).append((ch, answer_ol))
+        if ch["slug"] == PART_END.get(ch["part"]):
+            # 同网页：答案块可能在后续章才收齐，先留槽，整轮结束后再填。
+            html += part_answers_marker(ch["part"])
+        html = re.sub(r'<details(?![^>]*\bopen\b)([^>]*)>', r'<details\1 open>', html)
         print_frags.append(f'<article class="chapter" id="p-{ch["slug"]}">\n{html}\n{asset_card(ch["slug"])}\n</article>')
+    if set(print_answers) - set(PART_END):
+        raise RuntimeError(f"print 有答案的部没有 PART_END：{sorted(set(print_answers) - set(PART_END))}")
+    print_chapters = stitch_part_answers("\n".join(print_frags), print_answers)
     toc = "\n".join(
         f'<li><a href="#{c["slug"]}">{H.escape(c["label"])} {H.escape(short_title(c["title"], 30))}</a>'
         f'{badge_html(c["h1_markers"])}</li>' for c in chapters)
     print_content = (f'<div class="chapter-head"><h1>AI 系列读物 · 全文版</h1>'
                      f'<p class="doc-meta">本页为全书单页版：适合打印与全文检索（Ctrl+F）。'
                      f'分章阅读请回 <a href="index.html">目录</a>。</p></div>'
-                     f'<ul>{toc}</ul><hr>\n' + "\n".join(print_frags))
+                     f'<ul>{toc}</ul><hr>\n' + print_chapters)
     print_page = render_page(template, title="AI 系列读物 · 全文版", bodyclass="print-page",
                              sidebar="", content=print_content,
                              footer=footer_html(build_date, "源稿共 30 章"))

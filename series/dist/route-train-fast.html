@@ -144,6 +144,25 @@ details { border:1px dashed var(--line); border-radius:10px; padding:8px 14px; m
 details summary { cursor:pointer; font-weight:600; color:var(--ink-soft); }
 details[open] summary { margin-bottom:6px; }
 
+/* ===== 章末自查：题干为主，提示退后，答案为轻量折叠 ===== */
+.selfcheck-label { margin:2em 0 0.45em; padding-top:0.9em; border-top:1px solid var(--line);
+  font-weight:400; font-size:1.02em; scroll-margin-top:70px; }
+.selfcheck-label strong { font-weight:700; }
+.selfcheck-label + ol { margin-top:0.3em; }
+.selfcheck-label + ol > li { margin:0.55em 0; }
+.hint { color:var(--ink-soft); font-size:0.94em; }
+details.selfcheck-answer { border:0; background:transparent; padding:0; margin:0.4em 0 1.3em; }
+details.selfcheck-answer summary { color:var(--accent); font-weight:600; font-size:0.93em; }
+details.selfcheck-answer[open] summary { margin-bottom:4px; }
+details.selfcheck-answer ol { margin-top:0.2em; }
+.selfcheck-answers-link { margin:0.35em 0 0; font-size:0.9em; color:var(--ink-soft); }
+.selfcheck-answers-link a { color:var(--accent); }
+.part-answers { margin:2.4em 0 0; padding-top:1em; border-top:1px solid var(--line); scroll-margin-top:70px; }
+.part-answers-title { margin:0 0 0.15em; font-weight:700; font-size:1.05em; }
+.part-answers-note { margin:0 0 0.8em; font-size:0.9em; color:var(--ink-soft); }
+.part-answers details { margin:0.5em 0; }
+details.selfcheck-answer.part-answer summary { color:var(--ink); }
+
 /* ===== 章尾导航 / 资产卡 ===== */
 .prevnext { display:flex; justify-content:space-between; gap:12px; margin:30px 0 6px;
   padding-top:14px; border-top:1px solid var(--line); font-size:0.86rem; }
@@ -345,6 +364,11 @@ body.show-offroute article.chapter section.sec.dim { display:block; }
   a, .content a { color:inherit; text-decoration:none; }
   details { break-inside:avoid; }
   details > summary { display:none; }
+  details.selfcheck-answer { border:0; background:none; padding:0; }
+  details.selfcheck-answer > summary { display:block; color:var(--ink-soft); font-weight:700; }
+  details.selfcheck-answer:not([open]) { display:none; }
+  .selfcheck-label { border-top:0; padding-top:0; margin-top:1.4em; }
+  .part-answers { break-before:page; border-top:0; padding-top:0; margin-top:0; }
   .print-page .chapter { break-before:page; }
   .print-page .chapter:first-of-type { break-before:auto; }
 }
@@ -389,7 +413,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
 <h2>读全章（9）</h2><p>§0.1、§0.2、§0.3、§1、§2、§4、§6、§8、§12</p>
 <h2>只读所列节（8）</h2><p>§3（概率速查、Softmax 与温…、交叉熵、手算）；§5（Q、K、V、组装成 Block、KV Cache 原…）；§7（从续写到听话、可验证奖励 RLVR、什么时候用哪种、约束登场、脊柱）；§9（自回归循环、采样、KV 显存账、MLA 与效率回访）；§10（两条奇怪的曲线、两速度分解、机制、边界）；§11（鞍点、Edge of St…、SGD 噪声与线性缩…、实验）；§14（评估三支柱与 Goo…、可验证性 razor、评判员上岗、结业项目三）；§21（开放问题清单）</p>
 <p class="doc-meta">其余 13 页不读（自由读中仍可翻开）。</p>
-<h2>补课卡</h2><p>§9-s03 KV 账→已含（本路线读）；§10-s03 权重衰减→已含（本路线读）；§8-s04 MLA 门牌→已含（本路线读）；ch21-s03 自动科研注→已内联「评估器写不写得出来」一句；如需细节，自由读 §19</p>
+<h2>补课卡</h2><p>§9-s03 KV 账→已含（本路线读）；§10-s03 权重衰减→已含（本路线读）；§8-s04 MLA 条目→已含（本路线读）；ch21-s03 自动科研注→已内联「评估器写不写得出来」一句；如需细节，自由读 §19</p>
 <h2>豁免</h2><p>§13、§15–§20 不读；项目一/四不做</p>
 <h2>读完能（出口）</h2><ul><li>微调一个模型并对比秩（项目二）</li><li>写得出最小 eval 五件（项目三）</li><li>说得出幂律/Chinchilla/μP 各一行</li><li>说得出 EoS 两旋钮表与临界批</li></ul>
 <h2>自证题</h2><ul><li>项目二：链路＋玩具秩扫描（免费档）；两秩对比的完整训练按租卡档</li><li>项目三：最小 eval＋换序评判</li><li>手算：幂律外推四个点</li><li>说出失效两路径各一例</li></ul>
@@ -853,18 +877,33 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     }, { passive: true });
     upd();
   })();
-  /* 章页：抽查链接（隐藏节临时展开后定位） */
+  /* 章页：抽查链接（隐藏节临时展开后定位）。目标可能是一条节内锚
+     （如 #selfcheck），所以要先从目标向上找所属节，不能只按节锚查。 */
+  function revealTarget(el) {
+    var sec = el && el.closest ? el.closest('section.sec') : null;
+    if (sec && sec.classList.contains('dim')) sec.classList.add('offroute-shown');
+  }
   var rl = document.getElementById('reviewLink');
   if (rl) {
     rl.addEventListener('click', function (e) {
       var an = rl.getAttribute('data-anchor');
       if (!an) return;
-      var sec = document.querySelector('article.chapter section[data-anchor="' + an + '"]');
-      if (sec && sec.classList.contains('dim')) sec.classList.add('offroute-shown');
       var el2 = document.getElementById(an);
+      revealTarget(el2);
       if (el2 && el2.scrollIntoView) { e.preventDefault(); el2.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   }
+  /* 部末提醒等指向自查的链接：避开布局稳定前的原生 hash 落点偏移 */
+  document.querySelectorAll('a.selfcheck-jump').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var el = document.getElementById('selfcheck');
+      revealTarget(el);
+      if (el && el.scrollIntoView) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
   /* 检索：章与节标题（数据即内嵌块） */
   var si = document.getElementById('hubSearch');
   if (si) {
@@ -1009,6 +1048,19 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   })();
 
   /* 代码块复制按钮（H2.5） */
+  /* 跨页 hash（如从 §2 跳到 §9 的部末答案）在布局稳定后再落一次 */
+  (function () {
+    function jumpHash() {
+      var h = window.location.hash;
+      if (!h || h.length < 2) return;
+      var el = document.getElementById(h.slice(1));
+      if (el && el.scrollIntoView) {
+        setTimeout(function () { el.scrollIntoView({ block: 'start' }); }, 250);
+      }
+    }
+    if (document.readyState === 'complete') jumpHash();
+    else window.addEventListener('load', jumpHash);
+  })();
   document.querySelectorAll('article.chapter pre').forEach(function (pre) {
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'copy-btn'; btn.textContent = '复制';
