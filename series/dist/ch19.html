@@ -92,7 +92,7 @@ article.chapter p, article.chapter li, article.chapter blockquote { max-width:44
 /* 正文内链：颜色之外再给下划线（WCAG 1.4.1；axe link-in-text-block）；
    卡片/按钮型组件豁免（它们不是文内链接，靠形态区分） */
 .content a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
-.content a.route-card, .content a.route-next, .content a.review-link, .content a.router-start,
+.content a.route-next, .content a.review-link, .content a.router-start,
 .content a.pv-prev, .content a.pv-next, .content .hub-nav a { text-decoration: none; }
 h2 { font-size:1.22rem; margin:1.6em 0 0.6em; padding-bottom:0.2em; border-bottom:1px solid var(--line); }
 h3 { font-size:1.06rem; margin:1.3em 0 0.5em; }
@@ -240,16 +240,38 @@ section.sec.dim[data-kind="path"]:not([data-why]) > h2::after { content:"未纳�
 .node.dim { opacity:.55; }
 .node.focus { border-style:dashed; }
 .node-why { display:block; font-size:0.76rem; color:var(--ink-soft); margin-top:2px; }
-.route-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin:14px 0; }
-.route-card { display:flex; flex-direction:column; gap:4px; border:1px solid var(--line);
-  border-radius:10px; background:var(--card); padding:10px 12px; color:var(--ink); text-decoration:none; }
-.route-card:hover { border-color:var(--accent); }
+.route-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:10px; margin:14px 0; align-items:start; }
+.route-card { display:block; border:1px solid var(--line); border-radius:10px;
+  background:var(--card); color:var(--ink); }
+.route-card:hover, .route-card[open] { border-color:var(--accent); }
+.route-card[open] { grid-column:1 / -1; box-shadow:0 0 0 1px var(--accent) inset; }
 .route-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.route-card-summary { display:flex; flex-direction:column; gap:4px; padding:10px 12px;
+  cursor:pointer; list-style:none; }
+.route-card-summary::-webkit-details-marker { display:none; }
+.route-card-summary::after { content:"查看详情 ▾"; align-self:flex-start; margin-top:2px;
+  font-size:0.76em; color:var(--accent); }
+.route-card[open] > .route-card-summary::after { content:"收起 ▴"; }
+.route-card[open] > .route-card-summary .rc-aud,
+.route-card[open] > .route-card-summary .rc-meta { display:none; }
+.route-card-summary:hover { background:var(--accent-soft); border-radius:10px; }
+.route-card[open] > .route-card-summary:hover { border-radius:10px 10px 0 0; }
+.route-card .rc-head { display:flex; flex-wrap:wrap; gap:6px; align-items:baseline; }
 .route-card .rc-t { font-weight:700; }
 .route-card .rc-tag { font-size:0.72em; color:var(--accent); }
 .route-card .rc-aud { font-size:0.8em; color:var(--ink-soft); }
-.route-card .rc-exit { font-size:0.8em; }
+.route-card .rc-meta { display:flex; flex-wrap:wrap; gap:4px 10px; }
+.route-card .rc-plan { font-size:0.78em; }
 .route-card .rc-hours { font-size:0.76em; color:var(--ink-soft); }
+.route-card-body { display:flex; flex-direction:column; gap:5px; border-top:1px solid var(--line);
+  padding:9px 12px 12px; }
+.route-card-body p { margin:0; font-size:0.86em; }
+.route-card-body .rc-hours { font-size:0.8em; }
+.rc-actions { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-top:3px; }
+.rc-start { color:var(--accent); font-weight:700; }
+.rc-more { color:var(--ink-soft); font-size:0.88em; }
+.rc-start:hover, .rc-more:hover { text-decoration:underline; }
 #routerGoal, #routerTime { padding:3px 8px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); }
 .route-banner { margin:10px 0; padding:8px 12px; border:1px dashed var(--line); border-radius:8px;
   font-size:0.88em; color:var(--ink-soft); background:var(--accent-soft); }
@@ -990,24 +1012,66 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
       var rid = recommend();
       if (rid !== getRouteId() && rid !== 'free') seedDepthFor(rid);
       setRouteId(rid); applyRoute(rid);
+      setRouteCardOpen(rid);
     };
     rg.addEventListener('change', auto); rtm.addEventListener('change', auto);
     recommend();
   }
-  /* 路线卡 */
+  /* 路线卡：summary 展开即选中；跳转只由卡内的「开始」链接触发 */
+  function routeCard(id) {
+    var found = null;
+    document.querySelectorAll('.route-card').forEach(function (c) {
+      if (c.getAttribute('data-route') === id) found = c;
+    });
+    return found;
+  }
+  function setRouteCardStart(card, id) {
+    if (!card) return;
+    var start = card.querySelector('.rc-start');
+    if (!start) return;
+    if (id === 'free') { start.setAttribute('href', 's0a.html'); return; }
+    var dest = firstStation(id);
+    if (dest) start.setAttribute('href', dest);
+  }
+  function setRouteCardOpen(id) {
+    var card = routeCard(id);
+    if (!card) return;
+    document.querySelectorAll('.route-card').forEach(function (o) {
+      if (o !== card && o.open) o.open = false;
+    });
+    if (!card.open) {
+      // 程序化展开也要触发 toggle；标记一下，避免把向导的“推荐”文案改成“已选择”。
+      card._programmaticOpen = true;
+      card.open = true;
+    }
+    setRouteCardStart(card, id);
+  }
+  function setRouterStart(id) {
+    var rs = document.getElementById('routerStart');
+    if (!rs) return;
+    if (id === 'free') { rs.hidden = true; return; }
+    var dest = firstStation(id);
+    if (dest) { rs.href = dest; rs.textContent = '开始这条路线 →'; rs.hidden = false; }
+  }
+  function selectRouteCard(id, shouldOpen) {
+    if (id !== getRouteId() && id !== 'free') seedDepthFor(id);
+    setRouteId(id); applyRoute(id);
+    var card = routeCard(id);
+    if (card) {
+      if (shouldOpen) setRouteCardOpen(id); else setRouteCardStart(card, id);
+    }
+    setRouterStart(id);
+    var r = id === 'free' ? null : findRoute(id);
+    if (rr) rr.textContent = '已选择：' + (r ? r.title : '自由读');
+  }
   document.querySelectorAll('.route-card').forEach(function (c) {
-    c.addEventListener('click', function (e) {
-      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
-      e.preventDefault();
-      var id = c.getAttribute('data-route');
-      if (id !== 'free') seedDepthFor(id);
-      setRouteId(id); applyRoute(id);
-      if (id !== 'free') {
-        var r = findRoute(id);
-        if (rr && r) rr.textContent = '已切换：' + r.title;
-        var dest = firstStation(id);
-        if (dest) location.href = dest;
-      }
+    c.addEventListener('toggle', function () {
+      if (c._programmaticOpen) { c._programmaticOpen = false; return; }
+      if (!c.open) return;
+      document.querySelectorAll('.route-card').forEach(function (o) {
+        if (o !== c && o.open) o.open = false;
+      });
+      selectRouteCard(c.getAttribute('data-route'), false);
     });
   });
   /* 出口自证：勾选存本机；Hub 显示当前路线进度 */
@@ -1491,7 +1555,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
         try { localStorage.setItem(k, o[k]); n++; } catch (e) {} } });
       if (ioMsg) ioMsg.textContent = '已导入 ' + n + ' 项，已在本页生效。';
       refreshProgSummary(); refreshResume(); refreshSt(); refreshSelftestNote();
-      refreshProjLine(); applyRoute(getRouteId()); refreshReview();
+      refreshProjLine(); applyRoute(getRouteId()); setRouteCardOpen(getRouteId()); setRouterStart(getRouteId()); refreshReview();
     });
   }
   refreshProgSummary();
@@ -1499,10 +1563,11 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   refreshOffrouteNote();
 
   window.addEventListener('storage', function () {
-    applyRoute(getRouteId());
+    applyRoute(getRouteId()); setRouteCardOpen(getRouteId()); setRouterStart(getRouteId());
     refreshResume(); refreshSt(); refreshSelftestNote(); refreshProjLine(); refreshProgSummary(); refreshReview();
   });
   applyRoute(getRouteId());
+  setRouteCardOpen(getRouteId());
 })();
 </script>
 </body>

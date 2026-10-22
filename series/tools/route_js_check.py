@@ -57,7 +57,7 @@ function fail(msg) { bad++; console.log('FAIL ' + msg); }
 function mkEl(tag, attrs) {
   const el = {
     tag: tag, attrs: Object.assign({}, attrs || {}), children: [], textContent: '', hidden: false,
-    style: {}, _cls: new Set(), _listeners: {},
+    open: false, style: {}, _cls: new Set(), _listeners: {},
     get className() { return Array.from(this._cls).join(' '); },
     set className(v) { this._cls = new Set(String(v).split(/\s+/).filter(Boolean)); },
     get href() { return this.attrs.href || ''; },
@@ -149,7 +149,13 @@ register('termFilter', null); // 不存在于本 stub 语境
 
 const lis = SD.chapters.map(c => mkEl('li', { 'data-slug': c.slug }));
 const nodes = SD.chapters.map(c => mkEl('a', { 'data-slug': c.slug }));
-const cards = SD.routes.map(r => mkEl('a', { 'data-route': r.id }));
+const cards = SD.routes.map(r => {
+  const c = mkEl('details', { 'data-route': r.id });
+  const start = mkEl('a', { href: '#' });
+  start.className = 'rc-start';
+  c.appendChild(start);
+  return c;
+});
 const sections = [];
 SD.chapters.forEach(c => {
   if (STUB_CH.indexOf(c.slug) < 0) return;
@@ -364,13 +370,19 @@ global.localStorage.setItem('series-depth-v1', 'practice');
 global.localStorage.setItem('series-route-v1', 'deep');
 T.applyRoute('deep');
 if (global.localStorage.getItem('series-depth-v1') !== 'practice') fail('applyRoute must not reseed');
-// 卡片点击（deep）应重置为 theory 并跳转
+// 卡片展开（deep）应选中并重置为 theory；跳转只由卡内“开始”触发
 global.localStorage.setItem('series-progress-v1', '[]');
+global.localStorage.setItem('series-route-v1', 'agent-fast');
 const deepCard = cards.find(c => c.getAttribute('data-route') === 'deep');
 global.location.href = '';
-deepCard.dispatch('click');
-if (global.localStorage.getItem('series-depth-v1') !== 'theory') fail('card click seed: ' + global.localStorage.getItem('series-depth-v1'));
-if ((global.location.href || '').indexOf('s0a') < 0) fail('card click jump: ' + global.location.href);
+deepCard.open = true;
+deepCard.dispatch('toggle');
+if (global.localStorage.getItem('series-depth-v1') !== 'theory') fail('card open seed: ' + global.localStorage.getItem('series-depth-v1'));
+if ((global.location.href || '').indexOf('s0a') >= 0) fail('card open must not navigate: ' + global.location.href);
+const deepStart = deepCard.querySelector('.rc-start');
+if (!deepStart || (deepStart.getAttribute('href') || '').indexOf('s0a') < 0)
+  fail('card start href: ' + (deepStart && deepStart.getAttribute('href')));
+if (!deepCard._cls.has('active')) fail('card not active after open');
 
 // 3.11) 复习抽查（P1 缓做项）
 global.localStorage.setItem('series-progress-v1', JSON.stringify(['ch01', 'ch05']));
@@ -423,7 +435,7 @@ def main() -> int:
     scripts = re.findall(r"<script>(.*?)</script>", tpl, re.S)
     js = scripts[-1]
     js = js.replace(
-        "  applyRoute(getRouteId());\n})();",
+        "  applyRoute(getRouteId());\n  setRouteCardOpen(getRouteId());\n})();",
         "  window.__T = { viewOf: viewOf, recommend: recommend, ROUTER_MAP: ROUTER_MAP,\n"
         "                 findRoute: findRoute, nodeMins: nodeMins, freeDisp: freeDisp,\n"
         "                 applyRoute: applyRoute, refreshResume: refreshResume,\n"

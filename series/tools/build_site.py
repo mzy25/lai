@@ -278,6 +278,43 @@ ROUTER_TIMES = [("halfday", "一次半天"), ("fast", "两三周集中投入"),
                 ("slow", "几个月稳步推进"), ("endless", "长期，越多越好")]
 
 
+def route_first_href(route: dict) -> str:
+    """路线首站（构建期兜底；运行时由 firstStation 按已读进度重算）。"""
+    seq = route.get("sequence") or []
+    if not seq:
+        return "s0a.html"
+    first = seq[0]
+    slug = first.get("ch", "s0a")
+    if first.get("mode") == "focus" and first.get("sections"):
+        return f"{slug}.html#{first['sections'][0]}"
+    return f"{slug}.html"
+
+
+def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
+                    exit_text: str, hours_short: str, hours_full: str,
+                    start_href: str, start_label: str, more_href: str) -> str:
+    """首页路线卡：summary 只放选择所需信息，完整字段收在 details 内。"""
+    return (
+        f'<details class="route-card" data-route="{H.escape(rid)}" id="route-card-{H.escape(rid)}">'
+        '<summary class="route-card-summary">'
+        f'<span class="rc-head"><span class="rc-t">{H.escape(title)}</span>'
+        f'<span class="rc-tag">{H.escape(tag)}</span></span>'
+        f'<span class="rc-aud">{H.escape(audience)}</span>'
+        f'<span class="rc-meta"><span class="rc-plan">{H.escape(plan)}</span>'
+        f'<span class="rc-hours">{H.escape(hours_short)}</span></span>'
+        '</summary>'
+        '<div class="route-card-body">'
+        f'<p><b>适合：</b>{H.escape(audience)}</p>'
+        f'<p><b>路线安排：</b>{H.escape(plan)}</p>'
+        f'<p><b>出口：</b>{H.escape(exit_text)}</p>'
+        f'<p class="rc-hours"><b>投入：</b>{H.escape(hours_full)}</p>'
+        '<div class="rc-actions">'
+        f'<a class="rc-start" href="{H.escape(start_href)}">{H.escape(start_label)}</a>'
+        f'<a class="rc-more" href="{H.escape(more_href)}">完整说明 / 打印 →</a>'
+        '</div></div></details>'
+    )
+
+
 def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
                 free: dict) -> str:
     """Hub＝两个问题路由＋路线卡墙＋自由读卡＋节奏示例＋进度环＋检索。默认＝自由读。"""
@@ -314,29 +351,32 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     out.append('<div class="selftest-note" id="selftestNote"></div>')
     out.append('<a class="router-start" id="routerStart" hidden href="#"></a></div>')
 
-    # ---- 路线卡墙（自由读卡打头）
+    # ---- 路线卡墙（自由读卡打头；默认只展开一行，选中后再展开完整卡）
     out.append('<div class="route-cards" id="routeCards">')
-    out.append('<a class="route-card" data-route="free" href="routes.html#route-free">'
-               '<span class="rc-t">自由读</span><span class="rc-tag">默认</span>'
-               '<span class="rc-aud">不选路线，30 页全亮，按顺序或按兴趣翻</span>'
-               '<span class="rc-exit">出口：无（自由读没有出口承诺，走到哪算哪）</span>'
-               '<span class="rc-hours">读 ≈9 小时（全书）· 折叠块默认收起</span></a>')
+    out.append(route_card_html(
+        rid="free", title="自由读", tag="默认",
+        audience="不选路线，30 页全亮，按顺序或按兴趣翻",
+        plan="30 页全亮，按顺序或兴趣翻",
+        exit_text="无（自由读没有出口承诺，走到哪算哪）",
+        hours_short="读≈9h（全书）",
+        hours_full="读 ≈9 小时（全书）· 折叠块默认收起",
+        start_href="s0a.html", start_label="从 §0.1 开始 →",
+        more_href="routes.html#route-free"))
     for r in routes["routes"]:
-        ex = "；".join(r["exit"][:3])
-        hrs = (f'读 ≈{r["hours"]["read"]}h ＋ 练 ≈{r["hours"]["practice"]}h'
-               f' ＋ 项目 ≈{r["hours"]["project"]}h')
+        hrs_short = (f'读≈{r["hours"]["read"]}h · 练≈{r["hours"]["practice"]}h'
+                     f' · 项目≈{r["hours"]["project"]}h')
+        hrs_full = (f'读 ≈{r["hours"]["read"]}h ＋ 练 ≈{r["hours"]["practice"]}h'
+                    f' ＋ 项目 ≈{r["hours"]["project"]}h · {r["pace_note"]}')
         n_read = sum(1 for e in r["sequence"] if e["mode"] == "read")
         n_focus = len(r["sequence"]) - n_read
         skip = len(chapters) - len(r["sequence"])
         plan = (f'读 {n_read} 章' + (f'（焦点 {n_focus}）' if n_focus else '')
                 + (f'＋跳 {skip} 页' if skip else ''))
-        out.append(f'<a class="route-card" data-route="{r["id"]}" href="routes.html#route-{r["id"]}">'
-                   f'<span class="rc-t">{H.escape(r["title"])}</span>'
-                   f'<span class="rc-tag">{H.escape(r["tag"])}</span>'
-                   f'<span class="rc-aud">{H.escape(r["audience"])}</span>'
-                   f'<span class="rc-plan">{H.escape(plan)}</span>'
-                   f'<span class="rc-exit">出口：{H.escape(ex)}</span>'
-                   f'<span class="rc-hours">{H.escape(hrs)} · {H.escape(r["pace_note"])}</span></a>')
+        out.append(route_card_html(
+            rid=r["id"], title=r["title"], tag=r["tag"], audience=r["audience"],
+            plan=plan, exit_text="；".join(r["exit"]), hours_short=hrs_short,
+            hours_full=hrs_full, start_href=route_first_href(r),
+            start_label="开始这条路线 →", more_href=f'routes.html#route-{r["id"]}'))
     out.append('</div>')
 
     out.append('</section>')
