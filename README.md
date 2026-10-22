@@ -55,6 +55,7 @@ build/check_artifact_fresh.py  # 产物新鲜度门禁
 python3 series/tools/build_site.py       # series/*.md → series/dist/
 python3 series/tools/series_check.py     # 页面/锚点/路线/资产/配图/print 门禁
 python3 series/tools/build_readme.py --check
+python3 series/tools/first_use_scan.py --all --ledger-only --strict  # 术语首现/总账
 python3 build/check_artifact_fresh.py    # 与 HEAD 比对，源稿改了忘重建会报红
 ```
 
@@ -69,7 +70,8 @@ python3 build/check_artifact_fresh.py    # 与 HEAD 比对，源稿改了忘重�
 
 - 系列文风：`series/style/写作声音.md`、`series/style/句长基准.md`、`series/style/喻体台账.md`
 - 术语/符号/伏笔：`series/edit/*.tsv`
-- 改稿收尾：`python3 series/tools/finish_round.py`（首现、句长、表格、路线、构建双跑）
+- 改稿收尾：`python3 series/tools/finish_round.py`（首现/总账、句长、表格、残留、路线、构建双跑）
+- 工具索引：`series/tools/README.md`（构建、门禁、测量、手动工具各在哪）
 - 实验三条铁律：引用旧数字必复算；新实验必真跑并留档 `series/assets/`；正文数字与运行记录逐条对账
 
 ## 勘误与反馈

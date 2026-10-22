@@ -2,7 +2,7 @@ name: CI Audit
 
 # 根仓自足门禁：series 源稿 + 发布产物。
 # internal/ 与 .opencode/ 是本地私有仓，不在根仓跟踪范围；全仪器套件仍只在本地跑。
-# 本工作流只验证公开读者能看到的东西：结构、路线、README、HTML 产物与新鲜度。
+# 本工作流只验证公开读者能看到的东西：结构、路线、README、术语、HTML 产物与新鲜度。
 
 on:
   push:
@@ -36,6 +36,12 @@ jobs:
         run: python3 series/tools/route_lint.py --check
       - name: 阅读入口 README 是否同步
         run: python3 series/tools/build_readme.py --check
+      - name: 术语首现与总账
+        run: python3 series/tools/first_use_scan.py --all --ledger-only --strict
+      - name: 术语规则表自检
+        run: python3 series/tools/first_use_scan.py --check-rules
+      - name: 术语规则显式化
+        run: python3 series/tools/first_use_scan.py --all --ledger-only --strict --no-context-exempt
 
   artifacts:
     name: 产物新鲜度

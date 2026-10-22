@@ -8,6 +8,7 @@
 
 用法:
     python3 series/tools/residue_scan.py            # 扫全系列（散文单元）
+    python3 series/tools/residue_scan.py <章.md>…   # 只扫指定文件
     python3 series/tools/residue_scan.py --list     # 连「判留族」一并列出
 
 判读：EXPECT0＝应零命中（有命中即回流，需修）；LIST＝判留族，只提示计数防误删。
@@ -17,6 +18,7 @@ from __future__ import annotations
 import argparse
 import glob
 import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -41,10 +43,15 @@ PATTERNS = [
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("files", nargs="*", help="只扫指定章文件（默认全系列）")
     ap.add_argument("--list", action="store_true", help="连判留族一并列出")
     a = ap.parse_args()
-    files = [f for f in glob.glob(str(SERIES / "§*.md")) + glob.glob(str(SERIES / "T*.md"))
-             + glob.glob(str(SERIES / "支线*.md")) if not Path(f).name.startswith(("AGENTS", "plan"))]
+    files = a.files or [f for f in glob.glob(str(SERIES / "§*.md")) + glob.glob(str(SERIES / "T*.md"))
+                        + glob.glob(str(SERIES / "支线*.md")) if not Path(f).name.startswith(("AGENTS", "plan"))]
+    missing = [f for f in files if not Path(f).is_file()]
+    if missing:
+        print(f"文件不存在：{', '.join(missing)}", file=sys.stderr)
+        return 2
     total_bad = 0
     for name, pat, kind in PATTERNS:
         if kind == "LIST" and not a.list:

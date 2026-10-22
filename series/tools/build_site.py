@@ -532,8 +532,8 @@ def terms_items(chapters: list[dict]) -> list[tuple[str, str, str]]:
         if not name:
             continue
         note = "；".join(c for c in cols[2:] if c)
-        if "删除" in note and "档案" in note:
-            continue  # 已删装置的废条不入读者面
+        if ("删除" in note and "档案" in note) or "已并入" in note or "撤名退役" in note:
+            continue  # 已删/已并/撤名的废条不入读者面
         index[name] = len(items)
         items.append((name, cols[1] if len(cols) > 1 else "", note))
     seen_names = {it[0] for it in items}

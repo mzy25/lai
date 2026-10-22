@@ -528,6 +528,34 @@ def check_route_js() -> None:
         print("· 路线层 JS 对拍：PASS（viewOf 9/9、路由 20/20、free 全亮）")
 
 
+def _tracked_tools() -> list[Path]:
+    """仓内 tracked 的 tools/*.py；忽略本地私有脚本（.gitignore 里的仪器）。"""
+    r = subprocess.run(["git", "ls-files", "*.py"], cwd=HERE,
+                       capture_output=True, text=True)
+    if r.returncode == 0:
+        names = sorted({Path(x).name for x in r.stdout.splitlines() if x.strip()})
+        return [HERE / n for n in names if (HERE / n).is_file()]
+    return sorted(HERE.glob("*.py"))
+
+
+def check_tools_index() -> None:
+    """tools/README.md 必须收录每个 tracked tools/*.py，防索引随新增工具腐烂。"""
+    idx = HERE / "README.md"
+    if not idx.exists():
+        fail("tools/README.md 缺失")
+        return
+    text = idx.read_text(encoding="utf-8")
+    tools = _tracked_tools()
+    tracked = {p.name for p in tools}
+    missing = sorted(n for n in tracked if n not in text)
+    if missing:
+        fail(f"tools/README.md 未收录：{', '.join(missing)}")
+    stale = sorted(n for n in set(re.findall(r"`([A-Za-z0-9_]+\.py)`", text))
+                   if n not in tracked)
+    if stale:
+        fail(f"tools/README.md 提到不存在的脚本：{', '.join(stale)}")
+
+
 def anchors_drift(accept: bool) -> None:
     p = DIST / "anchors.json"
     if not p.exists():
@@ -569,6 +597,7 @@ def main() -> int:
     chapters = cfg["chapters"]
     check_bijection(chapters)
     check_source_terms()
+    check_tools_index()
 
     pages = {p.name for p in page_files()}
     for p in page_files():

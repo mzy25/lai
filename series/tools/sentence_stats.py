@@ -113,7 +113,7 @@ def part_of(uid: str) -> str:
 def row(path: Path, m: dict) -> str:
     uid = path.stem.split("-")[0]
     title = path.stem.split("-", 1)[1] if "-" in path.stem else path.stem
-    return (f"| {uid} {title} | {part_of(uid)} | {m['n']} | {m['mean']} | "
+    return (f"| {uid} {title} | {part_of(uid)} | {m['n']} | {m['mean']:.1f} | "
             f"{int(m['med'])} | {m['p90']} | {m['dashes']} | {m['dens']:.2f} |")
 
 
@@ -173,7 +173,7 @@ def update_row(p: Path, m: dict, note: str, dry: bool) -> int:
     if dry:
         print(f"[dry-run] {key}：{tail}{delta if changed else '值不变'}")
         return 0
-    bench.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    bench.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(f"{key}：{tail}{delta if changed else '值不变'}")
     return 0
 

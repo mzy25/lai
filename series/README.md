@@ -68,8 +68,10 @@
 python3 series/tools/build_site.py
 python3 series/tools/series_check.py
 python3 series/tools/build_readme.py --check
+python3 series/tools/first_use_scan.py --all --ledger-only --strict
 python3 build/check_artifact_fresh.py
 ```
 
-配图：`figures/`（`generate_figures.py` 单一来源）；动手实验：`assets/`；
-术语与符号台账：`edit/*.tsv`；写作规范：`style/`。
+改稿收尾：`python3 series/tools/finish_round.py`；工具索引见
+`series/tools/README.md`。配图：`figures/`（`generate_figures.py` 单一来源）；
+动手实验：`assets/`；术语与符号台账：`edit/*.tsv`；写作规范：`style/`。
