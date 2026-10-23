@@ -19,12 +19,13 @@
 | `first_use_scan.py` | 术语首现／总账核对；`--all --ledger-only --strict`；`--check-rules` | 门禁（收尾链＋CI） |
 | `residue_scan.py` | 修复批残留模式复扫（EXPECT0；可传章文件限定） | 门禁（收尾链） |
 | `metaphor_scan.py` | 喻体候选扫描；`--strict` 进收尾链 | 门禁（收尾链） |
+| `reference_lint.py` | 跨章回指、旧词残留与“后文简称”承诺检查；`--strict` 进收尾链 | 门禁（收尾链） |
 | `cliche_scan.py` | 套话词表扫描（只定位，不判罚） | 测量 |
 | `taste_probe.py` | 品味层探针（S/F/C/Q/B/E 六节） | 测量 |
 | `symbol_coverage.py` | 符号台账对查 | 测量 |
 | `apply_edits.py` | 断言式批量落文（锚全过才写） | 手动 |
 | `unit_closeout.py` | 单章收尾取证：first_use／句长／残留／套话／品味 | 手动 |
-| `finish_round.py` | 轮次收尾一条龙：改动章 → 总账/规则表 → 表格/残留 → 四仪 → build 双跑 | 收尾链 |
+| `finish_round.py` | 轮次收尾一条龙：改动章 → 总账/规则表 → 表格/残留 → 门禁链 → build 双跑 | 收尾链 |
 
 ## 常用命令
 
@@ -44,6 +45,7 @@ python3 series/tools/row_check.py
 python3 series/tools/first_use_scan.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md" --ledger-only
 python3 series/tools/first_use_scan.py --all --ledger-only --strict
 python3 series/tools/first_use_scan.py --check-rules
+python3 series/tools/reference_lint.py --strict
 python3 series/tools/first_use_scan.py --all --ledger-only --no-context-exempt  # 审计：只认显式规则
 python3 series/tools/residue_scan.py
 python3 series/tools/sentence_stats.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md" --row

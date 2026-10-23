@@ -163,6 +163,10 @@ def main() -> int:
     last = last_line(r)
     check("metaphor_scan --strict", r.returncode == 0, last if "候选" in last else "")
 
+    r = run([sys.executable, "tools/reference_lint.py", "--strict"])
+    last = last_line(r)
+    check("reference_lint --strict", r.returncode == 0, last)
+
     r = run([sys.executable, "tools/route_lint.py", "--check"])
     last = last_line(r)
     check("route_lint --check", r.returncode == 0 and "后向 0" in last, last[:70])
