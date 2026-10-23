@@ -516,12 +516,12 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     <div class="content">
 <article class="chapter">
 <div class="route-banner" id="routeBanner" data-slug="ch12" hidden></div>
-<div class="chapter-meta" id="chapterMeta" data-slug="ch12">7643 字 · 约 22 分钟</div>
+<div class="chapter-meta" id="chapterMeta" data-slug="ch12">7634 字 · 约 22 分钟</div>
 <div class="focus-row" id="focusRow" hidden><label><input type="checkbox" id="focusHide"> 隐藏非路线内容</label></div>
 <h1 id="ch12">§12 为什么模型的表现能提前预测、配方能大小通吃？——幂律、Chinchilla 与 μP <span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-○" title="支线先补">○</span></h1>
 <p>模型的表现能不能提前预测，配方能不能大小通吃。提前预测说的是：一条损失曲线在开训之前就能估出八九不离十，靠的是损失随规模滑动的幂律：参数越多、数据越多，损失按幂函数往下走。配方大小通吃说的是另一件事：小模型上调好的超参数，能不能原样搬给大模型？答案是默认不能，但 μP 这套按尺寸定步长的规矩能把"不能"改写成"能"。两问中间还横着一本配比账：Chinchilla 回答多少数据配多少参数；这个名字来自一种叫龙猫的小动物。可预测这件事有现实的分量：前沿大模型一次训练动辄上亿美元，损失若可预测，预算决策就能在小规模实验上完成；不可预测，"预算判断失效"只能事后才知道。</p>
 <section class="sec" data-anchor="ch12-s01"><h2 id="ch12-s01">幂律：损失为什么能提前算</h2>
-<p>幂律的完整说法是：损失等于不可约损失加上可降的部分。不可约损失是数据里本身不可预测、规模再大也压不下去的那部分，后文简称“地板”；降幅随规模按幂函数收缩，把"损失减去不可约损失"画在双对数坐标上是一条直线，斜率的绝对值就是幂指数 α。这个 α 是幂指数，不是 <a class="xref" href="ch05.html">§5</a> RoPE 里写进旋转矩阵 R(α) 的那个转角，两个 α 各管各的。有了这条直线，提前预测就不是口号了：在小规模处把直线拟合出来，大规模处的损失就能算出来，预算表在开训之前排好。</p>
+<p>幂律的完整说法是：损失等于不可约损失加上可降的部分。不可约损失是数据里本身不可预测、规模再大也压不下去的那部分；降幅随规模按幂函数收缩，把"损失减去不可约损失"画在双对数坐标上是一条直线，斜率的绝对值就是幂指数 α。这个 α 是幂指数，不是 <a class="xref" href="ch05.html">§5</a> RoPE 里写进旋转矩阵 R(α) 的那个转角，两个 α 各管各的。有了这条直线，提前预测就不是口号了：在小规模处把直线拟合出来，大规模处的损失就能算出来，预算表在开训之前排好。</p>
 <p>这个"能算出来"强到什么程度？有一个能逐格对账的玩具。教师是一个 4096 维线性函数，能量谱按分量序号的 −1.6 次幂衰减；学生只取前若干个坐标做线性回归，坐标个数充当"参数量"；噪声方差 0.09 就是不可约损失。数据量固定两万个样本，让参数轴的变化不被采样噪声淹没。八档规模的实测测试损失：</p>
 <div class="table-wrap" tabindex="0"><table class="wide" style="width:100%;">
 <colgroup>
@@ -779,7 +779,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
 <nav class="prevnext"><a class="pv-prev" href="ch11.html">← §11 训练怎样挑出会泛化的解？</a><a class="pv-next" href="ch13.html">§13 模型内部是什么样子、能看能改吗？ →</a></nav>
 <div class="asset-card"><b>本章资产：</b>6 件（fig_book_table.png、fig_olmo_fit.png、fit_and_extrapolate.py、make_figures.py、run_log.txt、首次运行记录.md） <a href="assets.html#d-%C2%A712-%E4%BD%93%E9%AA%8C%E5%AE%9E%E9%AA%8C">全部 →</a></div>
 </article>
-      <footer class="footer">v0.3.1 · 构建 2026-10-22 · 本章源稿校验和 2fc3aaab · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
+      <footer class="footer">v0.3.1 · 构建 2026-10-22 · 本章源稿校验和 af9f97d5 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
     </div>
   </main>
 </div>

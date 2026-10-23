@@ -521,7 +521,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     <div class="content">
 <article class="chapter">
 <div class="route-banner" id="routeBanner" data-slug="ch06" hidden></div>
-<div class="chapter-meta" id="chapterMeta" data-slug="ch06">7461 字 · 约 21 分钟</div>
+<div class="chapter-meta" id="chapterMeta" data-slug="ch06">7464 字 · 约 21 分钟</div>
 <div class="focus-row" id="focusRow" hidden><label><input type="checkbox" id="focusHide"> 隐藏非路线内容</label></div>
 <h1 id="ch06">§6 模型怎样把海量文本压进参数？——预训练、数据工程与 Scaling <span class="mk mk-▽" title="可后读">▽</span> <span class="mk mk-◇" title="主线依赖">◇</span></h1>
 <p>模型初始化时，参数还是随机数，什么都不会。预训练就是把海量文本压进参数的过程：文本是输入，通用能力是产出，Scaling 描述这套过程的规律。数据工程处理的是数据进入训练前的全部工序。</p>
@@ -632,7 +632,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
 </tbody>
 </table></div>
 <p>三笔账，三种问法。开口谈"配比"之前，先问说的是哪笔账，问错了账，答案就是错的。成分账也不是一成不变的定数：成分占比的几度调整、加练阶段的课程安排，都是按目标调出来的，不是算出来的固定解。</p>
-<p>数据不够怎么办？业界的一条出路是<strong>合成数据</strong>：用强模型批量生成候选语料，这是生成；用规则和模型双重筛掉低质与重复，这是过滤；在保留的验证集上检验增益，而不是看生成了多少，这是验证。数据能自己生成一部分，这套循环如今已是常见做法；生成的数据会不会把模型带偏、边界在哪，<a class="xref" href="ch14.html">§14</a> 谈。</p>
+<p>数据不够怎么办？业界的一条出路是<strong>合成数据</strong>：用强模型批量生成候选语料，这是生成；用规则和模型双重筛掉低质与重复，这是过滤；在保留的验证集上检验增益，而不是看生成了多少，这是验证。数据也可以由模型生成一部分，这套循环如今已是常见做法；生成的数据会不会把模型带偏、边界在哪，<a class="xref" href="ch14.html">§14</a> 谈。</p>
 </section><section class="sec" data-anchor="ch06-s07"><h2 id="ch06-s07">数据污染：评测题漏进语料 <span class="mk mk-▽" title="可后读">▽</span></h2>
 <p>评测题，可能早就躺在训练语料里。这类题大多公开，语料又从全网成批拉来，两边撞上，是迟早的事。行话叫<strong>数据污染</strong>（data contamination）：评测的题目或答案，混进了训练语料。它动的不是模型，是尺子：分数见涨，本事未必见长，可能只是背过题。</p>
 <p>对付它的做法，统称<strong>去污染</strong>（decontamination），一共三道防线。最直接的一道是重叠检查。把题目里的长词串拿去语料里搜，命中就进嫌疑名单；词串取多长是权衡：太长，换了说法的抓不到；太短，误伤日常表达。更稳的一道是做隔离：同一套评测常备两份，公开集供复现，私有集防背题。最彻底的一道是动态评测：评测集定期换新题，出题和泄题赛跑。</p>
@@ -705,7 +705,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
 <nav class="prevnext"><a class="pv-prev" href="ch05.html">← §5 模型怎样读懂上下文？</a><a class="pv-next" href="ch07.html">§7 只会续写的模型，怎样变成听得懂… →</a></nav>
 <div class="asset-card"><b>本章资产：</b>2 件（run_log.txt、scaling_slope.py） <a href="assets.html#d-%C2%A76-%E4%BD%93%E9%AA%8C%E5%AE%9E%E9%AA%8C">全部 →</a></div>
 </article>
-      <footer class="footer">v0.3.1 · 构建 2026-10-22 · 本章源稿校验和 51c4fbd8 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
+      <footer class="footer">v0.3.1 · 构建 2026-10-22 · 本章源稿校验和 fd04efbb · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
     </div>
   </main>
 </div>

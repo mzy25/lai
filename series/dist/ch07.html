@@ -520,7 +520,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     <div class="content">
 <article class="chapter">
 <div class="route-banner" id="routeBanner" data-slug="ch07" hidden></div>
-<div class="chapter-meta" id="chapterMeta" data-slug="ch07">8711 字 · 约 25 分钟</div>
+<div class="chapter-meta" id="chapterMeta" data-slug="ch07">8713 字 · 约 25 分钟</div>
 <div class="focus-row" id="focusRow" hidden><label><input type="checkbox" id="focusHide"> 隐藏非路线内容</label></div>
 <h1 id="ch07">§7 只会续写的模型，怎样变成听得懂指令的助手？——四种反馈、可验证奖励与上下文工程 <span class="mk mk-▽" title="可后读">▽</span></h1>
 <p>基座模型有能力、无导向：潜空间里通用推理的结构已经长好，可它不知道用户要什么、该拒什么、按什么格式答。只会续写是出厂状态，听得懂指令是教完的样子；中间是教的手段——四种反馈（例题、打分、对错、干活），可验证奖励是对错一路的开路先锋，上下文工程是教不进去那部分的正式手艺。约束那条线也从这里展开：不等式约束、KKT、对偶与影子价格，它也是权重衰减与安全的源头。</p>
@@ -782,7 +782,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
 </section><section class="sec" data-anchor="ch07-s10"><h2 id="ch07-s10">结业项目一：MiniMind-V</h2>
 <p><a class="xref" href="ch01.html">§1</a> 开口说话的小模型，出自 MiniMind 家族；这个项目给家族加上眼睛，让 MiniMind 学会看图、用图对话。</p>
 <p>先把版本说清：下面的数字以 2026 年春的仓库快照为准，这个家族迭代很快，动手时以当时版本为准。</p>
-<p><strong>MiniMind-V</strong> 还是 <a class="xref" href="ch06.html">§6</a> 那套三件套，等比缩小：视觉编码器 <strong>SigLIP2</strong>，拿来就冻结，约 95M 参数，一张 256×256 的图切成 8×8=64 个图像块、出 64 个视觉 token；连接器是 LayerNorm 加两层 MLP，约 1M 参数，把视觉特征投影到语言模型的维度，方案与 LLaVA-1.5 相同；MiniMind 语言模型约 64M。可训练部分合计约 65M，推理时整机约 160M。</p>
+<p><strong>MiniMind-V</strong> 还是 <a class="xref" href="ch06.html">§6</a> 那套三部分结构，等比缩小：视觉编码器 <strong>SigLIP2</strong>，拿来就冻结，约 95M 参数，一张 256×256 的图切成 8×8=64 个图像块、出 64 个视觉 token；连接器是 LayerNorm 加两层 MLP，约 1M 参数，把视觉特征投影到语言模型的维度，方案与 LLaVA-1.5 相同；MiniMind 语言模型约 64M。可训练部分合计约 65M，推理时整机约 160M。</p>
 <p>两阶段配方在这里是玩具版：阶段一先对齐，视觉编码器与语言模型全冻、只训连接器；阶段二再指令微调，解冻连接器与语言模型的首尾层。"冻结是保护，不是省事"在这个玩具尺度上缩小版复现；只动首尾层，同属温和版思路。</p>
 <p>数据是 ALLaVA-4V 数据集：Pretrain 127 万条图文说明，SFT 290 万条多模态对话，全部开源。配方因此有两种跑法：老实版先 Pretrain 再 SFT，捷径版直接 SFT——SFT 数据已把 Pretrain 的子集合并进去，官方推荐快速复现可跳过阶段一。两阶段脚本都留着。</p>
 <p>成本按仓库 README 的口径：SFT 一个 epoch，单张 3090 约 2 小时，租卡约 3 元，不含视觉编码器的预训练（SigLIP2 是拿来冻结的）；代码协议 Apache 2.0。</p>
@@ -810,7 +810,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
 <nav class="prevnext"><a class="pv-prev" href="ch06.html">← §6 模型怎样把海量文本压进参数？</a><a class="pv-next" href="ch08.html">§8 想改模型，一定要全量重训吗？ →</a></nav>
 <div class="asset-card"><b>本章资产：</b>3 件（grpo_advantage.py、run_log.txt、预置笔记本.ipynb） <a href="assets.html#d-%C2%A77-%E4%BD%93%E9%AA%8C%E5%AE%9E%E9%AA%8C">全部 →</a></div>
 </article>
-      <footer class="footer">v0.3.1 · 构建 2026-10-22 · 本章源稿校验和 8a87c55a · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
+      <footer class="footer">v0.3.1 · 构建 2026-10-22 · 本章源稿校验和 f520df29 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
     </div>
   </main>
 </div>
