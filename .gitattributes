@@ -1,0 +1,8 @@
+# 文本统一 LF；二进制不做行尾/差异转换
+* text=auto eol=lf
+*.docx binary
+*.png binary
+*.pdf binary
+*.woff2 binary
+*.woff binary
+*.ttf binary

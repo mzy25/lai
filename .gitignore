@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+
+# 构建中间产物
+*_raw.docx
+~$*.docx
+
+# 本地构建依赖与第三方参考资料（不随仓库分发）
+vendor/
+references/
+
+# 临时草稿与运行输出
+tmp*.md
+tmp*/
+*.tmp
+
+# series 私有工作区（不随公开仓分发）
+series/.tmp/
+series/.*.lock
+series/packs/
+series/plan*.md
+series/学习路径重设计方案.md
+series/知识点清单全集.md
+series/AGENTS.md
+series/edit/
+series/tools/pack_rebuild.py
+series/tools/hw_scan.py
+series/tools/browser_check.py
+series/tools/browser_check.sh
+series/tools/visual_pack.py
+
+# 系统
+.DS_Store

@@ -1,0 +1,16 @@
+{
+  "version": "0.3.3",
+  "date": "2026-11-04",
+  "contract": {
+    "terms_min": 600,
+    "projects": 4,
+    "migration_pages": ["ch09", "ch14", "ch21"],
+    "routes_min": 5,
+    "routes_selfcheck_min": 2,
+    "selftest_details_min": 8,
+    "env_assets_min": 6,
+    "aria_live_min": 3,
+    "hub_needles": ["节奏示例", "巩固半周", "梯度检查", "六站拆批", "MiniMind-V", "MiniMind-O"],
+    "routes_needles": ["尝鲜速览", "应用与 Agent", "训练与调参", "生成方向", "研究与理论", "深究线", "论文清单", "自证题"]
+  }
+}

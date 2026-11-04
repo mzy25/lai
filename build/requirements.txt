@@ -1,0 +1,6 @@
+# 本地技能环境（series v1 站点构建本身只需系统 python3 + pandoc + node）
+# 配图：numpy / matplotlib / pillow；长文编辑的骨架脚本：markdown-it-py
+numpy
+matplotlib
+markdown-it-py
+pillow

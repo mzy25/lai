@@ -1,0 +1,96 @@
+name: CI Audit
+
+# 根仓自足门禁：series 源稿 + 发布产物。
+# internal/ 与 .opencode/ 是本地私有仓，不在根仓跟踪范围；全仪器套件仍只在本地跑。
+# 本工作流只验证公开读者能看到的东西：结构、路线、README、术语、HTML 产物与新鲜度。
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  structure:
+    name: 结构硬断言
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 环境读数（诊断用）
+        run: |
+          python3 -V
+          git --version
+      - name: 表格结构
+        run: python3 series/tools/table_check.py
+      - name: 路线断链
+        run: python3 series/tools/route_lint.py --check
+      - name: 阅读入口 README 是否同步
+        run: python3 series/tools/build_readme.py --check
+      - name: 术语首现与总账
+        run: python3 series/tools/first_use_scan.py --all --ledger-only --strict
+      - name: 术语规则表自检
+        run: python3 series/tools/first_use_scan.py --check-rules
+      - name: 术语规则显式化
+        run: python3 series/tools/first_use_scan.py --all --ledger-only --strict --no-context-exempt
+      - name: 符号台账
+        run: python3 series/tools/symbol_coverage.py --strict
+      - name: 句长基准表对账
+        run: python3 series/tools/row_check.py
+      - name: 跨章回指/旧词
+        run: python3 series/tools/reference_lint.py --strict
+      - name: 喻体预算
+        run: python3 series/tools/metaphor_scan.py --strict
+      - name: 修复批残留
+        run: python3 series/tools/residue_scan.py
+
+  artifacts:
+    name: 产物新鲜度
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # 本机 pandoc = Ubuntu 24.04 的 3.1.3+ds-2（/usr/bin/pandoc）。CI 用同一发行版包，
+      # 保证 build_site 的 HTML 输出与入库产物一致（官方静态二进制可能产生差异）。
+      - name: 安装 pandoc（apt，对齐本机 3.1.3+ds）
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pandoc
+          pandoc --version | head -1
+      - name: 环境读数（诊断用）
+        run: |
+          python3 -V
+          pandoc --version | head -1
+          node --version
+      - name: 重建站点产物
+        run: python3 series/tools/build_site.py
+      - name: 站点结构/路线/资产门禁
+        run: python3 series/tools/series_check.py
+      # 与 HEAD 比对：series/dist 逐字节；失败时转成 check-run annotation。
+      - name: 产物新鲜度门禁
+        run: |
+          set +e
+          out=$(python3 build/check_artifact_fresh.py 2>&1)
+          rc=$?
+          printf '%s\n' "$out"
+          if [ "$rc" -ne 0 ]; then
+            printf '%s\n' "$out" | while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error title=freshness::$line"
+            done
+          fi
+          exit "$rc"

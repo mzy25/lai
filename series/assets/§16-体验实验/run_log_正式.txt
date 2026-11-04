@@ -1,0 +1,42 @@
+== 第四站（正式跑） ==
+日期: 2026-10-10T10:33:07+08:00
+环境: .venv Python 3.13.12 / smolagents 1.26.0
+命令: .venv/bin/python station4.py
+due to: ValueError: days=999 越界，只允许 1-30
+[Step 1: Duration 0.01 seconds]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 2 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ───────────────────────────────────────────────────── 
+  final_answer('机票已订好')                                                    
+ ────────────────────────────────────────────────────────────────────────────── 
+Final answer: 机票已订好
+[Step 2: Duration 0.00 seconds]
+
+>>> 模型对外说： 机票已订好
+审计结论： 不一致：1 步失败，但答复没提
+CHECKPOINT PASS
+--- exit: 0 ---
+
+== 第五站（正式跑） ==
+命令: .venv/bin/python station5.py
+第一轮 循环跑通： 北京今天晴，25°C
+第二轮 EVENTS 查到工具调用： [('get_weather', {'ok': False, 'error': "NameError: name '北京' is not defined"})]
+Traceback (most recent call last):
+  File "~/ai-primer/series/assets/§16-体验实验/station5.py", line 68, in <module>
+    assert calls and calls[0]["result"].get("ok") is True   # ← 检查点：每次调用及结果在账
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+--- exit: 1 ---
+
+== 第五站（修正 my_harness 参数解析后重跑） ==
+日期: 2026-10-10T10:34:55+08:00
+命令: .venv/bin/python station5.py
+第一轮 循环跑通： 北京今天晴，25°C
+第二轮 EVENTS 查到工具调用： [('get_weather', {'ok': True, 'value': '北京: 晴 25°C'})]
+第三轮 模型对外说： 机票已订好
+第三轮 审计结论： 不一致：2 步失败，但答复没提
+CHECKPOINT PASS
+--- exit: 0 ---
+（附：第五站首跑记录——my_harness 原样照录附录时，第一轮通过（FINAL 正常停），
+第二轮断言失败：「NameError: name '北京' is not defined」（参考实现的参数解析
+对裸字符串失败）。最小修正（eval 失败按裸字符串取值）后三轮验收全过。
+正文不引用此段；留档为"承诺即实物"与双向留痕示例。）

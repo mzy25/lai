@@ -1,0 +1,4 @@
+# 旧五书管线（仅在 tag five-books-final / legacy worktree 需要）
+# 当前 series v1 的 skill 不再导入 python-docx / lxml。
+python-docx
+lxml

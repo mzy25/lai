@@ -1,0 +1,14 @@
+[env] torch 2.14.1+cpu | cuda False | cpu 24
+[env] transformers 4.57.6 | peft 0.21.2 | bnb 0.50.2
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:07<00:22,  7.54s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:18<00:19,  9.57s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:27<00:09,  9.40s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:35<00:00,  8.66s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:35<00:00,  8.82s/it]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[A1] NF4 底座加载 OK，41s，峰值内存 8.0GB
+[A1] 量化线性层 196 个（示例 model.layers.0.self_attn.q_proj）
+[A2] 可训练参数 5,046,272 / 4,358,018,560（0.1158%）
+[time] 单步 6.5s（Qwen2.5-7B-Instruct NF4 CPU）
+[A3] losses [4.0593, 3.0244, 2.5465, 4.1054, 2.7253, 1.9589, 2.1463, 1.6663, 1.1009, 0.5864, 0.5109, 0.4711]
+[A3] 首 3 均 3.210 → 尾 3 均 0.523（下降 True）
+[A4] adapter 存盘 OK：/tmp/opencode/qlora_7b_adapter（19.3 MB）
+[A5] 推理 smoke OK
+[done] 总用时 125s，峰值内存 11.6GB，步数 12
