@@ -432,11 +432,11 @@ def route_time_total_text(r: dict, chapters: list[dict]) -> str:
 
 
 def route_time_compact_text(r: dict, chapters: list[dict]) -> str:
-    """首页矩阵摘要用：一个主数字，不拆速读/学习/练习。"""
+    """首页矩阵摘要用：只给一个主数字，周数留在展开详情。"""
     if r["id"] == "taste":
-        return "约 0.5–0.8h"
-    _, _, total, weeks = route_load(r, chapters)
-    return f"约 {total:.0f}h · {weeks.replace('约 ', '', 1)}"
+        return "0.5–0.8h"
+    _, _, total, _ = route_load(r, chapters)
+    return f"{total:.0f}h"
 
 
 def route_coverage_text(r: dict, view: dict) -> str:
@@ -458,23 +458,23 @@ def route_coverage_text(r: dict, view: dict) -> str:
 def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
                     exit_text: str, hours_short: str, hours_full: str,
                     start_href: str, start_label: str, more_href: str,
-                    goal: str = "", positioning: str = "", summary: str = "",
-                    variant: str = "full") -> str:
+                    goal: str = "", positioning: str = "", abilities: str = "",
+                    summary: str = "", variant: str = "full") -> str:
     """首页路线卡：摘要只放选择所需信息，完整字段收在 details 内。"""
     tag_html = (f'<span class="rc-tag">{H.escape(tag)}</span>'
                 if tag and tag not in title else '')
     if variant == "option":
         summary_html = (
-            f'<span class="rc-opt-head"><span class="rc-kind">{H.escape(positioning)}</span>'
-            f'{tag_html}<span class="rc-time">{H.escape(hours_short)}</span></span>'
-            f'<span class="rc-opt-summary rc-plan">{H.escape(summary)}</span>'
+            f'<span class="rc-opt-line"><span class="rc-kind">{H.escape(positioning)}</span>'
+            f'{tag_html}<span class="rc-ability rc-plan">{H.escape(abilities)}</span>'
+            f'<span class="rc-time">{H.escape(hours_short)}</span></span>'
         )
     elif variant == "bar":
         summary_html = (
-            f'<span class="rc-bar-head"><span class="rc-bar-title">{H.escape(title)}</span>'
+            f'<span class="rc-bar-line"><span class="rc-bar-title">{H.escape(title)}</span>'
             f'<span class="rc-kind">{H.escape(positioning)}</span>{tag_html}'
+            f'<span class="rc-ability rc-plan">{H.escape(abilities)}</span>'
             f'<span class="rc-time">{H.escape(hours_short)}</span></span>'
-            f'<span class="rc-bar-summary rc-plan">{H.escape(summary)}</span>'
         )
     else:
         summary_html = (
@@ -503,72 +503,19 @@ def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
 
 def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
                 free: dict, views_by_route: dict) -> str:
-    """Hub＝两个问题路由＋路线卡墙＋自由读卡＋节奏示例＋进度环＋检索。默认＝自由读。"""
+    """Hub＝选方向＋路线卡＋试读/自由读＋路线图＋我的＋参考。默认＝自由读。"""
     out: list[str] = []
     out.append('<div class="hero"><h1>AI 系列读物 · 阅读版</h1>'
-               '<p class="doc-meta">30 个阅读单元：主线 24＋支线 6。四个方向＋半日试读：应用 / Agent、'
-               '训练 / 调参、生成、研究；每个方向两条路，先拿结果或系统走完；也可以随时自由读。'
-               '支线补页是参考页，任何路线都可查，不计入路线时数。'
-               '检索用本页底部搜索框或 <a href="print.html">全文版</a>（Ctrl+F）；'
-               '查词用 <a href="terms.html">术语总表</a>；上手前看 <a href="env.html">环境指南</a>，'
-               '拿不准数学底子做 <a href="selftest.html">数学自修自测</a>；'
-               '路线全文、对比表与论文清单见 <a href="routes.html">路线卡</a>。</p></div>')
-    out.append('<div class="legend">' + " ".join(
-        f'<span class="item"><b>{k}</b> {v}</span>' for k, v in MARK_META.items()) + "</div>")
+               '<p class="doc-meta">30 个阅读单元：主线 24＋支线 6。先选一个方向；也可以直接自由读。</p></div>')
     out.append('<div class="resume" id="resumeBlock" hidden>'
                '<a class="resume-link" id="resumeLink" href="#"></a>'
                '<ul class="recent" id="recentList"></ul></div>')
     out.append('<div class="hub-nav" aria-label="页面分区">'
                '<a href="#hub-start">开始</a> · <a href="#hub-map">路线图</a> · '
                '<a href="#hub-mine">我的</a> · <a href="#hub-ref">参考</a></div>')
-    out.append('<section class="hub-sec" id="hub-start"><h2 class="hub-h">开始</h2>')
-
-    # ---- 两个问题 → 推荐路线（JS 落地映射）
-    out.append('<div class="wizard" id="router">')
-    out.append('<div class="wiz-title">两个问题，推荐一条路线（可随时改）</div>')
-    out.append('<div class="wiz-group"><span class="wiz-label">你想用 AI 做什么？</span>'
-               f'<select id="routerGoal" aria-label="你想用 AI 做什么">'
-               + "".join(f'<option value="{k}">{v}</option>' for k, v in ROUTER_GOALS)
-               + '</select></div>')
-    out.append('<div class="wiz-group"><span class="wiz-label">你能投入多少时间？</span>'
-               f'<select id="routerTime" aria-label="你能投入多少时间">'
-               + "".join(f'<option value="{k}">{v}</option>' for k, v in ROUTER_TIMES)
-               + '</select></div>')
-    out.append(f'<div class="wiz-result" id="routerResult" aria-live="polite"></div>')
-    out.append('<div class="selftest-note" id="selftestNote"></div>')
-    out.append('<a class="router-start" id="routerStart" hidden href="#"></a></div>')
-
-    # ---- 路线入口：半日试读、自由读、四方向矩阵
+    out.append('<section class="hub-sec" id="hub-start"><h2 class="hub-h">选一个方向</h2>')
     out.append('<div class="route-cards" id="routeCards">')
     route_by_id = {r["id"]: r for r in routes["routes"]}
-
-    taste = route_by_id["taste"]
-    out.append(route_card_html(
-        rid="taste", title="尝鲜速览", tag="",
-        audience=taste["audience"],
-        plan=route_coverage_text(taste, views_by_route["taste"]),
-        exit_text="；".join(taste["exit"]),
-        hours_short=route_time_compact_text(taste, chapters),
-        hours_full=route_time_text(taste, chapters),
-        start_href=route_first_href(taste), start_label="开始尝鲜 →",
-        more_href="routes.html#route-taste", goal=taste["goal"],
-        positioning=taste["positioning"], summary=taste["summary"], variant="bar"))
-
-    free_fast = sum(c["mins"] for c in chapters if not c.get("reference")) / 60
-    free_study = free_fast * FAST_CPM / STUDY_CPM
-    out.append(route_card_html(
-        rid="free", title="自由读", tag="",
-        audience="不选路线，按顺序或按兴趣翻",
-        plan="30 个单元全亮（含补页参考）",
-        exit_text="无（自由读没有出口承诺，走到哪算哪）",
-        hours_short=f'约 {free_study:.0f}h · 全书',
-        hours_full=f'读 速读≈{free_fast:.1f}h / 学习≈{free_study:.1f}h（全书）· 折叠块默认收起',
-        start_href="s0a.html", start_label="从 §0.1 开始 →",
-        more_href="routes.html#route-free",
-        positioning="默认",
-        summary="30 个单元全亮：按顺序或兴趣翻", variant="bar"))
-
-    out.append('<h3 class="route-pick-title">选一个方向</h3>')
     out.append('<p class="route-pick-note">每个方向两条：一条先拿结果，一条走得更全；'
                '补页随查，不计入时数。'
                '<a href="routes.html#compare">看九种走法对比</a>。</p>')
@@ -583,27 +530,80 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
             rid=r["id"], title=r["title"], tag=r["tag"], audience=r["audience"],
             plan=plan, exit_text="；".join(r["exit"]), hours_short=hrs_short,
             hours_full=hrs_full, start_href=route_first_href(r), goal=r["goal"],
-            positioning=r["positioning"], summary=r["summary"],
+            positioning=r["positioning"], abilities=r["abilities"],
             start_label="开始这条路线 →", more_href=f'routes.html#route-{r["id"]}',
             variant="option")
 
-    for g in route_groups(routes):
+    groups = [g for g in route_groups(routes) if g["id"] != "taste"]
+    for idx, g in enumerate(groups, 1):
         gid, gtitle, gsub, rids = g["id"], g["title"], g.get("sub", ""), g["routes"]
-        if gid == "taste":
-            continue
         out.append(f'<section class="route-group" data-group="{gid}" data-row="1"'
                    f' id="route-group-{gid}">')
         out.append('<div class="route-row-head">'
+                   f'<span class="route-row-num">{idx:02d}</span>'
+                   '<div class="route-row-text">'
                    f'<h3 class="route-group-title">{H.escape(gtitle)}</h3>'
                    f'<p class="route-group-sub">{H.escape(gsub)}</p>'
-                   '</div>')
+                   '</div></div>')
         out.append('<div class="route-group-body">')
         for rid in rids:
             out.append(route_card_for(route_by_id[rid]))
         out.append('</div></section>')
+
+    # ---- 不选方向的入口：半日试读、自由读
+    out.append('<h3 class="route-pick-title">或者，不选方向</h3>')
+    taste = route_by_id["taste"]
+    out.append(route_card_html(
+        rid="taste", title="尝鲜速览", tag="",
+        audience=taste["audience"],
+        plan=route_coverage_text(taste, views_by_route["taste"]),
+        exit_text="；".join(taste["exit"]),
+        hours_short=route_time_compact_text(taste, chapters),
+        hours_full=route_time_text(taste, chapters),
+        start_href=route_first_href(taste), start_label="开始尝鲜 →",
+        more_href="routes.html#route-taste", goal=taste["goal"],
+        positioning=taste["positioning"], abilities=taste["abilities"], variant="bar"))
+    free_fast = sum(c["mins"] for c in chapters if not c.get("reference")) / 60
+    free_study = free_fast * FAST_CPM / STUDY_CPM
+    out.append(route_card_html(
+        rid="free", title="自由读", tag="",
+        audience="不选路线，按顺序或按兴趣翻",
+        plan="30 个单元全亮（含补页参考）",
+        exit_text="无（自由读没有出口承诺，走到哪算哪）",
+        hours_short=f'{free_study:.0f}h',
+        hours_full=f'读 速读≈{free_fast:.1f}h / 学习≈{free_study:.1f}h（全书）· 折叠块默认收起',
+        start_href="s0a.html", start_label="从 §0.1 开始 →",
+        more_href="routes.html#route-free",
+        positioning="默认",
+        abilities="30 个单元全亮", variant="bar"))
     out.append('</div>')
 
+    # ---- 两个问题 → 推荐路线（放在选择卡片之后）
+    out.append('<div class="wizard" id="router">')
+    out.append('<div class="wiz-title">不知道怎么选？两个问题给你一条（可随时改）</div>')
+    out.append('<div class="wiz-group"><span class="wiz-label">你想用 AI 做什么？</span>'
+               f'<select id="routerGoal" aria-label="你想用 AI 做什么">'
+               + "".join(f'<option value="{k}">{v}</option>' for k, v in ROUTER_GOALS)
+               + '</select></div>')
+    out.append('<div class="wiz-group"><span class="wiz-label">你能投入多少时间？</span>'
+               f'<select id="routerTime" aria-label="你能投入多少时间">'
+               + "".join(f'<option value="{k}">{v}</option>' for k, v in ROUTER_TIMES)
+               + '</select></div>')
+    out.append(f'<div class="wiz-result" id="routerResult" aria-live="polite"></div>')
+    out.append('<div class="selftest-note" id="selftestNote"></div>')
+    out.append('<a class="router-start" id="routerStart" hidden href="#"></a></div>')
+
+    out.append('<details class="legend-details"><summary>读法标记</summary>'
+               '<div class="legend">'
+               + " ".join(f'<span class="item"><b>{k}</b> {v}</span>'
+                          for k, v in MARK_META.items())
+               + '</div></details>')
+    out.append('<p class="doc-meta hub-tools">工具与参考：'
+               '<a href="terms.html">术语总表</a> · <a href="env.html">环境指南</a> · '
+               '<a href="selftest.html">数学自修自测</a> · '
+               '<a href="routes.html">路线与论文清单</a> · <a href="print.html">全文打印</a></p>')
     out.append('</section>')
+
     # ---- 路线图（30 节点；JS 按所选路线更新类）
     out.append('<section class="hub-sec" id="hub-map"><h2 class="hub-h">路线图</h2>')
     out.append('<div class="route" id="route">')
