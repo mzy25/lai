@@ -46,7 +46,7 @@ DEFAULT_CONTRACT = {
     "env_assets_min": 6,
     "aria_live_min": 3,
     "hub_needles": ["节奏示例", "巩固半周", "梯度检查", "六站拆批", "MiniMind-V", "MiniMind-O"],
-    "routes_needles": ["尝鲜速览", "应用与 Agent", "训练与调参", "生成方向", "研究与理论", "深究线", "论文清单", "自证题"],
+    "routes_needles": ["尝鲜速览", "应用 / Agent", "训练 / 调参", "生成方向", "研究与理论", "深究线", "论文清单", "自证题"],
 }
 
 
@@ -377,8 +377,13 @@ def check_b3(chapters: list[dict]) -> None:
         fail("内嵌 default_route ≠ free（默认应为自由读）")
 
     cards = re.findall(r'class="route-card" data-route="([^"]+)"', idx)
-    if cards != ["free"] + [r["id"] for r in routes]:
-        fail(f"Hub 路线卡序列异常：{cards}")
+    expected_cards = {"free"} | {r["id"] for r in routes}
+    if set(cards) != expected_cards or len(cards) != len(expected_cards):
+        fail(f"Hub 路线卡集合异常：{cards}")
+    groups = re.findall(r'class="route-group" data-group="([^"]+)"', idx)
+    expected_groups = [g["id"] for g in cfg.get("groups", []) if len(g.get("routes", [])) > 1]
+    if groups != expected_groups:
+        fail(f"Hub 目标卡分组异常：{groups}；应为 {expected_groups}")
     emb = {r["id"] for r in ref.get("routes", [])}
     if emb != {r["id"] for r in routes}:
         fail("内嵌 routes 与 routes.json 的 id 集合不一致")
@@ -525,8 +530,8 @@ def check_supply_pages() -> None:
     rp2 = (DIST / "routes.html").read_text(encoding="utf-8")
     routes_cfg2 = json.loads((PROFILES / "routes.json").read_text(encoding="utf-8"))
     n_r = len(routes_cfg2["routes"])
-    if rp2.count("每周 5h≈") != n_r:
-        fail(f"routes.html 节奏三档行 {rp2.count('每周 5h≈')} ≠ {n_r}")
+    if rp2.count('class="route-facts"') != n_r:
+        fail(f"routes.html 路线事实表 {rp2.count('class=\"route-facts\"')} ≠ {n_r}")
     if rp2.count("打印本路线") != n_r:
         fail(f"routes.html 打印链 {rp2.count('打印本路线')} ≠ {n_r}")
     for r in routes_cfg2["routes"]:
@@ -587,7 +592,7 @@ def check_supply_pages() -> None:
 
 
 def check_part_answers(chapters: list[dict]) -> None:
-    """部末答案完整性：源答案块计数 = 部末折叠数；章页不再留内联答案。"""
+    """篇末答案完整性：源答案块计数 = 篇末折叠数；章页不再留内联答案。"""
     summary_re = re.compile(
         r'<details>\s*<summary>\s*先写，再看：答案与去处\s*</summary>', re.S)
     expected: dict[str, list[tuple[dict, int]]] = {}
@@ -600,19 +605,19 @@ def check_part_answers(chapters: list[dict]) -> None:
     for part, entries in expected.items():
         end = bs.PART_END.get(part)
         if not end:
-            fail(f"有答案的部没有 PART_END：{part}")
+            fail(f"有答案的篇没有 PART_END：{part}")
             continue
         page = DIST / f"{end}.html"
         if not page.exists():
-            fail(f"缺部末页：{page.name}（{part}）")
+            fail(f"缺篇末页：{page.name}（{part}）")
             continue
         html = page.read_text(encoding="utf-8")
         want = sum(n for _, n in entries)
         got = html.count('class="selfcheck-answer part-answer"')
         if got != want:
-            fail(f"{page.name}: 部末答案 {got} ≠ 源答案 {want}（{part}）")
+            fail(f"{page.name}: 篇末答案 {got} ≠ 源答案 {want}（{part}）")
         if f'id="answers-{part}"' not in html:
-            fail(f"{page.name}: 缺部末答案锚 #answers-{part}")
+            fail(f"{page.name}: 缺篇末答案锚 #answers-{part}")
         for ch, _ in entries:
             if ch["slug"] == end:
                 continue
@@ -621,17 +626,17 @@ def check_part_answers(chapters: list[dict]) -> None:
                 continue
             chapter_html = chapter_page.read_text(encoding="utf-8")
             if f'{end}.html#answers-{part}' not in chapter_html:
-                fail(f"{ch['slug']}.html: 缺部末答案链接 {end}.html#answers-{part}")
+                fail(f"{ch['slug']}.html: 缺篇末答案链接 {end}.html#answers-{part}")
             if '<details class="selfcheck-answer">' in chapter_html:
-                fail(f"{ch['slug']}.html: 答案仍在章内，未搬到部末")
+                fail(f"{ch['slug']}.html: 答案仍在章内，未搬到篇末")
 
     print_page = DIST / "print.html"
     if print_page.exists():
         total = sum(n for entries in expected.values() for _, n in entries)
         got = print_page.read_text(encoding="utf-8").count('class="selfcheck-answer part-answer"')
         if got != total:
-            fail(f"print.html: 部末答案 {got} ≠ 源答案 {total}")
-    print("· 部末答案：源块计数、部末折叠、章页指路、print 收口——逐项校验")
+            fail(f"print.html: 篇末答案 {got} ≠ 源答案 {total}")
+    print("· 篇末答案：源块计数、篇末折叠、章页指路、print 收口——逐项校验")
 
 
 def check_route_lint() -> None:
@@ -828,7 +833,8 @@ def selftest() -> int:
             '<div id="stScore"></div><div id="stSave"></div><div id="stSaved"></div>', encoding="utf-8")
         (DIST / "routes.html").write_text(
             "每周 5h≈" * 5 + "打印本路线" * 5
-            + "尝鲜速览 应用与 Agent 训练与调参 生成方向 研究与理论 深究线 论文清单 自证题"
+            + "尝鲜速览 应用 / Agent 训练 / 调参 生成方向 研究与理论 深究线 论文清单 自证题"
+            + 'class="route-facts"' * 5
             + 'class="exit-check"' * 10, encoding="utf-8")
         (DIST / "env.html").write_text(
             '最后验证 2026-10 class="asset" href="assets/x"', encoding="utf-8")

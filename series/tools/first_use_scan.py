@@ -125,8 +125,10 @@ def chapter_key(uid: str) -> tuple:
     # 兜底：临时文件/独立运行/旧 profile。
     if uid.startswith("支线导言"):
         return (1, 0, 0)
+    if uid.startswith("支线补页"):
+        return (1, 99, 0)
     if uid.startswith("支线附录"):
-        return (1, 1, 0)
+        return (1, 98, 0)
     m = re.fullmatch(r"§(\d+)(?:\.(\d+))?", uid)
     if m:
         n, minor = int(m.group(1)), int(m.group(2) or 0)
@@ -180,7 +182,7 @@ def load_rules(path: Path | None) -> list[dict]:
 def check_rules(ledger: Path, rules_path: Path | None) -> list[str]:
     """规则表自检：术语在总账、章号有效、理由非空、无冲突。"""
     entries = load_ledger(ledger)
-    known = {e["uid"] for e in entries} | {"支线导言", "支线附录"}
+    known = {e["uid"] for e in entries} | {"支线导言", "支线补页", "支线附录"}
     profile = SERIES / "profiles" / "chapters.json"
     if profile.is_file():
         try:
@@ -502,9 +504,9 @@ def selftest() -> int:
     ok &= not r8["errors"] and r8["stats"]["pointer"] == 1
 
     ok &= (chapter_key("§9") < chapter_key("支线导言")
-           < chapter_key("支线附录") < chapter_key("T1") < chapter_key("§10"))
+           < chapter_key("T1") < chapter_key("T4") < chapter_key("支线补页")
+           < chapter_key("§10"))
     ok &= chapter_key("§0.3") < chapter_key("§1")
-    ok &= chapter_key("T4") < chapter_key("§10")
     print("first_use_scan selftest:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 

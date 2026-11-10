@@ -12,7 +12,7 @@
   anchors.json 漂移（由 series_check.py 对照 git 历史门禁）。
 - 路线层：profiles/routes.json 路线库；默认＝自由读（变灰/折叠），页内内嵌数据块
   （剥 `_` 键），运行时 JS 镜像 resolve 切换路径；Hub ＝向导/路线图/课表/双进度环/
-  检索；章页 ＝ 档位行/深浅开关/已读/部末提醒。
+  检索；章页 ＝ 档位行/深浅开关/已读/篇末提醒。
 - depth×节标记（实践档 ○/◌ 节降灰、理论档全亮）与 focus 章非焦点节降灰；
   降灰带 kind（path/depth/focus）供样式与提示分型。
 - 无 KaTeX（系列无 $ 数学）、无 npm、file:// 全功能（零外部请求）。
@@ -254,6 +254,10 @@ def route_view(route: dict, chapters: list[dict]) -> dict:
             disp[c["slug"]] = "read"
         else:
             disp[c["slug"]] = {"focus": list(e.get("sections", []))}
+    # 参考页（补页）不随路线置灰：正文多处指向它，置灰会让指针像断链。
+    for c in chapters:
+        if c.get("reference") and disp.get(c["slug"]) == "dim":
+            disp[c["slug"]] = "read"
     dim_sections: dict[str, dict] = {}
     sections_of = {c["slug"]: [s["anchor"] for s in c["sections"]] for c in chapters}
     for slug, d in disp.items():
@@ -264,7 +268,7 @@ def route_view(route: dict, chapters: list[dict]) -> dict:
                     dim_sections[a] = {"reason": "本路线只读所列节", "kind": "focus"}
     counts = {"main": 0, "branch": 0}
     for c in chapters:
-        if disp[c["slug"]] == "dim":
+        if c.get("reference") or disp[c["slug"]] == "dim":
             continue
         counts["branch" if c["part"] == "branch" else "main"] += 1
     cards = {c["anchor"]: c["text"] for c in route.get("cards", [])}
@@ -277,11 +281,13 @@ def route_view(route: dict, chapters: list[dict]) -> dict:
 
 
 def free_view(chapters: list[dict]) -> dict:
-    """自由读（默认态）：全 30 章全亮、无节级降灰、折叠默认收起。"""
+    """自由读（默认态）：全 30 个单元全亮、无节级降灰、折叠默认收起。"""
     return {"disp": {c["slug"]: "read" for c in chapters},
             "dim_sections": {},
-            "counts": {"main": sum(1 for c in chapters if c["part"] != "branch"),
-                       "branch": sum(1 for c in chapters if c["part"] == "branch")},
+            "counts": {"main": sum(1 for c in chapters
+                                  if c["part"] != "branch" and not c.get("reference")),
+                       "branch": sum(1 for c in chapters
+                                     if c["part"] == "branch" and not c.get("reference"))},
             "open": False, "cards": {}, "next": {}, "pos": {}, "total": 0}
 
 
@@ -319,11 +325,11 @@ def apply_section_dim(html: str, dim_map: dict) -> str:
 
 
 def migration_callout(ch: dict) -> str:
-    """部末章（ch09/14/21）章尾提醒：直接指向章末自查标签。"""
+    """篇末章（ch09/14/21）章尾提醒：直接指向章末自查标签。"""
     if ch["slug"] not in ("ch09", "ch14", "ch21"):
         return ""
-    return ('<div class="migration"><b>部末提醒：</b>读完记得做'
-            '<a class="selfcheck-jump" href="#selfcheck">部末十题</a>（本章与前面章的回望题）。</div>')
+    return ('<div class="migration"><b>篇末提醒：</b>读完记得做'
+            '<a class="selfcheck-jump" href="#selfcheck">篇末十题</a>（本章与前面章的回望题）。</div>')
 
 
 def build_site_data(chapters: list[dict], parts: list[dict], routes: dict,
@@ -337,7 +343,7 @@ def build_site_data(chapters: list[dict], parts: list[dict], routes: dict,
         "parts": [{"id": p["id"], "label": p["label"]} for p in parts],
         "chapters": [
             {"slug": c["slug"], "label": c["label"], "title": c["title"], "part": c["part"],
-             "mins": c["mins"], "sec_mins": c.get("sec_mins", {}),
+             "mins": c["mins"], "sec_mins": c.get("sec_mins", {}), "reference": c.get("reference", False),
              "sections": [{"anchor": s["anchor"], "text": s["text"], "level": s["level"],
                            "markers": s["markers"]}
                           for s in c["sections"]]}
@@ -347,10 +353,21 @@ def build_site_data(chapters: list[dict], parts: list[dict], routes: dict,
     return f'<script type="application/json" id="series-data">{js}</script>'
 
 
-ROUTER_GOALS = [("undecided", "还没定，先看看"), ("agent", "应用与智能体（Agent）"),
-                ("train", "训练与调参"), ("gen", "生成方向（扩散）"), ("research", "研究与理论")]
+ROUTER_GOALS = [("undecided", "还没定，先看看"), ("agent", "应用 / Agent"),
+                ("train", "训练 / 调参"), ("gen", "生成方向（扩散）"),
+                ("research", "研究与理论")]
 ROUTER_TIMES = [("halfday", "一次半天"), ("fast", "两三周集中投入"),
                 ("slow", "几个月稳步推进"), ("endless", "长期，越多越好")]
+
+
+def route_groups(routes_cfg: dict) -> list[dict]:
+    """读者面分组（routes.json 单一来源）；校验每条路线恰好出现一次。"""
+    groups = routes_cfg.get("groups") or []
+    ids = [r["id"] for r in routes_cfg["routes"]]
+    covered = [rid for g in groups for rid in g.get("routes", [])]
+    if not groups or sorted(covered) != sorted(ids) or len(covered) != len(set(covered)):
+        raise RuntimeError("routes.json 的 groups 与路线 id 不一致")
+    return groups
 
 
 def route_first_href(route: dict) -> str:
@@ -365,22 +382,116 @@ def route_first_href(route: dict) -> str:
     return f"{slug}.html"
 
 
+FAST_CPM = 350      # 章页“约 N 分钟”的口径
+STUDY_CPM = 200     # 技术书学习阅读的保守口径
+
+
+def route_load(r: dict, chapters: list[dict]) -> tuple[float, float, float, str]:
+    """按路线实际选章/选节计算速读、学习、总时数与周数。"""
+    by = {c["slug"]: c for c in chapters}
+    mins = 0
+    for e in r["sequence"]:
+        ch = by[e["ch"]]
+        if e["mode"] == "read":
+            mins += ch["mins"]
+        elif e["mode"] == "focus":
+            mins += sum(ch["sec_mins"].get(a, 0) for a in e.get("sections", []))
+    fast = mins / 60
+    study = fast * FAST_CPM / STUDY_CPM
+    total = study + r["hours"]["practice"] + r["hours"]["project"]
+    lo, hi = math.ceil(total / 10), math.ceil(total / 5)
+    weeks = f'约 {lo} 周' if lo == hi else f'约 {lo}–{hi} 周'
+    return fast, study, total, weeks
+
+
+def route_time_text(r: dict, chapters: list[dict], *, short: bool = False) -> str:
+    """路线卡与路线页的时长说明。"""
+    if r["id"] == "taste":
+        return "约 0.5–0.8h（一次半天）"
+    fast, study, total, weeks = route_load(r, chapters)
+    p = r["hours"]["practice"]
+    j = r["hours"]["project"]
+    parts = [f'学习≈{study:.1f}h']
+    if p:
+        parts.append(f'练≈{p:g}h')
+    if j:
+        parts.append(f'项目≈{j:g}h')
+    summary = ' ＋ '.join(parts)
+    if short:
+        return f'{summary} · {weeks}'
+    return (f'读 速读≈{fast:.1f}h / {summary}；'
+            f'总计≈{total:.1f}h，按每周 5–10h {weeks}')
+
+
+def route_time_total_text(r: dict, chapters: list[dict]) -> str:
+    """对照表用的短时数：只报总计与周数，细节留给路线节。"""
+    if r["id"] == "taste":
+        return "约 0.5–0.8h（一次半天）"
+    _, _, total, weeks = route_load(r, chapters)
+    return f'总计≈{total:.1f}h · {weeks}'
+
+
+def route_time_compact_text(r: dict, chapters: list[dict]) -> str:
+    """首页矩阵摘要用：一个主数字，不拆速读/学习/练习。"""
+    if r["id"] == "taste":
+        return "约 0.5–0.8h"
+    _, _, total, weeks = route_load(r, chapters)
+    return f"约 {total:.0f}h · {weeks.replace('约 ', '', 1)}"
+
+
+def route_coverage_text(r: dict, view: dict) -> str:
+    """路线卡与对照表的覆盖行：全读几单元、选读几章几节、跳几单元。"""
+    if r["id"] == "taste":
+        return "开篇 3 节＋§14 三节"
+    n_read = sum(1 for e in r["sequence"] if e["mode"] == "read")
+    focus = [e for e in r["sequence"] if e["mode"] == "focus"]
+    n_sec = sum(len(e.get("sections", [])) for e in focus)
+    n_dim = sum(1 for d in view["disp"].values() if d == "dim")
+    out = f"全读 {n_read}"
+    if focus:
+        out += f" · 选读 {len(focus)} 章（{n_sec} 节）"
+    if n_dim:
+        out += f" · 跳 {n_dim}"
+    return out
+
+
 def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
                     exit_text: str, hours_short: str, hours_full: str,
-                    start_href: str, start_label: str, more_href: str) -> str:
-    """首页路线卡：summary 只放选择所需信息，完整字段收在 details 内。"""
+                    start_href: str, start_label: str, more_href: str,
+                    goal: str = "", positioning: str = "", summary: str = "",
+                    variant: str = "full") -> str:
+    """首页路线卡：摘要只放选择所需信息，完整字段收在 details 内。"""
+    tag_html = (f'<span class="rc-tag">{H.escape(tag)}</span>'
+                if tag and tag not in title else '')
+    if variant == "option":
+        summary_html = (
+            f'<span class="rc-opt-head"><span class="rc-kind">{H.escape(positioning)}</span>'
+            f'{tag_html}<span class="rc-time">{H.escape(hours_short)}</span></span>'
+            f'<span class="rc-opt-summary rc-plan">{H.escape(summary)}</span>'
+        )
+    elif variant == "bar":
+        summary_html = (
+            f'<span class="rc-bar-head"><span class="rc-bar-title">{H.escape(title)}</span>'
+            f'<span class="rc-kind">{H.escape(positioning)}</span>{tag_html}'
+            f'<span class="rc-time">{H.escape(hours_short)}</span></span>'
+            f'<span class="rc-bar-summary rc-plan">{H.escape(summary)}</span>'
+        )
+    else:
+        summary_html = (
+            f'<span class="rc-head"><span class="rc-t">{H.escape(title)}</span>{tag_html}</span>'
+            f'<span class="rc-aud">{H.escape(audience)}</span>'
+            f'<span class="rc-meta"><span class="rc-plan">{H.escape(plan)}</span>'
+            f'<span class="rc-hours">{H.escape(hours_short)}</span></span>'
+        )
     return (
-        f'<details class="route-card" data-route="{H.escape(rid)}" id="route-card-{H.escape(rid)}">'
-        '<summary class="route-card-summary">'
-        f'<span class="rc-head"><span class="rc-t">{H.escape(title)}</span>'
-        f'<span class="rc-tag">{H.escape(tag)}</span></span>'
-        f'<span class="rc-aud">{H.escape(audience)}</span>'
-        f'<span class="rc-meta"><span class="rc-plan">{H.escape(plan)}</span>'
-        f'<span class="rc-hours">{H.escape(hours_short)}</span></span>'
-        '</summary>'
+        f'<details class="route-card" data-route="{H.escape(rid)}"'
+        f' data-variant="{H.escape(variant)}" id="route-card-{H.escape(rid)}"'
+        f' aria-label="{H.escape(title, quote=True)}">'
+        f'<summary class="route-card-summary">{summary_html}</summary>'
         '<div class="route-card-body">'
-        f'<p><b>适合：</b>{H.escape(audience)}</p>'
-        f'<p><b>路线安排：</b>{H.escape(plan)}</p>'
+        + (f'<p><b>目标：</b>{H.escape(goal)}</p>' if goal else '')
+        + f'<p><b>适合：</b>{H.escape(audience)}</p>'
+        f'<p><b>覆盖：</b>{H.escape(plan)}</p>'
         f'<p><b>出口：</b>{H.escape(exit_text)}</p>'
         f'<p class="rc-hours"><b>投入：</b>{H.escape(hours_full)}</p>'
         '<div class="rc-actions">'
@@ -391,16 +502,17 @@ def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
 
 
 def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
-                free: dict) -> str:
+                free: dict, views_by_route: dict) -> str:
     """Hub＝两个问题路由＋路线卡墙＋自由读卡＋节奏示例＋进度环＋检索。默认＝自由读。"""
     out: list[str] = []
     out.append('<div class="hero"><h1>AI 系列读物 · 阅读版</h1>'
-               '<p class="doc-meta">24 章主线＋支线六页。应用与 Agent、训练、生成、研究'
-               '四条完整线，另有三条快线、尝鲜速览与深究线；也可以随时自由读。'
+               '<p class="doc-meta">30 个阅读单元：主线 24＋支线 6。四个方向＋半日试读：应用 / Agent、'
+               '训练 / 调参、生成、研究；每个方向两条路，先拿结果或系统走完；也可以随时自由读。'
+               '支线补页是参考页，任何路线都可查，不计入路线时数。'
                '检索用本页底部搜索框或 <a href="print.html">全文版</a>（Ctrl+F）；'
                '查词用 <a href="terms.html">术语总表</a>；上手前看 <a href="env.html">环境指南</a>，'
                '拿不准数学底子做 <a href="selftest.html">数学自修自测</a>；'
-               '路线全文与论文清单见 <a href="routes.html">路线卡</a>。</p></div>')
+               '路线全文、对比表与论文清单见 <a href="routes.html">路线卡</a>。</p></div>')
     out.append('<div class="legend">' + " ".join(
         f'<span class="item"><b>{k}</b> {v}</span>' for k, v in MARK_META.items()) + "</div>")
     out.append('<div class="resume" id="resumeBlock" hidden>'
@@ -426,32 +538,69 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     out.append('<div class="selftest-note" id="selftestNote"></div>')
     out.append('<a class="router-start" id="routerStart" hidden href="#"></a></div>')
 
-    # ---- 路线卡墙（自由读卡打头；默认只展开一行，选中后再展开完整卡）
+    # ---- 路线入口：半日试读、自由读、四方向矩阵
     out.append('<div class="route-cards" id="routeCards">')
+    route_by_id = {r["id"]: r for r in routes["routes"]}
+
+    taste = route_by_id["taste"]
     out.append(route_card_html(
-        rid="free", title="自由读", tag="默认",
-        audience="不选路线，30 页全亮，按顺序或按兴趣翻",
-        plan="30 页全亮，按顺序或兴趣翻",
+        rid="taste", title="尝鲜速览", tag="",
+        audience=taste["audience"],
+        plan=route_coverage_text(taste, views_by_route["taste"]),
+        exit_text="；".join(taste["exit"]),
+        hours_short=route_time_compact_text(taste, chapters),
+        hours_full=route_time_text(taste, chapters),
+        start_href=route_first_href(taste), start_label="开始尝鲜 →",
+        more_href="routes.html#route-taste", goal=taste["goal"],
+        positioning=taste["positioning"], summary=taste["summary"], variant="bar"))
+
+    free_fast = sum(c["mins"] for c in chapters if not c.get("reference")) / 60
+    free_study = free_fast * FAST_CPM / STUDY_CPM
+    out.append(route_card_html(
+        rid="free", title="自由读", tag="",
+        audience="不选路线，按顺序或按兴趣翻",
+        plan="30 个单元全亮（含补页参考）",
         exit_text="无（自由读没有出口承诺，走到哪算哪）",
-        hours_short="读≈9h（全书）",
-        hours_full="读 ≈9 小时（全书）· 折叠块默认收起",
+        hours_short=f'约 {free_study:.0f}h · 全书',
+        hours_full=f'读 速读≈{free_fast:.1f}h / 学习≈{free_study:.1f}h（全书）· 折叠块默认收起',
         start_href="s0a.html", start_label="从 §0.1 开始 →",
-        more_href="routes.html#route-free"))
-    for r in routes["routes"]:
-        hrs_short = (f'读≈{r["hours"]["read"]}h · 练≈{r["hours"]["practice"]}h'
-                     f' · 项目≈{r["hours"]["project"]}h')
-        hrs_full = (f'读 ≈{r["hours"]["read"]}h ＋ 练 ≈{r["hours"]["practice"]}h'
-                    f' ＋ 项目 ≈{r["hours"]["project"]}h · {r["pace_note"]}')
-        n_read = sum(1 for e in r["sequence"] if e["mode"] == "read")
-        n_focus = len(r["sequence"]) - n_read
-        skip = len(chapters) - len(r["sequence"])
-        plan = (f'读 {n_read} 章' + (f'（焦点 {n_focus}）' if n_focus else '')
-                + (f'＋跳 {skip} 页' if skip else ''))
-        out.append(route_card_html(
+        more_href="routes.html#route-free",
+        positioning="默认",
+        summary="30 个单元全亮：按顺序或兴趣翻", variant="bar"))
+
+    out.append('<h3 class="route-pick-title">选一个方向</h3>')
+    out.append('<p class="route-pick-note">每个方向两条：一条先拿结果，一条走得更全；'
+               '补页随查，不计入时数。'
+               '<a href="routes.html#compare">看九种走法对比</a>。</p>')
+
+    def route_card_for(r: dict) -> str:
+        hrs_short = route_time_compact_text(r, chapters)
+        hrs_full = route_time_text(r, chapters)
+        if r.get("backfill"):
+            hrs_full += f'；补站：{r["backfill"]}'
+        plan = route_coverage_text(r, views_by_route[r["id"]])
+        return route_card_html(
             rid=r["id"], title=r["title"], tag=r["tag"], audience=r["audience"],
             plan=plan, exit_text="；".join(r["exit"]), hours_short=hrs_short,
-            hours_full=hrs_full, start_href=route_first_href(r),
-            start_label="开始这条路线 →", more_href=f'routes.html#route-{r["id"]}'))
+            hours_full=hrs_full, start_href=route_first_href(r), goal=r["goal"],
+            positioning=r["positioning"], summary=r["summary"],
+            start_label="开始这条路线 →", more_href=f'routes.html#route-{r["id"]}',
+            variant="option")
+
+    for g in route_groups(routes):
+        gid, gtitle, gsub, rids = g["id"], g["title"], g.get("sub", ""), g["routes"]
+        if gid == "taste":
+            continue
+        out.append(f'<section class="route-group" data-group="{gid}" data-row="1"'
+                   f' id="route-group-{gid}">')
+        out.append('<div class="route-row-head">'
+                   f'<h3 class="route-group-title">{H.escape(gtitle)}</h3>'
+                   f'<p class="route-group-sub">{H.escape(gsub)}</p>'
+                   '</div>')
+        out.append('<div class="route-group-body">')
+        for rid in rids:
+            out.append(route_card_for(route_by_id[rid]))
+        out.append('</div></section>')
     out.append('</div>')
 
     out.append('</section>')
@@ -462,15 +611,22 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
         items = [c for c in chapters if c["part"] == part["id"]]
         if not items:
             continue
-        out.append(f'<div class="route-part">{H.escape(part["label"])}</div>')
-        if part["id"] == "branch":
-            out.append('<div class="route-note">由 §9 章末进（导言 → 配方 → T1–T4）；'
+        is_branch = part["id"] == "branch"
+        if is_branch:
+            out.append('<div class="route-branch">')
+        label = H.escape(part["label"]) + (' · 可选' if is_branch else '')
+        out.append(f'<div class="route-part">{label}</div>')
+        if is_branch:
+            out.append('<div class="route-note">由 §9 章末进；导言 → T1–T4；补页随查。'
                        '不走生成方向的读者可直接过 §10。</div>')
         for c in items:
+            mins_text = "参考" if c.get("reference") else f'{c["mins"]} 分钟'
             out.append(f'<a class="node" data-slug="{c["slug"]}" data-mins="{c["mins"]}" '
                        f'href="{c["slug"]}.html">'
                        f'<span class="node-t">{H.escape(c["label"])} {H.escape(short_title(c["title"], 34))}</span>'
-                       f'<span class="node-mins">{c["mins"]} 分钟</span></a>')
+                       f'<span class="node-mins">{mins_text}</span></a>')
+        if is_branch:
+            out.append('</div>')
     out.append('</div>')
 
     out.append('<div class="route-note" id="offrouteNote" hidden></div>')
@@ -483,11 +639,13 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     out.append('<div class="ring" id="ringMain"><svg viewBox="0 0 36 36">'
                '<circle class="ring-bg" cx="18" cy="18" r="15.9"></circle>'
                '<circle class="ring-fg" id="ringMainFg" cx="18" cy="18" r="15.9"></circle></svg>'
-               '<div class="ring-txt"><b id="ringMainN">0/24</b><span>主线已读</span></div></div>')
+               f'<div class="ring-txt"><b id="ringMainN">0/{free["counts"]["main"]}</b>'
+               '<span>主线已读</span></div></div>')
     out.append('<div class="ring" id="ringBranch"><svg viewBox="0 0 36 36">'
                '<circle class="ring-bg" cx="18" cy="18" r="15.9"></circle>'
                '<circle class="ring-fg" id="ringBranchFg" cx="18" cy="18" r="15.9"></circle></svg>'
-               '<div class="ring-txt"><b id="ringBranchN">0/6</b><span>支线已读</span></div></div>')
+               f'<div class="ring-txt"><b id="ringBranchN">0/{free["counts"]["branch"]}</b>'
+               '<span>支线已读</span></div></div>')
     out.append('</div>')
     out.append('<div class="exit-line" id="exitLine" aria-live="polite" hidden></div>')
     out.append('<label class="focus-toggle"><input type="checkbox" id="focusHideHub"> '
@@ -549,12 +707,6 @@ FOOTER_LINKS = ('<a href="index.html">目录</a> · <a href="print.html">全文�
                 '<a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · '
                 '<a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · '
                 '<a href="assets.html">资产索引</a>')
-
-
-def route_weeks_text(hrs: dict) -> str:
-    """三档节奏估算（每周 5/10/15h → 周数；含练习与项目）。"""
-    total = hrs["read"] + hrs["practice"] + hrs["project"]
-    return "｜".join(f"每周 {p}h≈{max(1, math.ceil(total / p))} 周" for p in (5, 10, 15))
 
 
 def _sec_short(text: str, n: int = 10) -> str:
@@ -668,8 +820,8 @@ def terms_content(chapters: list[dict]) -> str:
                       if slug else H.escape(first))
         trs.append(f'<tr id="{_term_anchor(name)}"><td>{H.escape(name)}</td><td>{first_html}</td>'
                    f'<td>{_link_refs_inline(_clean_note(note), chapters)}</td></tr>')
-    table = ('<table id="termTable"><thead><tr><th>名词</th><th>首现</th>'
-             '<th>说明</th></tr></thead><tbody>' + "".join(trs) + "</tbody></table>")
+    table = ('<div class="table-wrap" tabindex="0"><table id="termTable"><thead><tr><th>名词</th><th>首现</th>'
+             '<th>说明</th></tr></thead><tbody>' + "".join(trs) + "</tbody></table></div>")
     script = ('<script>(function(){var i=document.getElementById("termFilter");'
               'var t=document.getElementById("termTable");if(!i||!t)return;'
               'i.addEventListener("input",function(){var q=i.value.trim().toLowerCase();'
@@ -721,53 +873,87 @@ def selftest_content(ref_map: dict[str, str]) -> str:
     return html + widget
 
 
-def routes_content(routes_cfg: dict, chapters: list[dict]) -> str:
+def routes_content(routes_cfg: dict, chapters: list[dict], views_by_route: dict) -> str:
     lab = {c["slug"]: c["label"] for c in chapters}
     sec_title = {s["anchor"]: s["text"] for c in chapters for s in c["sections"]}
+    by_id = {r["id"]: r for r in routes_cfg["routes"]}
+    groups = route_groups(routes_cfg)
     out = ['<div class="chapter-head"><h1>路线与论文清单</h1>'
-           '<p class="doc-meta">九条路线的全文说明，可打印；每条含读法、出口、自证题、时数与补课卡。'
-           '默认自由读，随时可换。回 <a href="index.html">目录</a>。</p></div>']
+           '<p class="doc-meta">四个方向＋半日试读，九种走法，按目标分组。先看下表比较覆盖与时间，再看每条的读法、'
+           '出口、自证题与时数。默认自由读，随时可换。回 <a href="index.html">目录</a>。</p>'
+           '<p class="doc-meta">时数口径：速读按 350 字/分、学习按 200 字/分；练习/项目为标称下限，'
+           '实际耗时可能上浮。周数按每周 5–10 小时折算。支线补页是参考页，不计入路线时数。</p></div>']
     out.append('<section class="route-full" id="route-free">'
                '<h2>自由读 <span class="rc-tag">默认</span></h2>'
-               '<p class="doc-meta">不选路线：30 页全亮，按顺序或按兴趣翻；没有出口承诺，走到哪算哪。'
-               '下面的九条路线是带出口与审计的推荐单，随时可切。</p></section>')
-    for r in routes_cfg["routes"]:
-        seq = r["sequence"]
-        read = [lab[e["ch"]] for e in seq if e["mode"] == "read"]
-        focus = []
-        for e in seq:
-            if e["mode"] != "focus":
-                continue
-            short = [_sec_short(sec_title.get(a, a.split("-")[-1])) for a in e.get("sections", [])]
-            shown = "、".join(short[:3]) + ("…" if len(short) > 3 else "")
-            focus.append(f'{lab[e["ch"]]}（{shown}）')
-        skipped = len(chapters) - len(read) - len(focus)
-        hrs = r["hours"]
-        out.append(f'<section class="route-full" id="route-{r["id"]}">')
-        out.append(f'<h2>{H.escape(r["title"])} <span class="rc-tag">{H.escape(r["tag"])}</span></h2>')
-        weeks = route_weeks_text(hrs)
-        out.append(f'<p class="doc-meta">{H.escape(r["audience"])}｜读 ≈{hrs["read"]}h ＋ '
-                   f'练 ≈{hrs["practice"]}h ＋ 项目 ≈{hrs["project"]}h｜{H.escape(r["pace_note"])}｜'
-                   f'预计：{weeks}（按标称时数估算，含练习与项目）</p>')
-        out.append(f'<p class="doc-meta"><a href="route-{r["id"]}.html">打印本路线（单页）→</a></p>')
-        out.append(f'<p><b>读完能：</b>{H.escape("；".join(r["exit"]))}</p>')
-        checks = "".join(
-            f'<label class="exit-check"><input type="checkbox" data-route="{r["id"]}" '
-            f'data-idx="{i}"> {H.escape(s)}</label>'
-            for i, s in enumerate(r["selfcheck"]))
-        out.append(f'<p><b>自证题</b>（勾选只存本机）：</p><div class="exit-list">{checks}</div>')
-        line = f'<p><b>读全章：</b>{H.escape("、".join(read)) or "—"}'
-        if focus:
-            line += f'；<b>只读所列节：</b>{H.escape("；".join(focus))}'
-        if skipped > 0:
-            line += f'；其余 {skipped} 页不读（自由读中仍可翻开）'
-        out.append(line + "</p>")
-        if r.get("catchups"):
-            out.append('<p><b>补课卡：</b>' + H.escape("；".join(
-                f'{c.get("where", "")}→{c.get("fix", "")}' for c in r["catchups"])) + '</p>')
-        if r.get("exempt"):
-            out.append('<p><b>豁免：</b>' + H.escape("；".join(r["exempt"])) + '</p>')
-        out.append('</section>')
+               '<p class="doc-meta">不选路线：30 个阅读单元全亮（含补页参考），按顺序或按兴趣翻；'
+               '没有出口承诺，走到哪算哪。下面按目标列出九种走法，每种都带出口与审计，随时可切。</p></section>')
+
+    # ---- 一张表：先比覆盖与时间，再往下看细节
+    out.append('<h2 class="route-goal-h" id="compare">九种走法一张表</h2>')
+    out.append('<div class="table-wrap"><table class="route-compare">'
+               '<thead><tr><th>路线</th><th>覆盖</th><th>时间</th></tr></thead><tbody>')
+    for g in groups:
+        out.append(f'<tr class="group-row"><th colspan="3">{H.escape(g["title"])}</th></tr>')
+        for rid in g["routes"]:
+            r = by_id[rid]
+            cover = route_coverage_text(r, views_by_route[rid])
+            hours = route_time_total_text(r, chapters)
+            if r.get("backfill_short"):
+                hours += f'；{r["backfill_short"]}'
+            out.append(f'<tr><td><a href="#route-{rid}">{H.escape(r["title"])}</a></td>'
+                       f'<td>{H.escape(cover)}</td><td>{H.escape(hours)}</td></tr>')
+    out.append('</tbody></table></div>')
+
+    # ---- 按目标分组展开九条路线
+    for g in groups:
+        out.append(f'<h2 class="route-goal-h" id="group-{H.escape(g["id"])}">{H.escape(g["title"])}</h2>')
+        if g.get("sub"):
+            out.append(f'<p class="route-goal-sub">{H.escape(g["sub"])}</p>')
+        for rid in g["routes"]:
+            r = by_id[rid]
+            view = views_by_route[rid]
+            seq = r["sequence"]
+            read = [lab[e["ch"]] for e in seq if e["mode"] == "read"]
+            focus = []
+            for e in seq:
+                if e["mode"] != "focus":
+                    continue
+                short = [_sec_short(sec_title.get(a, a.split("-")[-1])) for a in e.get("sections", [])]
+                shown = "、".join(short[:3]) + ("…" if len(short) > 3 else "")
+                focus.append(f'{lab[e["ch"]]}（{shown}）')
+            skipped = sum(1 for d in view["disp"].values() if d == "dim")
+            out.append(f'<section class="route-full" id="route-{rid}">')
+            tag = (f' <span class="rc-tag">{H.escape(r["tag"])}</span>'
+                   if r["tag"] and r["tag"] not in r["title"] else '')
+            out.append(f'<h3>{H.escape(r["title"])}{tag}</h3>')
+            out.append('<dl class="route-facts">'
+                       f'<dt>适合</dt><dd>{H.escape(r["audience"])}</dd>'
+                       f'<dt>目标</dt><dd>{H.escape(r["goal"])}</dd>'
+                       f'<dt>覆盖</dt><dd>{H.escape(route_coverage_text(r, view))}</dd>'
+                       f'<dt>时间</dt><dd>{route_time_text(r, chapters)}</dd>'
+                       + (f'<dt>补站</dt><dd>{H.escape(r["backfill"])}</dd>' if r.get("backfill") else '')
+                       + '</dl>')
+            out.append(f'<p class="doc-meta"><a href="route-{rid}.html">打印本路线（单页）→</a></p>')
+            out.append(f'<p><b>读完能：</b>{H.escape("；".join(r["exit"]))}</p>')
+            line = f'<p><b>读全章：</b>{H.escape("、".join(read)) or "—"}'
+            if focus:
+                line += f'；<b>只读所列节：</b>{H.escape("；".join(focus))}'
+            if skipped > 0:
+                line += f'；其余 {skipped} 个单元不读（自由读中仍可翻开）'
+            out.append(line + "</p>")
+            checks = "".join(
+                f'<label class="exit-check"><input type="checkbox" data-route="{rid}" '
+                f'data-idx="{i}"> {H.escape(s)}</label>'
+                for i, s in enumerate(r["selfcheck"]))
+            out.append('<details class="route-extra"><summary>自证题、补课卡与豁免</summary>')
+            out.append(f'<p><b>自证题</b>（勾选只存本机）：</p><div class="exit-list">{checks}</div>')
+            if r.get("catchups"):
+                out.append('<p><b>补课卡：</b>' + H.escape("；".join(
+                    f'{c.get("where", "")}→{c.get("fix", "")}' for c in r["catchups"])) + '</p>')
+            if r.get("exempt"):
+                out.append('<p><b>豁免：</b>' + H.escape("；".join(r["exempt"])) + '</p>')
+            out.append('</details>')
+            out.append('</section>')
     out.append('<h2>论文清单（首批）</h2>'
                '<p>深究线与研究线用：候选论文五篇见 §21「深究：给一篇论文分级」的折叠框；'
                '分级卡按 §14 六类边界表的证据档位交付。发布批扩至十篇。</p>')
@@ -834,8 +1020,6 @@ def route_print_content(r: dict, chapters: list[dict]) -> str:
     """单路线打印页（H2-4）：构建期静态生成，file:// 下最稳。"""
     lab = {c["slug"]: c["label"] for c in chapters}
     sec_title = {s["anchor"]: s["text"] for c in chapters for s in c["sections"]}
-    hrs = r["hours"]
-    weeks = route_weeks_text(hrs)
     read, focus = [], []
     for e in r["sequence"]:
         if e["mode"] == "read":
@@ -844,17 +1028,19 @@ def route_print_content(r: dict, chapters: list[dict]) -> str:
             titles = "、".join(_sec_short(sec_title.get(a, a.split("-")[-1]))
                                for a in e.get("sections", []))
             focus.append(f'{lab[e["ch"]]}（{titles}）')
-    skipped = len(chapters) - len(read) - len(focus)
+    skipped = sum(1 for d in route_view(r, chapters)["disp"].values() if d == "dim")
     out = [f'<div class="chapter-head"><h1>{H.escape(r["title"])}</h1>'
-           f'<p class="doc-meta">{H.escape(r["audience"])}｜读 ≈{hrs["read"]}h ＋ 练 ≈{hrs["practice"]}h'
-           f' ＋ 项目 ≈{hrs["project"]}h｜{H.escape(r["pace_note"])}｜预计：{weeks}</p>'
+           f'<p class="doc-meta">{H.escape(r["audience"])}｜{route_time_text(r, chapters)}'
+           + (f'｜补站：{H.escape(r["backfill"])}' if r.get("backfill") else '')
+           + '</p>'
            f'<p class="doc-meta"><a href="routes.html#route-{r["id"]}">← 回路线卡</a> · '
            f'<a href="index.html">目录</a></p></div>']
     out.append(f'<h2>读全章（{len(read)}）</h2><p>{H.escape("、".join(read)) or "—"}</p>')
     if focus:
         out.append(f'<h2>只读所列节（{len(focus)}）</h2><p>{H.escape("；".join(focus))}</p>')
     if skipped > 0:
-        out.append(f'<p class="doc-meta">其余 {skipped} 页不读（自由读中仍可翻开）。</p>')
+        out.append(f'<p class="doc-meta">其余 {skipped} 个单元不读（自由读中仍可翻开）；'
+                   '补页参考随查，不计入路线。</p>')
     if r.get("catchups"):
         out.append('<h2>补课卡</h2><p>' + H.escape("；".join(
             f'{c.get("where", "")}→{c.get("fix", "")}' for c in r["catchups"])) + '</p>')
@@ -1004,18 +1190,20 @@ def wrap_tables(html: str) -> str:
         table = m.group(0)
         first_tr = re.search(r"<tr[^>]*>.*?</tr>", table, re.S)
         ncol = first_tr.group(0).count("<th") if first_tr else 0
-        if ncol >= 8 and "<table" in table:
+        is_wide = ncol >= 8 and "<table" in table
+        if is_wide:
             table = table.replace("<table", '<table class="wide"', 1)
-        return f'<div class="table-wrap" tabindex="0">{table}</div>'
+        cls = "table-wrap wide-wrap" if is_wide else "table-wrap"
+        return f'<div class="{cls}" tabindex="0">{table}</div>'
     return re.sub(r"<table[^>]*>.*?</table>", repl, html, flags=re.S)
 
 
 SELFCHECK_LABEL = re.compile(r'<p>(先别翻答案，试着回答：|把书合上，先答这十题：)</p>', re.S)
 
-# 自查答案按部收口：章末只留一句“答案见本部末”，答案集中在部末页。
-PART_END = {"zero": "s0c", "build": "ch09", "branch": "t4", "law": "ch14", "drive": "ch21"}
-PART_END_LABEL = {"build": "§9", "law": "§14", "drive": "§21"}
-PART_ANSWER_TITLE = {"build": "第一部自查答案", "law": "第二部自查答案", "drive": "第三部自查答案"}
+# 自查答案按篇收口：章末只留一句“答案见本篇末”，答案集中在篇末页。
+PART_END = {"zero": "s0c", "build": "ch09", "branch": "t4", "law": "ch14", "drive": "ch19", "frontier": "ch21"}
+PART_END_LABEL = {"build": "§9", "law": "§14", "drive": "§19", "frontier": "§21"}
+PART_ANSWER_TITLE = {"build": "第一篇自查答案", "law": "第二篇自查答案", "drive": "第三篇自查答案", "frontier": "终篇自查答案"}
 
 SELFCHECK_ANSWER = re.compile(
     r'<details class="selfcheck-answer">\s*<summary>.*?</summary>\s*'
@@ -1023,7 +1211,7 @@ SELFCHECK_ANSWER = re.compile(
 
 
 def take_selfcheck_answer(html: str, replacement: str = "") -> tuple[str, str | None]:
-    """抽出章末答案块；原位置换成一句指向部末的提示，或直接留空。"""
+    """抽出章末答案块；原位置换成一句指向篇末的提示，或直接留空。"""
     m = SELFCHECK_ANSWER.search(html)
     if not m:
         return html, None
@@ -1031,7 +1219,7 @@ def take_selfcheck_answer(html: str, replacement: str = "") -> tuple[str, str | 
 
 
 def answers_note(ch: dict, print_mode: bool = False) -> str:
-    """非部末章：指向部末答案。部末章不挂链接，答案就在本章最末。"""
+    """非篇末章：指向篇末答案。篇末章不挂链接，答案就在本章最末。"""
     part = ch["part"]
     end = PART_END.get(part)
     if not end or ch["slug"] == end:
@@ -1039,14 +1227,14 @@ def answers_note(ch: dict, print_mode: bool = False) -> str:
     label = PART_END_LABEL.get(part, end)
     href = f"#answers-{part}" if print_mode else f"{end}.html#answers-{part}"
     return (f'<p class="selfcheck-answers-link">答案见<a href="{href}">'
-            f'本部末（{label}）</a>。</p>')
+            f'本篇末（{label}）</a>。</p>')
 
 
 def part_answers_html(part: str, blocks: list[tuple[dict, str]]) -> str:
-    """部末答案区：每章一个折叠，标题用章名，不再用“先写，再看”。"""
+    """篇末答案区：每章一个折叠，标题用章名，不再用“先写，再看”。"""
     if not blocks:
         return ""
-    title = PART_ANSWER_TITLE.get(part, "本部自查答案")
+    title = PART_ANSWER_TITLE.get(part, "本篇自查答案")
     body = []
     for ch, ol in blocks:
         summary = f'{ch["label"]} {short_title(ch["title"], 40)}'
@@ -1071,7 +1259,7 @@ def stitch_part_answers(html: str, blocks: dict[str, list[tuple[dict, str]]]) ->
             html = html.replace(marker, part_answers_html(part, blocks.get(part, [])))
     if "<!--PART_ANSWERS:" in html:
         left = re.findall(r"<!--PART_ANSWERS:([^>]+)-->", html)
-        raise RuntimeError(f"部末答案槽未收口：{left}")
+        raise RuntimeError(f"篇末答案槽未收口：{left}")
     return html
 
 
@@ -1132,7 +1320,7 @@ def build_ref_map(chapters: list[dict]) -> dict[str, str]:
 
 def short_title(t: str, n: int = 22) -> str:
     core = t.split("——")[0]
-    core = re.sub(r"^(?:§[\d.]+|T\d|支线导言|支线附录)[:：]?\s*", "", core)
+    core = re.sub(r"^(?:§[\d.]+|T\d|支线导言|支线附录|支线补页)[:：]?\s*", "", core)
     return core if len(core) <= n else core[: n - 1] + "…"
 
 
@@ -1218,7 +1406,7 @@ def asset_card(slug: str) -> str:
 
 BRANCH_DOOR = (
     '<div class="asset-card"><b>支线入口：</b>想走生成方向的话，从这里进支线'
-    '（<a href="intro.html">导言</a> → <a href="recipe.html">主线速览版配方</a> → T1–T4），'
+    '（<a href="intro.html">导言</a> → T1–T4；公式与变体在<a href="recipe.html">补页</a>），'
     '否则 <a href="ch10.html">直接过 §10</a>。</div>'
 )
 
@@ -1319,6 +1507,11 @@ def _run_build(args) -> int:
         ch["sec_mins"] = section_mins_map(processed, info["sections"])
         ch["stats"] = reading_stats(raw)
         ch["mins"] = reading_metrics(raw)[1]
+        ch["reference"] = bool(ch.get("reference"))
+        if ch["reference"]:
+            ch["stats_ref"] = f"参考页 · 约 {ch['mins']} 分钟（不计入路线）"
+        else:
+            ch["stats_ref"] = ch["stats"]
         ch["blk"] = _block_stats(raw)
 
     if not all(c["title"] for c in chapters):
@@ -1390,7 +1583,7 @@ def _run_build(args) -> int:
         html = mark_selfcheck(html)
         part_answers = ""
         if args.only:
-            # 单章预览不搬答案：部末页可能没重建，搬走会留下死链或丢答案。
+            # 单章预览不搬答案：篇末页可能没重建，搬走会留下死链或丢答案。
             answer_ol = None
         else:
             html, answer_ol = take_selfcheck_answer(html, answers_note(ch))
@@ -1403,7 +1596,7 @@ def _run_build(args) -> int:
         footer = footer_html(build_date, f"本章源稿校验和 {ch['hash']}")
         h2s = [s for s in ch["sections"] if s["level"] == 2]
         review_anchor = "selfcheck" if 'id="selfcheck"' in html else (h2s[-1]["anchor"] if h2s else "")
-        review_label = "抽查部末十题" if slug in ("ch09", "ch14", "ch21") else "抽查本章三题"
+        review_label = "抽查篇末十题" if slug in ("ch09", "ch14", "ch21") else "抽查本章三题"
         # 支线导言没有章末自查，别给它挂“抽查本章三题”的空链接。
         if slug == "intro":
             review_label = ""
@@ -1411,7 +1604,7 @@ def _run_build(args) -> int:
                        f'data-anchor="{review_anchor}">{review_label}</a>') if review_anchor and review_label else ""
         content = (f'<article class="chapter">\n'
                    f'<div class="route-banner" id="routeBanner" data-slug="{slug}" hidden></div>\n'
-                   f'<div class="chapter-meta" id="chapterMeta" data-slug="{slug}">{ch["stats"]}</div>\n'
+                   f'<div class="chapter-meta" id="chapterMeta" data-slug="{slug}">{ch["stats_ref"]}</div>\n'
                    f'<div class="focus-row" id="focusRow" hidden><label><input type="checkbox" '
                    f'id="focusHide"> 隐藏非路线内容</label></div>\n'
                    f'{html}\n'
@@ -1440,7 +1633,7 @@ def _run_build(args) -> int:
         page_path = DIST / f"{end}.html"
         if not page_path.exists():
             if answers_by_part.get(part):
-                raise RuntimeError(f"部末页不存在：{end}.html（{part}）")
+                raise RuntimeError(f"篇末页不存在：{end}.html（{part}）")
             continue
         page = page_path.read_text(encoding="utf-8")
         if part_answers_marker(part) in page:
@@ -1476,6 +1669,8 @@ def _run_build(args) -> int:
     if set(print_answers) - set(PART_END):
         raise RuntimeError(f"print 有答案的部没有 PART_END：{sorted(set(print_answers) - set(PART_END))}")
     print_chapters = stitch_part_answers("\n".join(print_frags), print_answers)
+    # 篇末答案槽在逐章 details 全开之后才填入，需要再扫一遍。
+    print_chapters = re.sub(r'<details(?![^>]*\bopen\b)([^>]*)>', r'<details\1 open>', print_chapters)
     toc = "\n".join(
         f'<li><a href="#{c["slug"]}">{H.escape(c["label"])} {H.escape(short_title(c["title"], 30))}</a>'
         f'{badge_html(c["h1_markers"])}</li>' for c in chapters)
@@ -1485,7 +1680,7 @@ def _run_build(args) -> int:
                      f'<ul>{toc}</ul><hr>\n' + print_chapters)
     print_page = render_page(template, title="AI 系列读物 · 全文版", bodyclass="print-page",
                              sidebar="", content=print_content,
-                             footer=footer_html(build_date, "源稿共 30 章"))
+                             footer=footer_html(build_date, "源稿共 30 个单元"))
     (DIST / "print.html").write_text(print_page, encoding="utf-8", newline="\n")
     print(f"✓ print.html ({len(print_page)//1024} KB)")
 
@@ -1545,7 +1740,7 @@ def _run_build(args) -> int:
     print("✓ selftest.html")
     (DIST / "routes.html").write_text(
         render_page(template, title="路线与论文清单 · AI 系列读物", bodyclass="aux-page", sidebar="",
-                    content=routes_content(routes_cfg, chapters), footer=footer_html(build_date),
+                    content=routes_content(routes_cfg, chapters, views_by_route), footer=footer_html(build_date),
                     site_data=site_data_html),
         encoding="utf-8", newline="\n")
     print("✓ routes.html")
@@ -1558,7 +1753,7 @@ def _run_build(args) -> int:
     print(f"✓ route-*.html ×{len(routes_cfg['routes'])}")
 
     # ---- index.html（B3：向导＋路线图＋课表＋进度环＋检索；数据块内嵌）
-    index_content = hub_content(chapters, parts, routes_cfg, free)
+    index_content = hub_content(chapters, parts, routes_cfg, free, views_by_route)
     index_page = render_page(template, title="AI 系列读物 · 阅读版", bodyclass="hub-page",
                              sidebar="", content=index_content, footer=footer_html(build_date),
                              site_data=site_data_html)

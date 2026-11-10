@@ -7,10 +7,14 @@
 | 任务 | 先跑 | 门禁/收尾 |
 | --- | --- | --- |
 | 写/改一章 | `series-writing` skill：首稿契约/句子配方 → 首稿自检；兜底再跑 `style-scan --series` + `sentence_stats --row` + `first_use_scan` | `finish_round.py` |
+| 单章审阅（改动后） | `prose_diff.py --since HEAD --summary-only` → `section_map.py` → `coherence_scan.py`；按改动类型跑 `ripple_check.py` | `unit_closeout.py` / `finish_round.py` |
+| 工具自检 | `selftest_tools.py`（新审阅工具）；`--all` 追加核心工具 | 改 `series/tools/*.py` 后 |
+| 答案/正文镜像 | `answer_mirror_check.py "series/§N-….md"` | 人工裁决；`--strict` 可用于审阅批 |
 | 单章精修取证 | `unit_closeout.py "series/§N-….md"` | 人工把摘要抄进修订记录；提交前仍跑 `finish_round` |
 | 一轮/多章收尾 | `finish_round.py` | 收尾表全过；提交前不要用 `--no-build` |
 | 内容审计 | `series-audit` skill：`table_check` / `reference_lint --strict` / `first_use_scan` / `metaphor_scan --strict` / `symbol_coverage --strict` / `residue_scan` / `row_check` | `series_check` |
-| 配图 | `series-figures` skill：`generate_figures.py` | `series_check` 配图 24/24 |
+| Phase 0/1 体检 | `phase01.py --gates`：语病/条件候选＋第N部/§N 指针＋术语多释；报告写 `series/.tmp/phase01/` | 人工分诊；`--strict` 有 L0/指针错/术语多释退 1 |
+| 配图 | `series-figures` skill：`generate_figures.py` | `series_check` 配图 31/31 |
 | 构建/发布 | `build-pipeline` skill：`build_site.py` | `series_check` + `check_artifact_fresh` |
 | 规划/重排 | `series-planning` skill | `route_lint --check` + `build_readme --check` + anchors 漂移门 |
 
@@ -19,6 +23,12 @@
 只定位，不入硬门禁。公开数据 `series/data/` 由 `sync_public_data.py` 维护，本地有
 私有 `series/edit/术语总账.tsv` 时 `finish_round` 会校验同步。行文 pass 在
 `series-writing`，不在本目录的机械工具里。
+
+**正文审阅工具边界**：`prose_diff`/`section_map`/`coherence_scan`/`answer_mirror_check`/
+`ripple_check` 都是候选态，默认退出 0，不进入 `finish_round` 硬门禁；判断仍归
+`series-writing`/`series-audit`。`prose_diff` 需要 git 基线（默认 `HEAD` 对工作区，
+`HEAD~1` 对上一提交）；`review_log` 默认写私有 `series/edit/`，公开 clone 退回
+`series/.tmp/`。新工具都有 `--selftest`；改工具后先跑自检，再跑 `series_check`。
 
 **生成物/归档边界**：`series/.tmp/` 是可随时清空的运行产物；`series/dist/` 是发布产物，
 只由 `build_site.py` 重建；`series/data/` 是公开构建数据（术语/符号/引用规则，随仓提交）；
@@ -38,6 +48,19 @@
 | `route_js_check.py` | 路线层 JavaScript 与视图表对拍 | 门禁（本地） |
 | `table_check.py` | Markdown 表格结构检查 | 门禁（本地＋CI） |
 | `sentence_stats.py` | 句长／破折号密度测量；`--update` 刷基准表 | 测量 |
+| `selftest_tools.py` | 工具自检总入口；默认跑新审阅工具，`--all` 追加核心工具 | 维护 |
+| `prose_common.py` | 正文审阅共用切分/测量模块（被 section_map/coherence_scan/answer_mirror_check/prose_diff 引用） | 模块 |
+| `reader_packet.py` | 冷读包生成：本章正文＋截至本章之前的术语；排除后文/答案/edit；`--selftest` | 手动 |
+| `prose_diff.py` | 改动感知审阅：hunk＋前后段＋影响分类＋ripple 清单；`--since` 指定基线 | 测量 |
+| `section_map.py` | 按 H2 输出段落/句长/节奏地图，供反向提纲；节级读数为相对比较，章级基准看 `sentence_stats` | 测量 |
+| `coherence_scan.py` | 段首指代/上下文引用/孤岛术语/重复开头/超长段候选；`--max-orphans` 限条数 | 测量 |
+| `logic_lint.py` | 语病/条件/二分/约数候选（L0/L1/L2；只定位，不判罚）；`--include-absolute` 才列绝对化 | 测量 |
+| `consistency_scan.py` | 第N部/第N章/§N 指针、术语多释、数字台账 | 测量 |
+| `phase01.py` | Phase 0/1 一键体检：logic_lint + consistency_scan + 可选 series_check；`--recall` 出机器面全量候选，`--coverage N` 出覆盖抽样单；报告写 `series/.tmp/phase01/` | 手动 |
+| `answer_mirror_check.py` | 答案块数字/术语/引语回正文对账；数字比较归一化（3.20=3.2）；`--strict` 有候选退 1 | 测量 |
+| `ripple_check.py` | 按改动类型跑涟漪检查；标“本章/全系列”，全系列默认只提示 | 手动 |
+| `blind_pair.py` | 原文/改写随机 A/B 盲评表；`score` 读 votes/key 算胜率并可写 `review_log` | 手动 |
+| `review_log.py` | 审阅裁决日志与接受率汇总（默认 `series/edit/review_log.tsv`） | 手动 |
 | `row_check.py` | `style/句长基准.md` 与实测逐列对账 | 门禁（收尾链） |
 | `first_use_scan.py` | 术语首现／总账核对；`--all --ledger-only --strict`；`--check-rules` | 门禁（收尾链＋CI） |
 | `residue_scan.py` | 修复批残留模式复扫（EXPECT0；可传章文件限定） | 门禁（收尾链） |
@@ -48,7 +71,7 @@
 | `symbol_coverage.py` | 符号台账对查；`--strict` 有 FAIL 退出 1 | 门禁（收尾链） |
 | `sync_public_data.py` | 从私有 `edit/` 导出公开 `data/`；`--check` 校验是否过期 | 维护（本地） |
 | `apply_edits.py` | 断言式批量落文（锚全过才写） | 手动 |
-| `unit_closeout.py` | 单章收尾取证：first_use／句长／残留／套话／品味 | 手动 |
+| `unit_closeout.py` | 单章收尾取证：first_use／句长／残留／套话／品味；`--card` 加节地图/衔接/答案镜像 | 手动 |
 | `finish_round.py` | 轮次收尾一条龙：改动章 → 总账/规则表 → 符号/表格/残留 → 四仪 → build 双跑；`--no-build` 快速循环 | 收尾链 |
 
 ## 常用命令
@@ -63,6 +86,22 @@ python3 build/check_artifact_fresh.py
 # 改稿收尾（有 edit 档案走档案，无档案走 --ledger-only）
 python3 series/tools/finish_round.py --files "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md"
 python3 series/tools/unit_closeout.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md"
+python3 series/tools/unit_closeout.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md" --card
+
+# 工具自检
+python3 series/tools/selftest_tools.py
+python3 series/tools/selftest_tools.py --all
+
+# 改动感知审阅（候选态，不入硬门禁）
+python3 series/tools/prose_diff.py "series/§N-….md" --since HEAD --context 2 --summary-only
+python3 series/tools/section_map.py "series/§N-….md"
+python3 series/tools/coherence_scan.py "series/§N-….md"
+python3 series/tools/answer_mirror_check.py "series/§N-….md"
+python3 series/tools/ripple_check.py "series/§N-….md" --type claim --run
+python3 series/tools/blind_pair.py series/.tmp/§N.pairs.tsv
+python3 series/tools/blind_pair.py score --votes series/.tmp/blind/§N/votes.tsv \
+  --key series/.tmp/blind/§N/key.json --chapter "§N" --pass prose
+python3 series/tools/review_log.py summary --chapter "§N"
 
 # 单项
 python3 series/tools/row_check.py

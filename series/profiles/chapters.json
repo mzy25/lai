@@ -3,11 +3,11 @@
  "parts": [
   {
    "id": "zero",
-   "label": "第〇部 · 总览与读法"
+   "label": "开篇 · 总览与读法"
   },
   {
    "id": "build",
-   "label": "第一部 · 建造：模型怎样获得能力"
+   "label": "第一篇 · 建造：模型怎样获得能力"
   },
   {
    "id": "branch",
@@ -15,11 +15,15 @@
   },
   {
    "id": "law",
-   "label": "第二部 · 规律：能力为什么可信"
+   "label": "第二篇 · 规律与边界：能力为什么可信、里面有什么、哪里到头"
   },
   {
    "id": "drive",
-   "label": "第三部 · 驾驭：把能力用成可靠系统"
+   "label": "第三篇 · 驾驭：把能力用成可靠系统"
+  },
+  {
+   "id": "frontier",
+   "label": "终篇 · 前沿与收束：走出屏幕之后"
   }
  ],
  "chapters": [
@@ -158,13 +162,13 @@
   {
    "slug": "ch20",
    "file": "§20-AI 怎样走出屏幕、进入物理世界？——实时交互与具身智能.md",
-   "part": "drive",
+   "part": "frontier",
    "label": "§20"
   },
   {
    "slug": "ch21",
    "file": "§21-这一切能走多远？——世界模型、认知与开放问题.md",
-   "part": "drive",
+   "part": "frontier",
    "label": "§21"
   },
   {
@@ -172,12 +176,6 @@
    "file": "支线导言-生成深潜.md",
    "part": "branch",
    "label": "支线导言"
-  },
-  {
-   "slug": "recipe",
-   "file": "支线附录-主线速览版SD配方.md",
-   "part": "branch",
-   "label": "支线附录"
   },
   {
    "slug": "t1",
@@ -202,6 +200,13 @@
    "file": "T4-怎样控制生成的内容、还能生成什么？——应用与现状.md",
    "part": "branch",
    "label": "T4"
+  },
+  {
+   "slug": "recipe",
+   "file": "支线补页-公式与现状.md",
+   "part": "branch",
+   "label": "支线补页",
+   "reference": true
   }
  ]
 }

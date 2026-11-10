@@ -42,7 +42,7 @@ def render() -> str:
     out: list[str] = []
     out.append(f"# AI 系列读物 · v{version}")
     out.append("")
-    out.append("> 30 个阅读单元：第〇部 3 节＋第一部 9 章＋支线导言/配方页＋T1–T4＋第二部 5 章＋第三部 7 章。")
+    out.append("> 30 个阅读单元：开篇 3 节＋第一篇 9 章＋支线导言＋T1–T4＋补页＋第二篇 5 章＋第三篇 5 章＋终篇 2 章。")
     out.append("")
     out.append("## 在线阅读")
     out.append("")
@@ -56,7 +56,7 @@ def render() -> str:
     out.append("")
     out.append("## 30 个单元")
     out.append("")
-    out.append("| 部 | 号 | 章题 | 源稿 | 在线 |")
+    out.append("| 篇 | 号 | 章题 | 源稿 | 在线 |")
     out.append("| --- | --- | --- | --- | --- |")
     for c in chapters["chapters"]:
         part = parts.get(c["part"], c["part"])
@@ -65,15 +65,20 @@ def render() -> str:
             f"| [md](./{q(c['file'])}) | [读](./dist/{c['slug']}.html) |"
         )
     out.append("")
-    out.append("## 九条路线")
+    out.append("## 路线目标")
     out.append("")
-    out.append("| 路线 | 类型 | 适合谁 |")
-    out.append("| --- | --- | --- |")
-    for r in routes["routes"]:
-        out.append(
-            f"| [{r['title']}](./dist/routes.html#route-{r['id']}) "
-            f"| {r.get('tag', '')} | {r.get('audience', '')} |"
-        )
+    out.append("| 目标 | 组内走法 |")
+    out.append("| --- | --- |")
+    by_id = {r["id"]: r for r in routes["routes"]}
+    for g in routes.get("groups", []):
+        labels = []
+        for rid in g["routes"]:
+            r = by_id[rid]
+            label = r["title"]
+            if r.get("tag") and r["tag"] not in label:
+                label += f"（{r['tag']}）"
+            labels.append(f"[{label}](./dist/routes.html#route-{rid})")
+        out.append(f"| {g['title']} | {'、'.join(labels)} |")
     out.append("")
     out.append("## 构建与门禁")
     out.append("")

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""series 配图单一来源：一图一函数（P0 试点 3 张，P1 全量 22 张）。
+"""series 配图单一来源：一图一函数（当前 31 张）。
 
 用法：
-    .venv/bin/python series/tools/generate_figures.py            # 全部（当前=P0 三张 + 已注册）
+    .venv/bin/python series/tools/generate_figures.py            # 全部（当前 31 张）
     .venv/bin/python series/tools/generate_figures.py 0-2 T4-2   # 单张重建
 
 产出：
@@ -253,6 +253,10 @@ def fig_0_1_loop():
     axR.text(-2.4, -0.1, "参数 w", fontsize=8.5, color=INK)
     axR.annotate("一路滚到碗底", (0.15, 0.5), xytext=(-2.9, 4.6), fontsize=8.5,
                  color=GRAY["d"], arrowprops=dict(arrowstyle="-|>", color=GRAY["d"], lw=1.0))
+    axR.annotate("步子偏大：\n越过谷底再回调", xy=(0.9, 1.2), xytext=(0.4, 5.8),
+                 fontsize=8.2, color=ROLE_WARNING, ha="left",
+                 arrowprops=dict(arrowstyle="-|>", color=ROLE_WARNING, lw=1.0,
+                                 connectionstyle="arc3,rad=-0.2"))
     fig.subplots_adjust(wspace=0.05)
     return save_fig(fig, "fig_0_1_loop.png")
 
@@ -278,12 +282,19 @@ def fig_15_1_pomdp():
         "观测空间：能看到的信息",
         "状态转移：做完动作，世界怎么变",
         "观测模型：状态与观测的概率关系",
-        "奖励：好不好的衡量（看一整条轨迹）",
-        "折扣因子：越远的未来越打折",
     ]
     for i, txt in enumerate(chips):
         ax.text(7.0, 8.55 - i * 1.05, "· " + txt, fontsize=8, color=INK, va="center")
-    ax.text(0.5, 1.0, "观察、推断、行动、反馈：一轮又是一轮", fontsize=9, color=GRAY["d"])
+    # 奖励与折扣：回报计算的两个入口
+    _box(ax, 2.7, 0.55, 2.4, 0.85, "奖励 $r_t$\n这一步好不好",
+         ORANGE["l"], ORANGE["d"], fs=8)
+    _box(ax, 5.5, 0.55, 2.4, 0.85, "折扣 $\\gamma$\n未来回报打折",
+         ORANGE["l"], ORANGE["d"], fs=8)
+    ax.plot([2.7, 7.9], [1.55, 1.55], color=ORANGE["m"], lw=1.0, ls=(0, (3, 2)))
+    ax.plot([3.4, 3.4], [2.6, 1.55], color=ORANGE["m"], lw=1.0, ls=(0, (3, 2)))
+    ax.text(8.15, 0.95, r"$G_t=r_t+\gamma r_{t+1}+\cdots$", fontsize=8.5,
+            color=ORANGE["d"], va="center")
+    ax.text(0.5, 0.12, "观察、推断、行动、反馈：一轮又是一轮", fontsize=8.5, color=GRAY["d"])
     return save_fig(fig, "fig_15_1_pomdp.png")
 
 
@@ -305,12 +316,16 @@ def fig_16_1_harness():
         y = 0.9 + i * 1.32
         fc = BLUE["xl"] if i % 2 == 0 else BLUE["l"]
         _box(ax, 0.7, y, 3.4, 1.05, name, fc, BLUE["d"], fs=9.5)
+        if i >= 4:
+            ax.add_patch(FancyBboxPatch((0.64, y - 0.06), 3.52, 1.17,
+                         boxstyle="round,pad=0.02,rounding_size=0.06",
+                         fc="none", ec=ROLE_WARNING, lw=1.5, ls=(0, (4, 2))))
         ax.text(4.35, y + 0.52, act, fontsize=8.5, color=INK, va="center")
     ax.plot([0.5, 0.5], [0.9, 8.4], color=GRAY["m"], lw=1.4)
     ax.text(0.22, 4.6, "模型外", rotation=90, ha="center", va="center",
             fontsize=8.5, color=GRAY["d"])
-    ax.text(0.7, 0.15, "六层全在模型外面；按翻车点补层（L5／L6 是缺口）"
-            "。权重里只装了推理与工具用法。", fontsize=8.5, color=GRAY["d"])
+    ax.text(0.7, 0.15, "六层全在模型外面；橙色虚线 L5／L6 是常见缺口。"
+            "权重里只装了推理与工具用法。", fontsize=8.5, color=GRAY["d"])
     return save_fig(fig, "fig_16_1_harness.png")
 
 
@@ -349,7 +364,7 @@ def fig_16_2_agent_loop():
 def fig_t4_3_clip_path():
     fig, ax = plt.subplots(figsize=(10.6, 5.0))
     ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.axis("off")
-    ax.text(5, 9.6, "CLIP 条件通路：条件在每一层反复注入", ha="center",
+    ax.text(5, 9.6, "CLIP 条件通路：条件在各级交叉注意力块反复注入", ha="center",
             fontsize=11, fontweight="bold", color=INK)
     _box(ax, 0.4, 6.4, 2.2, 1.2, "提示词", GRAY["l"], GRAY["d"], fs=9)
     _box(ax, 3.0, 6.4, 2.6, 1.2, "CLIP 文本塔\n（冻结）", GREEN["l"], GREEN["d"], fs=9)
@@ -400,7 +415,7 @@ def fig_t4_5_open_closed():
 @figure("T4-6", "fig_t4_6_studio.png")
 def fig_t4_6_studio():
     fig, ax = plt.subplots(figsize=(11.0, 5.2))
-    ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.axis("off")
+    ax.set_xlim(0, 10); ax.set_ylim(-1.2, 10.2); ax.axis("off")
     ax.text(5, 9.6, "画室挂架：四类技法 × 三把工具刷", ha="center",
             fontsize=11, fontweight="bold", color=INK)
     cols = ["大板刷\n（Transformer）", "勾线笔\n（U-Net）", "海绵滚轮\n（Mamba 一系）"]
@@ -422,8 +437,9 @@ def fig_t4_6_studio():
             fc = GRAY["xlight"] if txt == "—" else GREEN["l"]
             ec = GRAY["line"] if txt == "—" else GREEN["d"]
             _box(ax, x0 + j * cw, y, cw - 0.15, ch - 0.2, txt, fc, ec, fs=8)
-    ax.text(0.4, 0.35, "技法与工具互不绑定（交叉处是代表模型）；海绵滚轮为补记、未进主表。",
-            fontsize=8.5, color=GRAY["d"])
+    ax.text(0.4, -0.9, "技法与工具互不绑定；交叉处是代表模型。\n"
+            "— = 暂无代表模型，不等于组合不可行；海绵滚轮为补记、未进主表。",
+            fontsize=8.2, color=GRAY["d"], linespacing=1.5)
     return save_fig(fig, "fig_t4_6_studio.png")
 
 
@@ -558,19 +574,23 @@ def fig_t1_5_manifold():
 
 @figure("T1-6", "fig_t1_6_field.png")
 def fig_t1_6_field():
-    centers = [(2.0, 2.0), (-2.0, -2.0), (2.0, -1.6)]
+    centers = [(2.6, 2.6), (-2.2, -2.2)]
+    weights = [0.7, 0.3]
     gx, gy = np.meshgrid(np.linspace(-5, 5, 22), np.linspace(-5, 5, 22))
-    sx, sy = _gauss_mix_score(gx, gy, centers, 0.9, [0.45, 0.45, 0.10])
+    sx, sy = _gauss_mix_score(gx, gy, centers, 0.9, weights)
     fx = np.linspace(-5, 5, 240)
     FY, FX = np.meshgrid(np.linspace(-5, 5, 240), fx)
     dens = np.zeros_like(FX)
-    for cx, cy in centers:
-        dens += np.exp(-((FX - cx) ** 2 + (FY - cy) ** 2) / (2 * 0.9 ** 2))
+    for (cx, cy), wt in zip(centers, weights):
+        dens += wt * np.exp(-((FX - cx) ** 2 + (FY - cy) ** 2) / (2 * 0.9 ** 2))
     fig, ax = plt.subplots(figsize=(6.6, 5.6))
     ax.contour(FX, FY, dens, levels=8, colors=GRAY["m"], linewidths=0.8)
     ax.quiver(gx, gy, sx, sy, color=ROLE_PRIMARY, alpha=0.9)
+    for i, (cx, cy) in enumerate(centers, 1):
+        ax.plot([cx], [cy], "o", color=ROLE_WARNING, ms=6)
+        ax.text(cx + 0.25, cy + 0.25, f"峰 {i}", fontsize=8, color=ROLE_WARNING)
     ax.set_xlabel("第一维", fontsize=9); ax.set_ylabel("第二维", fontsize=9)
-    ax.set_title("分数函数：等高线与向量场（指向密度增长最快处）", fontsize=10)
+    ax.set_title("分数函数：等高线与向量场（双峰玩具）", fontsize=10)
     ax.set_aspect("equal")
     for sp in ax.spines.values():
         sp.set_color(GRAY["line"])
@@ -591,8 +611,9 @@ def fig_t1_7_two_sigmas():
         sx, sy = _gauss_mix_score(gx, gy, centers, sig, weights)
         n = np.hypot(sx, sy); n[n == 0] = 1
         ax.quiver(gx, gy, sx / n, sy / n, color=ROLE_PRIMARY, alpha=0.9)
-        for (cx, cy), w in zip(centers, weights):
+        for idx, ((cx, cy), w) in enumerate(zip(centers, weights), 1):
             ax.plot([cx], [cy], "o", color=ROLE_WARNING, ms=7 + 4 * w)
+            ax.text(cx + 0.2, cy + 0.2, f"峰 {idx}", fontsize=8, color=ROLE_WARNING)
         ax.plot([com[0]], [com[1]], "*", color=ROLE_PURPLE, ms=14)
         ax.text(com[0] + 0.25, com[1] + 0.15, "整体重心", fontsize=8, color=ROLE_PURPLE)
         ax.set_xticks([]); ax.set_yticks([])
@@ -759,7 +780,7 @@ def fig_10_2_map():
     qs = [("反常", "§10"), ("凭什么", "§11"), ("可预测", "§12"), ("内部", "§13"), ("边界", "§14")]
     fig, ax = plt.subplots(figsize=(11.2, 4.6))
     ax.set_xlim(0, 11.2); ax.set_ylim(0, 7.0); ax.axis("off")
-    ax.text(5.6, 6.5, "规律部五问：先从反常开始", ha="center", fontsize=11,
+    ax.text(5.6, 6.5, "规律篇五问：先从反常开始", ha="center", fontsize=11,
             fontweight="bold", color=INK)
     w, gap = 1.85, 0.42
     for i, (name, sec) in enumerate(qs):
@@ -801,13 +822,265 @@ def fig_13_1_tests():
             _arr(ax, (x + w + 0.04, 4.35), (x + w + gap - 0.04, 4.35), color=GRAY["d"])
     _box(ax, 10.1, 3.6, 1.05, 1.5, "解释", GREEN["l"], GREEN["d"], fs=10)
     _arr(ax, (2.4 + 2 * (w + gap) + w + 0.04, 4.35), (10.1, 4.35), color=ROLE_SUCCESS)
-    _arr(ax, (6.08, 3.6), (6.08, 2.0), color=ROLE_DANGER, style="-")
-    _arr(ax, (6.08, 2.0), (1.15, 2.0), color=ROLE_DANGER, style="-")
-    _arr(ax, (1.15, 2.0), (1.15, 3.6), color=ROLE_DANGER)
-    ax.text(3.3, 1.55, "任何一道断了 → 退回标“线索”", fontsize=9, color=ROLE_DANGER)
+    gate_centers = [2.4 + i * (w + gap) + w / 2 for i in range(3)]
+    rail_y = 2.15
+    for cx in gate_centers:
+        _arr(ax, (cx, 3.6), (cx, rail_y), color=ROLE_DANGER, lw=1.2,
+             style="-", ls=(0, (4, 3)))
+    _arr(ax, (gate_centers[-1], rail_y), (1.15, rail_y), color=ROLE_DANGER, style="-")
+    _arr(ax, (1.15, rail_y), (1.15, 3.6), color=ROLE_DANGER)
+    ax.text(3.3, 1.55, "任一道断了 → 退回标“线索”", fontsize=9, color=ROLE_DANGER)
     ax.text(0.3, 0.7, "起点不是“找到了什么”，而是“观测到线索”；解释要用证据换。",
             fontsize=8.5, color=GRAY["d"])
     return save_fig(fig, "fig_13_1_tests.png")
+
+
+
+# ---------------------------------------------------------------- 新增 P0/P1：机制与曲线
+
+@figure("4-1", "fig_4_1_backprop.png")
+def fig_4_1_backprop():
+    fig, ax = plt.subplots(figsize=(12.0, 6.2))
+    ax.set_xlim(0, 12); ax.set_ylim(0, 7); ax.axis("off")
+    ax.text(6.0, 6.7, "反向传播：前向装数据，反向装责任", ha="center",
+            fontsize=11, fontweight="bold", color=INK)
+    ax.text(0.2, 5.95, "前向：数据 →", fontsize=8.5, color=GRAY["d"])
+    ax.text(0.2, 3.25, "反向：责任 ←", fontsize=8.5, color=GRAY["d"])
+    # 前向
+    _box(ax, 0.2, 4.6, 1.3, 1.0, "x\n[2, 3]", GRAY["l"], GRAY["d"], fs=9)
+    _box(ax, 1.9, 4.6, 2.2, 1.0, "z = Wx + b\n[9, 19, 29]", BLUE["l"], BLUE["d"], fs=8.5)
+    _box(ax, 4.5, 4.6, 2.0, 1.0, "h = ReLU(z)\n[9, 19, 29]", GREEN["l"], GREEN["d"], fs=8.5)
+    _box(ax, 6.9, 4.6, 2.1, 1.0, r"$\hat{y}$ = W_out·h + c" "\n135", BLUE["l"], BLUE["d"], fs=8.5)
+    _box(ax, 9.4, 4.6, 1.8, 1.0, "损失\n½(135−10)²", RED["l"], RED["d"], fs=8.5)
+    for x1, x2, lab in [(1.5, 1.9, "W, b"), (4.1, 4.5, "ReLU"),
+                        (6.5, 6.9, "W_out, c"), (9.0, 9.4, "MSE")]:
+        _arr(ax, (x1, 5.1), (x2, 5.1), color=GRAY["d"])
+        ax.text((x1 + x2) / 2, 5.78, lab, ha="center", fontsize=7.5, color=GRAY["d"])
+    # 反向
+    _box(ax, 9.3, 1.7, 2.0, 1.0, r"dL/d$\hat{y}$ = 125", ORANGE["l"], ORANGE["d"], fs=8.5)
+    _box(ax, 6.8, 1.7, 2.0, 1.0, "dL/dh\n[125, 250, 375]", ORANGE["l"], ORANGE["d"], fs=8)
+    _box(ax, 4.4, 1.7, 2.0, 1.0, "dL/dz\n[125, 250, 375]", ORANGE["l"], ORANGE["d"], fs=8)
+    _box(ax, 0.3, 1.5, 3.4, 1.5, "dW = x^T · dL/dz\n[[250, 375],\n [500, 750],\n [750, 1125]]",
+         ORANGE["l"], ORANGE["d"], fs=7.5)
+    _arr(ax, (10.3, 4.6), (10.3, 2.7), color=ROLE_WARNING, lw=1.4)
+    ax.text(10.45, 3.55, r"$\delta\hat{y}$=125", fontsize=7.5, color=ROLE_WARNING)
+    _arr(ax, (7.95, 4.6), (7.8, 2.7), color=ROLE_WARNING, lw=1.4)
+    ax.text(8.05, 3.7, "×W_out", fontsize=7.5, color=ROLE_WARNING)
+    _arr(ax, (5.5, 4.6), (5.4, 2.7), color=ROLE_WARNING, lw=1.4)
+    ax.text(5.55, 3.7, "×ReLU′", fontsize=7.5, color=ROLE_WARNING)
+    _arr(ax, (4.4, 1.95), (3.7, 2.45), color=ROLE_WARNING, lw=1.4, rad=-0.1)
+    ax.text(3.95, 2.8, "×x → 外积", fontsize=7.5, color=ROLE_WARNING)
+    ax.text(5.4, 0.45, "375 = 125 × 3 × 1：责任看输出权重 W_out，不看 h3=29 的大小",
+            ha="center", fontsize=8.8, color=ROLE_DANGER)
+    return save_fig(fig, "fig_4_1_backprop.png")
+
+
+@figure("5-1", "fig_5_1_attention.png")
+def fig_5_1_attention():
+    fig, ax = plt.subplots(figsize=(12.0, 5.8))
+    ax.set_xlim(0, 12); ax.set_ylim(0, 7); ax.axis("off")
+    ax.text(6.0, 6.6, "注意力：投影—打分—归一—取回", ha="center",
+            fontsize=11, fontweight="bold", color=INK)
+    _box(ax, 0.2, 3.0, 1.6, 1.2, "X\n3×4", GRAY["l"], GRAY["d"], fs=10)
+    _box(ax, 2.4, 4.8, 1.7, 0.9, "Q = XW_Q\n3×2", BLUE["l"], BLUE["d"], fs=8.5)
+    _box(ax, 2.4, 3.4, 1.7, 0.9, "K = XW_K\n3×2", GREEN["l"], GREEN["d"], fs=8.5)
+    _box(ax, 2.4, 2.0, 1.7, 0.9, "V = XW_V\n3×2", ORANGE["l"], ORANGE["d"], fs=8.5)
+    for y, lab in [(5.25, "×W_Q"), (3.85, "×W_K"), (2.45, "×W_V")]:
+        _arr(ax, (1.8, 3.6), (2.4, y), color=GRAY["d"])
+        ax.text(2.05, (3.6 + y) / 2 + 0.12, lab, fontsize=7.2, color=GRAY["d"], ha="right")
+    _box(ax, 4.7, 3.8, 2.0, 0.9, "S = QK^T/√d\n3×3", GRAY["l"], GRAY["d"], fs=8.5)
+    _arr(ax, (4.1, 5.25), (4.7, 4.45), color=BLUE["d"])
+    _arr(ax, (4.1, 3.85), (4.7, 4.1), color=GREEN["d"])
+    ax.text(4.42, 4.95, "打分", fontsize=7.2, color=GRAY["d"])
+    _box(ax, 7.1, 3.8, 2.0, 0.9, "A = softmax(S)\n每行和 = 1", PURPLE["l"], PURPLE["d"], fs=8.5)
+    _arr(ax, (6.7, 4.25), (7.1, 4.25), color=GRAY["d"])
+    ax.text(8.1, 3.5, "第一行：0.134 / 0.281 / 0.585", ha="center",
+            fontsize=7.2, color=PURPLE["d"])
+    _box(ax, 9.7, 1.9, 2.0, 0.9, "O = AV\n3×2", BLUE["l"], BLUE["d"], fs=9)
+    _arr(ax, (8.1, 3.8), (10.2, 2.8), color=PURPLE["d"], rad=-0.1)
+    _arr(ax, (4.1, 2.45), (9.7, 2.35), color=ORANGE["d"], rad=0.0)
+    ax.text(6.9, 2.05, "加权取回", fontsize=7.2, color=ORANGE["d"])
+    ax.text(10.7, 1.55, "第一行：1.761 / 1.561", ha="center", fontsize=7.2, color=BLUE["d"])
+    ax.text(0.3, 0.7, "Q 负责提问；K 负责报专长；V 负责给建议", fontsize=8.5, color=GRAY["d"])
+    return save_fig(fig, "fig_5_1_attention.png")
+
+
+@figure("8-1", "fig_8_1_svd_lora.png")
+def fig_8_1_svd_lora():
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(12.0, 5.2))
+    for ax in (axL, axR):
+        ax.set_xlim(0, 6.5); ax.set_ylim(0, 5.6); ax.axis("off")
+    axL.text(3.25, 5.15, "SVD：旋转—拉伸—旋转", ha="center", fontsize=11,
+             fontweight="bold", color=INK)
+    _box(axL, 0.2, 3.5, 1.2, 1.0, "A\n2×3", GRAY["l"], GRAY["d"], fs=9)
+    axL.text(1.55, 4.0, "=", fontsize=12, color=INK, va="center")
+    _box(axL, 1.8, 3.5, 1.1, 1.0, "U\n2×2", BLUE["l"], BLUE["d"], fs=9)
+    axL.text(3.05, 4.0, "×", fontsize=12, color=INK, va="center")
+    _box(axL, 3.3, 3.5, 1.2, 1.0, "Σ\n2×3", GREEN["l"], GREEN["d"], fs=9)
+    axL.text(4.65, 4.0, "×", fontsize=12, color=INK, va="center")
+    _box(axL, 4.9, 3.5, 1.3, 1.0, "V^T\n3×3", PURPLE["l"], PURPLE["d"], fs=9)
+    axL.text(0.3, 2.55, "只留 σ1 → A1；丢掉 σ2，相对误差 56.6%", fontsize=8.8, color=GRAY["d"])
+    axL.text(0.3, 1.95, "3.193 与 2.193 挨得近，截断本来就亏；\n自然矩阵的谱衰减更快，三五项就能占九成能量。",
+             fontsize=8.3, color=GRAY["d"], linespacing=1.5)
+    axL.add_patch(plt.Rectangle((0.4, 0.2), 0.45, 1.2, color=BLUE["m"]))
+    axL.add_patch(plt.Rectangle((1.05, 0.2), 0.45, 0.82, color=GRAY["m"]))
+    axL.text(0.62, 1.5, "σ1 3.193", ha="center", fontsize=8.0, color=BLUE["d"])
+    axL.text(1.27, 1.12, "σ2 2.193", ha="center", fontsize=8.0, color=GRAY["d"])
+    axL.text(1.8, 0.7, "截断 k=1：留 68% 能量", fontsize=8.5, color=GRAY["d"])
+    axR.text(3.25, 5.15, "LoRA：冻结 W0，只训 BA", ha="center", fontsize=11,
+             fontweight="bold", color=INK)
+    _box(axR, 0.2, 2.9, 1.8, 1.2, "W0\nd×d\n冻结", GRAY["l"], GRAY["d"], fs=8.5)
+    _box(axR, 2.6, 3.5, 1.3, 0.8, "B\nd×r", BLUE["l"], BLUE["d"], fs=8.5)
+    _box(axR, 4.2, 3.5, 1.3, 0.8, "A\nr×d", GREEN["l"], GREEN["d"], fs=8.5)
+    axR.text(4.0, 3.9, "×", fontsize=12, color=INK, va="center")
+    _box(axR, 3.2, 2.2, 1.5, 0.8, "BA\nd×d", ORANGE["l"], ORANGE["d"], fs=8.5)
+    _box(axR, 3.0, 0.8, 1.9, 0.9, "W = W0 + BA\nd×d", PURPLE["l"], PURPLE["d"], fs=8.5)
+    _arr(axR, (2.0, 3.1), (3.05, 1.7), color=GRAY["d"], rad=-0.2)
+    _arr(axR, (3.95, 3.5), (3.95, 3.0), color=ROLE_WARNING)
+    _arr(axR, (4.0, 2.2), (4.0, 1.7), color=ROLE_WARNING)
+    axR.text(0.3, 1.75, "参数 d² → 2dr", fontsize=8.8, color=GRAY["d"])
+    axR.text(0.3, 1.35, "d=4096, r=4：512×", fontsize=8.8, color=GRAY["d"])
+    axR.text(0.3, 0.95, "训练只动 B/A；\n推理可合并回 W0", fontsize=8.3, color=GRAY["d"],
+             linespacing=1.4)
+    fig.subplots_adjust(wspace=0.08)
+    return save_fig(fig, "fig_8_1_svd_lora.png")
+
+
+@figure("12-1", "fig_12_1_scaling.png")
+def fig_12_1_scaling():
+    params = np.array([8, 16, 32, 64, 128, 256, 512, 1024], dtype=float)
+    loss = np.array([0.538, 0.379, 0.274, 0.212, 0.169, 0.139, 0.120, 0.111])
+    floor = 0.09
+    coef = np.polyfit(np.log10(params[:4]), np.log10(loss[:4] - floor), 1)
+    xx = np.logspace(np.log10(8), np.log10(1024), 100)
+    yy = 10 ** coef[1] * xx ** coef[0] + floor
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(12.0, 4.6))
+    axL.plot(params, loss, "o", color=ROLE_PRIMARY, ms=5, label="实测")
+    axL.plot(xx, yy, "-", color=ROLE_PRIMARY, lw=1.6,
+             label=f"前四点拟合：α={-coef[0]:.2f}")
+    axL.axhline(floor, color=GRAY["m"], ls="--", lw=1.0, label="不可约损失 0.09")
+    axL.set_xscale("log"); axL.set_yscale("log")
+    axL.set_xlabel("参数量（对数）"); axL.set_ylabel("测试损失（对数）")
+    axL.set_title("幂律：前四点拟合，后四点外推", fontsize=10)
+    axL.legend(fontsize=8, loc="upper right")
+    axL.grid(alpha=0.25, lw=0.6)
+    axL.annotate("外推误差 ≤2.4%", xy=(512, 0.12), xytext=(180, 0.28),
+                 fontsize=8, color=ROLE_DANGER,
+                 arrowprops=dict(arrowstyle="-|>", color=ROLE_DANGER, lw=0.9))
+    p2 = np.array([32, 64, 128, 192, 256, 512])
+    l2 = np.array([0.297, 0.236, 0.205, 0.202, 0.222, 0.351])
+    axR.plot(p2, l2, "o-", color=ROLE_WARNING, lw=1.6, ms=5)
+    axR.axvspan(128, 192, color=GREEN["l"], alpha=0.7)
+    axR.annotate("谷底 128–192", xy=(160, 0.202), xytext=(245, 0.27),
+                 fontsize=8, color=GREEN["d"],
+                 arrowprops=dict(arrowstyle="-|>", color=GREEN["d"], lw=0.9))
+    axR.text(34, 0.315, "太小：欠拟合", fontsize=7.5, color=GRAY["d"])
+    axR.text(505, 0.325, "太大：连噪声一起学", fontsize=7.5, color=GRAY["d"], ha="right")
+    axR.set_xlabel("参数量"); axR.set_ylabel("测试损失")
+    axR.set_title("Chinchilla：固定 800 样本的 U 形", fontsize=10)
+    axR.grid(alpha=0.25, lw=0.6)
+    fig.subplots_adjust(wspace=0.25)
+    return save_fig(fig, "fig_12_1_scaling.png")
+
+
+@figure("T2-1", "fig_t2_1_reverse_sde.png")
+def fig_t2_1_reverse_sde():
+    t = np.linspace(0, 1, 90)
+
+    def wavy(start, end, amp, phase):
+        base = start + (end - start) * t[:, None]
+        dev = np.stack([np.sin(2 * np.pi * t + phase),
+                        np.cos(2 * np.pi * t + phase)], axis=1)
+        return base + amp * np.sin(np.pi * t)[:, None] * dev
+
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(9.8, 3.6))
+    for ax in (axL, axR):
+        ax.set_xlim(0, 8); ax.set_ylim(1.4, 4.8); ax.axis("off")
+    data = np.array([1.2, 3.0]); noise = np.array([6.8, 3.0])
+    axL.text(4.0, 4.55, "前向：数据 → 噪声", ha="center", fontsize=10.5,
+             fontweight="bold", color=INK)
+    for phase in np.linspace(0, 2 * np.pi, 5, endpoint=False):
+        path = wavy(data, noise, 0.32, phase)
+        axL.plot(path[:, 0], path[:, 1], color=GRAY["m"], lw=1.0, alpha=0.55)
+    axL.scatter([data[0]], [data[1]], color=ROLE_SUCCESS, s=50, zorder=4)
+    axL.scatter([noise[0]], [noise[1]], color=GRAY["d"], s=50, zorder=4)
+    axL.text(data[0], data[1] - 0.45, "数据", ha="center", fontsize=8, color=ROLE_SUCCESS)
+    axL.text(noise[0], noise[1] - 0.45, "噪声", ha="center", fontsize=8, color=GRAY["d"])
+    axL.text(4.0, 1.6, "多次加噪：同一个起点也走出不同路径", ha="center",
+             fontsize=8, color=GRAY["d"])
+    axR.text(4.0, 4.55, "反向：噪声 → 数据", ha="center", fontsize=10.5,
+             fontweight="bold", color=INK)
+    for phase in np.linspace(0, 2 * np.pi, 4, endpoint=False):
+        path = wavy(noise, data, 0.32, phase)
+        axR.plot(path[:, 0], path[:, 1], color=ROLE_WARNING, lw=1.0, alpha=0.55)
+    ode = noise + (data - noise) * t[:, None]
+    ode[:, 1] += 0.42 * np.sin(np.pi * t)
+    axR.plot(ode[:, 0], ode[:, 1], color=ROLE_PRIMARY, lw=2.2)
+    axR.scatter([noise[0]], [noise[1]], color=GRAY["d"], s=50, zorder=4)
+    axR.scatter([data[0]], [data[1]], color=ROLE_SUCCESS, s=50, zorder=4)
+    axR.text(noise[0], noise[1] - 0.45, "同一起点", ha="center", fontsize=8, color=GRAY["d"])
+    axR.text(data[0], data[1] - 0.45, "数据", ha="center", fontsize=8, color=ROLE_SUCCESS)
+    axR.text(4.0, 1.6, "橙色：反向 SDE（有分支）　蓝色：概率流 ODE（确定）",
+             ha="center", fontsize=8, color=GRAY["d"])
+    fig.subplots_adjust(wspace=0.05)
+    return save_fig(fig, "fig_t2_1_reverse_sde.png")
+
+
+@figure("19-1", "fig_19_1_topologies.png")
+def fig_19_1_topologies():
+    fig, axes = plt.subplots(1, 3, figsize=(12.0, 4.0))
+    for ax in axes:
+        ax.set_xlim(0, 6); ax.set_ylim(0, 6); ax.axis("off")
+    # Supervisor
+    ax = axes[0]
+    ax.set_title("Supervisor：中心委派", fontsize=10.5)
+    _box(ax, 2.0, 4.4, 2.0, 0.8, "主 Agent", BLUE["l"], BLUE["d"], fs=8.5)
+    for i, x in enumerate([0.2, 2.2, 4.2]):
+        _box(ax, x, 2.2, 1.6, 0.8, f"子 {i+1}", BLUE["l"], BLUE["d"], fs=8)
+        _arr(ax, (3.0, 4.4), (x + 0.8, 3.0), color=GRAY["d"])
+    _arr(ax, (2.2 + 0.8, 3.0), (3.0, 4.4), color=ROLE_WARNING, rad=0.2)
+    ax.text(3.0, 1.1, "主上下文被中间结果淹没", ha="center", fontsize=8, color=ROLE_DANGER)
+    # Pipeline
+    ax = axes[1]
+    ax.set_title("Pipeline：顺序链", fontsize=10.5)
+    for i, (x, name) in enumerate([(0.2, "A"), (2.2, "B"), (4.2, "C")]):
+        _box(ax, x, 3.0, 1.5, 0.9, name, BLUE["l"], BLUE["d"], fs=9)
+        if i < 2:
+            _arr(ax, (x + 1.5, 3.45), (x + 2.0, 3.45), color=GRAY["d"])
+    ax.text(3.0, 1.1, "上游错误沿管道放大", ha="center", fontsize=8, color=ROLE_DANGER)
+    # Fan-out
+    ax = axes[2]
+    ax.set_title("Fan-out：并行分发", fontsize=10.5)
+    _box(ax, 2.1, 4.6, 1.8, 0.7, "分发", BLUE["l"], BLUE["d"], fs=8.5)
+    for i, x in enumerate([0.2, 2.1, 4.0]):
+        _box(ax, x, 2.8, 1.7, 0.8, f"子 {i+1}", BLUE["l"], BLUE["d"], fs=8)
+        _arr(ax, (3.0, 4.6), (x + 0.85, 3.6), color=GRAY["d"])
+        _arr(ax, (x + 0.85, 2.8), (3.0, 1.8), color=GRAY["d"])
+    _box(ax, 2.1, 1.0, 1.8, 0.7, "聚合", GREEN["l"], GREEN["d"], fs=8.5)
+    ax.text(3.0, 0.35, "聚合缺校验时结论互相打架", ha="center", fontsize=8, color=ROLE_DANGER)
+    fig.text(0.5, 0.01, "常用三种；Debate 与 Swarm 见正文表。", ha="center",
+             fontsize=8, color=GRAY["d"])
+    fig.subplots_adjust(wspace=0.08, bottom=0.12)
+    return save_fig(fig, "fig_19_1_topologies.png")
+
+
+@figure("21-1", "fig_21_1_world_model_uses.png")
+def fig_21_1_world_model_uses():
+    fig, ax = plt.subplots(figsize=(10.6, 5.8))
+    ax.set_xlim(0, 10.6); ax.set_ylim(0, 7.2); ax.axis("off")
+    ax.text(5.3, 6.8, "世界模型的四条用法：瓶颈各不相同", ha="center",
+            fontsize=11, fontweight="bold", color=INK)
+    boxes = [
+        (0.3, 4.2, "规划与控制\nV-JEPA 2-AC / Dreamer\n瓶颈：动作空间、评估器", BLUE),
+        (5.4, 4.2, "训练环境\nGenie 3\n瓶颈：动作空间、一致性", GREEN),
+        (0.3, 1.3, "合成数据与 sim-to-real\nCosmos Transfer/Predict\n瓶颈：物理真实度", ORANGE),
+        (5.4, 1.3, "评估\n可重复的测试环境\n瓶颈：覆盖度", PURPLE),
+    ]
+    for x, y, text, color in boxes:
+        _box(ax, x, y, 4.7, 2.2, text, color["l"], color["d"], fs=8.5)
+    ax.text(5.3, 0.45, "生成一帧可以实时；把模型放进规划器反复采样，才是分钟级。",
+            ha="center", fontsize=8.5, color=GRAY["d"])
+    return save_fig(fig, "fig_21_1_world_model_uses.png")
 
 
 # ---------------------------------------------------------------- 入口

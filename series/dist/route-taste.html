@@ -88,6 +88,15 @@ html[data-page="aux-page"] #navToggle { display:none; }
 .chapter-head { margin:6px 0 18px; padding-bottom:12px; border-bottom:2px solid var(--line); }
 .chapter-head h1 { font-size:1.5rem; line-height:1.5; }
 .doc-meta { font-size:0.83rem; color:var(--ink-soft); margin-top:6px; }
+.route-facts { display:grid; grid-template-columns:max-content 1fr; gap:4px 14px;
+  margin:10px 0 12px; font-size:0.9rem; }
+.route-facts dt { color:var(--ink-soft); font-size:0.83rem; }
+.route-facts dd { margin:0; }
+.route-extra { margin:10px 0 14px; font-size:0.9rem; }
+.route-extra summary { cursor:pointer; color:var(--ink-soft); font-size:0.86rem; }
+.route-extra summary:hover { color:var(--accent); }
+@media (max-width:640px) { .route-facts { grid-template-columns:1fr; gap:2px; }
+  .route-facts dt { margin-top:6px; } }
 article.chapter p, article.chapter li, article.chapter blockquote { max-width:44em; }
 /* 正文内链：颜色之外再给下划线（WCAG 1.4.1；axe link-in-text-block）；
    卡片/按钮型组件豁免（它们不是文内链接，靠形态区分） */
@@ -98,6 +107,7 @@ h2 { font-size:1.22rem; margin:1.6em 0 0.6em; padding-bottom:0.2em; border-botto
 h3 { font-size:1.06rem; margin:1.3em 0 0.5em; }
 h1, h2, h3 { scroll-margin-top:60px; }
 p { margin:0.65em 0; }
+.content p, .content li, .content td { overflow-wrap:anywhere; }
 ul, ol { margin:0.6em 0 0.6em 1.5em; }
 li { margin:0.25em 0; }
 strong { font-weight:700; }
@@ -118,6 +128,15 @@ tbody tr:nth-child(even) { background:var(--row-alt); }
 /* ===== 表格容器：宽表横向滚动（普通表零变化） ===== */
 .table-wrap { overflow-x: auto; margin: 1.1em 0; }
 .table-wrap > table.wide { width: max-content; min-width: 100%; }
+#termTable { table-layout:fixed; width:100%; }
+#termTable th:nth-child(1), #termTable td:nth-child(1) { width:32%; word-break:break-word; }
+#termTable th:nth-child(2), #termTable td:nth-child(2) { width:18%; white-space:nowrap; }
+#termTable th:nth-child(3), #termTable td:nth-child(3) { width:50%; }
+@media (min-width:641px) {
+  #termTable th:nth-child(1), #termTable td:nth-child(1) { width:22%; }
+  #termTable th:nth-child(2), #termTable td:nth-child(2) { width:14%; }
+  #termTable th:nth-child(3), #termTable td:nth-child(3) { width:64%; }
+}
 @media print { .table-wrap { overflow: visible; } }
 
 /* ===== 标记徽章（读法标记）===== */
@@ -232,6 +251,32 @@ section.sec.dim[data-kind="path"]:not([data-why]) > h2::after { content:"未纳�
 .route { margin:18px 0; }
 .route-part { margin:14px 0 6px; font-weight:700; font-size:0.95rem; }
 .route-note { font-size:0.8rem; color:var(--ink-soft); margin:-2px 0 6px; }
+.route-pick-title { grid-column:1 / -1; margin:8px 0 0; font-size:0.95rem; }
+.route-pick-note { grid-column:1 / -1; margin:2px 0 0; font-size:0.86rem; color:var(--ink-soft); }
+.route-branch { margin:10px 0 12px 24px; padding:2px 0 6px 14px;
+  border-left:3px solid var(--accent); background:var(--accent-soft);
+  border-radius:0 10px 10px 0; }
+.route-branch .route-part { margin-top:8px; }
+.route-branch .node { margin-left:0; }
+.route-goal-h { margin:1.9em 0 0.2em; padding-top:0.7em; border-top:1px solid var(--line); }
+.route-goal-sub { margin:0 0 0.7em; font-size:0.86rem; color:var(--ink-soft); }
+.route-full h3 { margin:1.2em 0 0.4em; }
+.route-compare .group-row th { text-align:left; padding-top:12px; color:var(--ink-soft);
+  font-weight:700; border-bottom:1px solid var(--line); }
+.route-compare td:first-child { white-space:nowrap; }
+@media (max-width:640px) {
+  .route-branch { margin-left:8px; padding-left:10px; }
+  .route-group[data-row] .route-group-body { grid-template-columns:1fr; }
+  .route-compare thead { display:none; }
+  .route-compare, .route-compare tbody, .route-compare tr,
+  .route-compare td, .route-compare th { display:block; }
+  .route-compare tr { padding:8px 0; border-bottom:1px solid var(--line); }
+  .route-compare tr.group-row { padding-top:12px; border-bottom:0; }
+  .route-compare td { padding:2px 0; border:0; }
+  .route-compare td:first-child { white-space:normal; font-weight:700; }
+  .route-compare td:nth-child(2)::before { content:"覆盖："; color:var(--ink-soft); }
+  .route-compare td:nth-child(3)::before { content:"时间："; color:var(--ink-soft); }
+}
 .node { display:block; border:1px solid var(--line); border-radius:10px; background:var(--card);
   padding:7px 12px; margin:5px 0 5px 12px; font-size:0.9rem; color:var(--ink); }
 .node::after { content:""; display:block; clear:both; }
@@ -243,9 +288,30 @@ section.sec.dim[data-kind="path"]:not([data-why]) > h2::after { content:"未纳�
 .route-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
   gap:10px; margin:14px 0; align-items:start; }
 .route-card { display:block; border:1px solid var(--line); border-radius:10px;
-  background:var(--card); color:var(--ink); }
+  background:var(--card); color:var(--ink); padding:0; margin:0; }
 .route-card:hover, .route-card[open] { border-color:var(--accent); }
 .route-card[open] { grid-column:1 / -1; box-shadow:0 0 0 1px var(--accent) inset; }
+.route-card[data-variant="option"][open] { grid-column:auto; }
+.route-card[data-variant="bar"] { grid-column:1 / -1; }
+.route-card[data-route="taste"] { border-color:var(--accent); background:var(--accent-soft); }
+.route-card[data-variant="bar"] .route-card-summary { padding:10px 14px; }
+.route-card[data-variant="bar"] .rc-bar-head,
+.route-card[data-variant="option"] .rc-opt-head { display:flex; flex-wrap:wrap;
+  align-items:baseline; gap:4px 8px; }
+.route-card .rc-bar-title { font-weight:700; }
+.route-card .rc-kind { font-weight:700; }
+.route-card .rc-time { margin-left:auto; font-size:0.76em; color:var(--ink-soft);
+  white-space:nowrap; }
+.route-card .rc-opt-summary,
+.route-card .rc-bar-summary { font-size:0.84em; color:var(--ink); }
+.route-card[data-variant="option"] .route-card-summary { position:relative; padding-right:24px; }
+.route-card[data-variant="bar"] .route-card-summary { position:relative; padding-right:24px; }
+.route-card[data-variant="option"] > .route-card-summary::after,
+.route-card[data-variant="bar"] > .route-card-summary::after {
+  content:"▾"; position:absolute; right:12px; bottom:8px; margin:0;
+  align-self:auto; font-size:0.8em; color:var(--accent); }
+.route-card[data-variant="option"][open] > .route-card-summary::after,
+.route-card[data-variant="bar"][open] > .route-card-summary::after { content:"▴"; }
 .route-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
 .route-card-summary { display:flex; flex-direction:column; gap:4px; padding:10px 12px;
   cursor:pointer; list-style:none; }
@@ -263,11 +329,35 @@ section.sec.dim[data-kind="path"]:not([data-why]) > h2::after { content:"未纳�
 .route-card .rc-aud { font-size:0.8em; color:var(--ink-soft); }
 .route-card .rc-meta { display:flex; flex-wrap:wrap; gap:4px 10px; }
 .route-card .rc-plan { font-size:0.78em; }
+.route-card .rc-opt-summary.rc-plan,
+.route-card .rc-bar-summary.rc-plan { font-size:0.84em; }
 .route-card .rc-hours { font-size:0.76em; color:var(--ink-soft); }
 .route-card-body { display:flex; flex-direction:column; gap:5px; border-top:1px solid var(--line);
   padding:9px 12px 12px; }
 .route-card-body p { margin:0; font-size:0.86em; }
 .route-card-body .rc-hours { font-size:0.8em; }
+.route-group { grid-column:1 / -1; border:1px solid var(--line); border-radius:12px;
+  background:var(--card); padding:0; margin:0; }
+.route-group[data-row] { border:0; border-top:1px solid var(--line); border-radius:0;
+  background:transparent; padding:12px 0 2px; }
+.route-group[data-row] .route-row-head { padding:0 2px 8px; }
+.route-group[data-row] .route-group-title { margin:0; font-size:0.98rem; }
+.route-group[data-row] .route-group-sub { margin:2px 0 0; grid-column:auto; }
+.route-group > summary { display:grid; grid-template-columns:1fr auto; gap:2px 14px;
+  align-items:center; padding:10px 14px; cursor:pointer; list-style:none; }
+.route-group > summary::-webkit-details-marker { display:none; }
+.route-group-title { grid-column:1; font-weight:700; }
+.route-group-sub { grid-column:1; font-size:0.82em; color:var(--ink-soft); }
+.route-group > summary::after { content:"展开走法 ▾"; grid-column:2; grid-row:1 / span 2;
+  font-size:0.76em; color:var(--accent); margin-top:0; }
+.route-group[open] > summary::after { content:"收起走法 ▴"; }
+.route-group-body { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:10px; padding:0 12px 12px; align-items:start; }
+.route-group[data-row] .route-group-body { padding:0;
+  grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media (max-width:640px) {
+  .route-group[data-row] .route-group-body { grid-template-columns:1fr; }
+}
 .rc-actions { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-top:3px; }
 .rc-start { color:var(--accent); font-weight:700; }
 .rc-more { color:var(--ink-soft); font-size:0.88em; }
@@ -297,7 +387,17 @@ pre { position:relative; }
   cursor:pointer; opacity:0.55; }
 .copy-btn:hover { opacity:1; border-color:var(--accent); }
 .fig-dialog { border:none; background:transparent; padding:0; max-width:96vw; }
+.fig-dialog::backdrop { background:rgba(0,0,0,.55); }
 .fig-dialog img { max-width:92vw; max-height:88vh; }
+@media (max-width:640px) {
+  .fig-dialog { width:100vw; height:100vh; max-width:100vw; max-height:100vh;
+    margin:0; background:var(--bg); overflow:auto; }
+  .fig-dialog img { width:1400px; max-width:none; max-height:none; }
+  .fig-dialog::after { content:"左右滑动查看"; position:fixed; left:50%; bottom:10px;
+    transform:translateX(-50%); padding:4px 10px; border-radius:999px;
+    background:color-mix(in srgb, var(--foreground) 8%, transparent);
+    color:var(--muted-foreground); font-size:0.72rem; pointer-events:none; }
+}
 .term-hit td { background: var(--accent-soft); }
 @media print { .copy-btn { display:none !important; } }
 .selftest-note { margin-top:6px; font-size:0.88rem; color:var(--ink-soft); }
@@ -340,8 +440,12 @@ body.show-offroute article.chapter section.sec.dim { display:block; }
   body.focus-hide article.chapter section.sec.dim { display:block !important; } }
 @media (max-width: 640px) {
   .route-cards { grid-template-columns:1fr; }
-  .topbar { flex-wrap:wrap; row-gap:6px; }
+  .topbar { flex-wrap:nowrap; gap:6px; padding:0 10px; }
+  .topbar .brand { font-size:0.86rem; white-space:nowrap; }
+  .topbar button, .topbar a.btn { padding:3px 8px; }
   .content { padding-left:14px; padding-right:14px; }
+  .table-wrap.wide-wrap::before { content:"表格较宽，可左右滑动 →"; display:block;
+    font-size:0.75rem; color:var(--ink-soft); margin:0 0 4px; }
   .prevnext { flex-direction:column; gap:8px; }
   .wiz-group { align-items:flex-start; flex-direction:column; }
   .wiz-label { min-width:0; }
@@ -405,9 +509,17 @@ body.show-offroute article.chapter section.sec.dim { display:block; }
 .back-top:hover { color:var(--accent); border-color:var(--accent); }
 /* ===== 配图（series/figures，单一来源配图管线）===== */
 figure.book-fig { margin: 1.35em auto; text-align: center; }
-figure.book-fig img { max-width: 100%; height: auto; border-radius: 6px; }
+figure.book-fig img { max-width: 100%; height: auto; border-radius: 6px; cursor: zoom-in; }
 figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em; line-height: 1.6; }
-@media print { figure.book-fig img { max-width: 92%; } }
+.fig-zoom-btn { display: inline-block; margin: .5em auto 0; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink-soft); border-radius: 999px;
+  padding: 4px 12px; font-size: .78rem; cursor: zoom-in; }
+.fig-zoom-btn:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 640px) {
+  article.chapter h1 { font-size: 1.65rem; line-height: 1.3; }
+  .fig-zoom-btn { font-size: .8rem; padding: 5px 14px; }
+}
+@media print { figure.book-fig img { max-width: 92%; } .fig-zoom-btn { display: none; } }
 </style>
 </head>
 <body class="aux-page">
@@ -431,16 +543,16 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   </aside>
   <main class="main" id="main">
     <div class="content">
-<div class="chapter-head"><h1>尝鲜速览</h1><p class="doc-meta">只有半天，想先看清这套书值不值得读的人｜读 ≈0.8h ＋ 练 ≈0h ＋ 项目 ≈0h｜一次半天即可读完；不需要排课表｜预计：每周 5h≈1 周｜每周 10h≈1 周｜每周 15h≈1 周</p><p class="doc-meta"><a href="routes.html#route-taste">← 回路线卡</a> · <a href="index.html">目录</a></p></div>
+<div class="chapter-head"><h1>尝鲜速览</h1><p class="doc-meta">只有半天，想先看清这套书值不值得读的人｜约 0.5–0.8h（一次半天）</p><p class="doc-meta"><a href="routes.html#route-taste">← 回路线卡</a> · <a href="index.html">目录</a></p></div>
 <h2>读全章（3）</h2><p>§0.1、§0.2、§0.3</p>
-<h2>只读所列节（1）</h2><p>§14（边界类型、数据墙与模型崩塌）</p>
-<p class="doc-meta">其余 26 页不读（自由读中仍可翻开）。</p>
+<h2>只读所列节（1）</h2><p>§14（边界类型、数据墙与模型崩塌、评审四问）</p>
+<p class="doc-meta">其余 25 个单元不读（自由读中仍可翻开）；补页参考随查，不计入路线。</p>
 <h2>补课卡</h2><p>ch14-s05/s06→已内联半句；数据墙四名目随 s05 补齐；ch14-s06 数据墙→已内联（不可约损失一句）</p>
 <h2>豁免</h2><p>零动手为设计（试读包）；三题自查在 §0 各章章末</p>
 <h2>读完能（出口）</h2><ul><li>能复述训练回路（旋钮—山—下山）与四级火箭</li><li>能区分自回归与扩散两条生成路线</li><li>能把「做不到」分成定理锁死与还没做到两类</li><li>能说出自己下一步想走哪条线</li></ul>
 <h2>自证题</h2><ul><li>§0.1/§0.2/§0.3 各三题</li><li>自找三个「做不到」的流行说法，各判定理/未做到</li></ul>
 <p class="doc-meta">六站与结业项目按路线卡与正文；勾选进度在阅读版里（本页为打印版）。</p>
-      <footer class="footer">v0.3.3 · 构建 2026-11-04 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
+      <footer class="footer">v0.3.4 · 构建 2026-11-10 · <a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · <a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · <a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · <a href="assets.html">资产索引</a></footer>
     </div>
   </main>
 </div>
@@ -564,7 +676,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   var BRANCH_REASON = branchReason();
   var FREE_REASON = '不在当前路线（自由读中仍可翻开）';
   var ROUTER_MAP = {
-    'undecided|halfday': 'taste', 'undecided|fast': 'agent-full', 'undecided|slow': 'agent-full', 'undecided|endless': 'deep',
+    'undecided|halfday': 'taste', 'undecided|fast': 'agent-fast', 'undecided|slow': 'agent-full', 'undecided|endless': 'deep',
     'agent|halfday': 'taste', 'agent|fast': 'agent-fast', 'agent|slow': 'agent-full', 'agent|endless': 'deep',
     'train|halfday': 'taste', 'train|fast': 'train-fast', 'train|slow': 'train-full', 'train|endless': 'research-full',
     'gen|halfday': 'taste', 'gen|fast': 'gen-fast', 'gen|slow': 'gen-full', 'gen|endless': 'deep',
@@ -594,8 +706,15 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   function freeDisp() { var d = {}; SD.chapters.forEach(function (c) { d[c.slug] = 'read'; }); return d; }
 
   function viewOf(id) {
-    if (id === 'free') return { disp: freeDisp(), dimSec: {}, counts: { main: 24, branch: 6 },
-                                open: false, cards: {}, next: {}, pos: {}, total: 0 };
+    if (id === 'free') {
+      var fm = 0, fb = 0;
+      SD.chapters.forEach(function (c) {
+        if (c.reference) return;
+        if (c.part === 'branch') fb++; else fm++;
+      });
+      return { disp: freeDisp(), dimSec: {}, counts: { main: fm, branch: fb },
+               open: false, cards: {}, next: {}, pos: {}, total: 0 };
+    }
     var r = findRoute(id);
     if (!r) return null;
     return { disp: r.view.disp, dimSec: r.view.dim_sections, counts: r.view.counts,
@@ -604,6 +723,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   }
   function nodeMins(slug, d) {
     var c = bySlug(slug); if (!c) return c;
+    if (c.reference) return '参考';
     if (d && d.focus) {
       var sum = 0; d.focus.forEach(function (a) { sum += (c.sec_mins || {})[a] || 1; });
       return sum + ' 分钟（全章 ' + c.mins + '）';
@@ -629,6 +749,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     if (!document.getElementById('ringMainFg') || !view) return;
     var prog = getProgress(), mainR = 0, brR = 0;
     SD.chapters.forEach(function (c) {
+      if (c.reference) return;
       var d = view.disp[c.slug];
       var active = (d === 'read') || (d && d.focus);
       if (!active || prog.indexOf(c.slug) < 0) return;
@@ -828,6 +949,9 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   function setRouteCardOpen(id) {
     var card = routeCard(id);
     if (!card) return;
+    if (id === 'free') return;  // 自由读是默认态，保持折叠，先让读者看见五组路线
+    var group = card.closest('details.route-group');
+    if (group) group.open = true;
     document.querySelectorAll('.route-card').forEach(function (o) {
       if (o !== card && o.open) o.open = false;
     });
@@ -1145,17 +1269,25 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     pre.appendChild(btn);
   });
 
-  /* 图点击放大（H2.5） */
+  /* 图点击放大（H2.5）：图片与可见按钮共用一套打开逻辑 */
+  function openFig(img) {
+    var d = document.createElement('dialog'); d.className = 'fig-dialog';
+    var big = document.createElement('img'); big.src = img.src; big.alt = img.alt || '';
+    d.appendChild(big);
+    d.addEventListener('click', function () { if (d.close) d.close(); if (d.remove) d.remove(); });
+    d.addEventListener('close', function () { if (d.remove) d.remove(); });
+    document.body.appendChild(d);
+    if (d.showModal) d.showModal(); else window.open(img.src);
+  }
   document.querySelectorAll('figure.book-fig img').forEach(function (img) {
-    img.style.cursor = 'zoom-in';
-    img.addEventListener('click', function () {
-      var d = document.createElement('dialog'); d.className = 'fig-dialog';
-      var big = document.createElement('img'); big.src = img.src; big.alt = img.alt || '';
-      d.appendChild(big);
-      d.addEventListener('click', function () { if (d.close) d.close(); if (d.remove) d.remove(); });
-      document.body.appendChild(d);
-      if (d.showModal) d.showModal(); else window.open(img.src);
-    });
+    img.addEventListener('click', function () { openFig(img); });
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'fig-zoom-btn';
+    btn.textContent = '查看大图';
+    btn.setAttribute('aria-label', '放大图片');
+    btn.addEventListener('click', function () { openFig(img); });
+    img.insertAdjacentElement('afterend', btn);
   });
 
   /* 路线聚焦与自动跳站（2026-10-15 读者反馈批） */

@@ -106,8 +106,8 @@ def part_of(uid: str) -> str:
     if not m:
         return "支线" if uid.startswith("T") else "—"
     n = int(m.group(1))
-    return {0: "第〇部"}.get(n) or ("第一部" if n <= 9 else
-           "第二部" if n <= 14 else "第三部")
+    return {0: "开篇"}.get(n) or ("第一篇" if n <= 9 else
+           "第二篇" if n <= 14 else "第三篇" if n <= 19 else "终篇")
 
 
 def row(path: Path, m: dict) -> str:

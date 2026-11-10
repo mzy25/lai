@@ -94,5 +94,33 @@
  "13-1": {
   "file": "fig_13_1_tests.png",
   "func": "fig_13_1_tests"
+ },
+ "4-1": {
+  "file": "fig_4_1_backprop.png",
+  "func": "fig_4_1_backprop"
+ },
+ "5-1": {
+  "file": "fig_5_1_attention.png",
+  "func": "fig_5_1_attention"
+ },
+ "8-1": {
+  "file": "fig_8_1_svd_lora.png",
+  "func": "fig_8_1_svd_lora"
+ },
+ "12-1": {
+  "file": "fig_12_1_scaling.png",
+  "func": "fig_12_1_scaling"
+ },
+ "T2-1": {
+  "file": "fig_t2_1_reverse_sde.png",
+  "func": "fig_t2_1_reverse_sde"
+ },
+ "19-1": {
+  "file": "fig_19_1_topologies.png",
+  "func": "fig_19_1_topologies"
+ },
+ "21-1": {
+  "file": "fig_21_1_world_model_uses.png",
+  "func": "fig_21_1_world_model_uses"
  }
 }

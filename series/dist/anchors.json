@@ -301,7 +301,7 @@
  },
  "ch07-s04": {
   "ch": "ch07",
-  "title": "约束登场：KKT、对偶与影子价格",
+  "title": "约束线：只递线头",
   "level": 2
  },
  "ch07-s05": {
@@ -631,10 +631,15 @@
  },
  "ch14-s08": {
   "ch": "ch14",
-  "title": "结业项目三：写最小 eval",
+  "title": "评审四问：读一篇发布稿",
   "level": 2
  },
  "ch14-s09": {
+  "ch": "ch14",
+  "title": "结业项目三：写最小 eval",
+  "level": 2
+ },
+ "ch14-s10": {
   "ch": "ch14",
   "title": "回望与下一章",
   "level": 2
@@ -646,7 +651,7 @@
  },
  "ch15-s01": {
   "ch": "ch15",
-  "title": "最小结论：建造部与规律部",
+  "title": "最小结论：建造篇与规律篇",
   "level": 2
  },
  "ch15-s02": {
@@ -766,25 +771,30 @@
  },
  "ch17-s06": {
   "ch": "ch17",
-  "title": "Safe RL 与 A_safe(c)：安全写进约束",
+  "title": "约束登场：KKT、对偶与影子价格",
   "level": 2
  },
  "ch17-s07": {
   "ch": "ch17",
-  "title": "验证门与授权梯度：从受命到自主",
+  "title": "Safe RL 与 A_safe(c)：安全写进约束",
   "level": 2
  },
  "ch17-s08": {
   "ch": "ch17",
-  "title": "越狱攻防与治理",
+  "title": "验证门与授权梯度：从受命到自主",
   "level": 2
  },
  "ch17-s09": {
   "ch": "ch17",
-  "title": "动手：第六站与原则",
+  "title": "越狱攻防与治理",
   "level": 2
  },
  "ch17-s10": {
+  "ch": "ch17",
+  "title": "动手：第六站与原则",
+  "level": 2
+ },
+ "ch17-s11": {
   "ch": "ch17",
   "title": "回望与下一章",
   "level": 2
@@ -971,7 +981,7 @@
  },
  "ch21-s07": {
   "ch": "ch21",
-  "title": "深究：给一篇论文定证据状态",
+  "title": "深究：给一篇论文定证据档位",
   "level": 2
  },
  "intro": {
@@ -981,22 +991,22 @@
  },
  "intro-s01": {
   "ch": "intro",
-  "title": "读到哪儿了",
+  "title": "先看全貌：一张 SD 配方",
   "level": 2
  },
  "intro-s02": {
   "ch": "intro",
-  "title": "工具回收框：主线学的，支线哪里用",
+  "title": "两条读法：理解段与应用段",
   "level": 2
  },
  "intro-s03": {
   "ch": "intro",
-  "title": "对比学习",
+  "title": "读到哪儿了",
   "level": 2
  },
  "intro-s04": {
   "ch": "intro",
-  "title": "CFG 与 RLHF：同一枚旋钮的正反两个读数",
+  "title": "工具回收框：主线学的，支线哪里用",
   "level": 2
  },
  "intro-s05": {
@@ -1011,8 +1021,153 @@
  },
  "recipe": {
   "ch": "recipe",
-  "title": "支线附录 · 主线速览版 SD 配方",
+  "title": "支线补页 · 公式、变体与现状",
   "level": 1
+ },
+ "recipe-s01": {
+  "ch": "recipe",
+  "title": "附：对比学习（主线欠账）",
+  "level": 2
+ },
+ "recipe-s02": {
+  "ch": "recipe",
+  "title": "破坏的推导：t=2、独立性与 Tweedie 证明",
+  "level": 2
+ },
+ "recipe-s02-1": {
+  "ch": "recipe",
+  "title": "t=2 的展开：平方和为什么要等于 1",
+  "level": 3
+ },
+ "recipe-s02-2": {
+  "ch": "recipe",
+  "title": "反事实：如果噪声一步依赖一步",
+  "level": 3
+ },
+ "recipe-s02-3": {
+  "ch": "recipe",
+  "title": "Tweedie 恒等式的证明",
+  "level": 3
+ },
+ "recipe-s02-4": {
+  "ch": "recipe",
+  "title": "两步对拍",
+  "level": 3
+ },
+ "recipe-s02-5": {
+  "ch": "recipe",
+  "title": "Langevin 玩具：一步一随机",
+  "level": 3
+ },
+ "recipe-s02-6": {
+  "ch": "recipe",
+  "title": "反事实：把方向整个抽走",
+  "level": 3
+ },
+ "recipe-s03": {
+  "ch": "recipe",
+  "title": "反向 SDE 的推导：两套时间、扩散系数与两条采样链",
+  "level": 2
+ },
+ "recipe-s03-1": {
+  "ch": "recipe",
+  "title": "一阶近似的误差账",
+  "level": 3
+ },
+ "recipe-s04": {
+  "ch": "recipe",
+  "title": "加速的推导：Fokker-Planck、换元与求解器",
+  "level": 2
+ },
+ "recipe-s04-1": {
+  "ch": "recipe",
+  "title": "分数参数化与三个误读",
+  "level": 3
+ },
+ "recipe-s04-2": {
+  "ch": "recipe",
+  "title": "Fisher 散度：为什么只比斜率",
+  "level": 3
+ },
+ "recipe-s04-3": {
+  "ch": "recipe",
+  "title": "训练的两笔小账：位置编码与一图多噪",
+  "level": 3
+ },
+ "recipe-s04-4": {
+  "ch": "recipe",
+  "title": "从 SDE 到 ODE 的五步",
+  "level": 3
+ },
+ "recipe-s04-5": {
+  "ch": "recipe",
+  "title": "两种调度的速度场",
+  "level": 3
+ },
+ "recipe-s04-6": {
+  "ch": "recipe",
+  "title": "残差块与欧拉一步",
+  "level": 3
+ },
+ "recipe-s04-7": {
+  "ch": "recipe",
+  "title": "DDIM 的换元代数",
+  "level": 3
+ },
+ "recipe-s04-8": {
+  "ch": "recipe",
+  "title": "DPM-Solver 家族",
+  "level": 3
+ },
+ "recipe-s04-9": {
+  "ch": "recipe",
+  "title": "二十到五十、终止时刻与离散步数",
+  "level": 3
+ },
+ "recipe-s05": {
+  "ch": "recipe",
+  "title": "离散扩散与视频的数学",
+  "level": 2
+ },
+ "recipe-s06": {
+  "ch": "recipe",
+  "title": "变体与现状：DiT、流匹配、蒸馏与推理时控制",
+  "level": 2
+ },
+ "recipe-s06-1": {
+  "ch": "recipe",
+  "title": "DiT：U-Net 的结构假设与 scaling 数据点",
+  "level": 3
+ },
+ "recipe-s06-2": {
+  "ch": "recipe",
+  "title": "推理时控制：Doob、SMC 与推理期策略",
+  "level": 3
+ },
+ "recipe-s06-3": {
+  "ch": "recipe",
+  "title": "蒸馏家族",
+  "level": 3
+ },
+ "recipe-s06-4": {
+  "ch": "recipe",
+  "title": "流匹配术语",
+  "level": 3
+ },
+ "recipe-s06-5": {
+  "ch": "recipe",
+  "title": "九维对照",
+  "level": 3
+ },
+ "recipe-s06-6": {
+  "ch": "recipe",
+  "title": "融合前沿",
+  "level": 3
+ },
+ "recipe-s07": {
+  "ch": "recipe",
+  "title": "回程",
+  "level": 2
  },
  "s0a": {
   "ch": "s0a",
@@ -1131,50 +1286,25 @@
  },
  "t1-s03": {
   "ch": "t1",
-  "title": "深挖：t=2 的展开，平方和为什么要等于 1",
+  "title": "动手：手算加噪",
   "level": 2
  },
  "t1-s04": {
   "ch": "t1",
-  "title": "反事实：如果噪声一步依赖一步",
+  "title": "分数函数：指向数据的方向",
   "level": 2
  },
  "t1-s05": {
   "ch": "t1",
-  "title": "动手：手算加噪",
+  "title": "Tweedie 恒等式",
   "level": 2
  },
  "t1-s06": {
   "ch": "t1",
-  "title": "分数函数：指向数据的方向",
+  "title": "手算：混合高斯的分数",
   "level": 2
  },
  "t1-s07": {
-  "ch": "t1",
-  "title": "反事实：把方向整个抽走",
-  "level": 2
- },
- "t1-s08": {
-  "ch": "t1",
-  "title": "Tweedie 恒等式",
-  "level": 2
- },
- "t1-s09": {
-  "ch": "t1",
-  "title": "Tweedie 恒等式的证明",
-  "level": 2
- },
- "t1-s10": {
-  "ch": "t1",
-  "title": "混合高斯的分数：一次手算",
-  "level": 2
- },
- "t1-s11": {
-  "ch": "t1",
-  "title": "动手：混合高斯的分数",
-  "level": 2
- },
- "t1-s12": {
   "ch": "t1",
   "title": "回望与下一章",
   "level": 2
@@ -1285,11 +1415,6 @@
   "level": 2
  },
  "t4-s07": {
-  "ch": "t4",
-  "title": "动手：用评审四问读一篇发布稿",
-  "level": 2
- },
- "t4-s08": {
   "ch": "t4",
   "title": "回望与收束",
   "level": 2

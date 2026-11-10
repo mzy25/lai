@@ -49,7 +49,7 @@ SUP: dict[str, str] = {
 INLINE_CODE = re.compile(r"(`[^`]*`)")
 FENCE = re.compile(r"^\s*```")
 
-DEFAULT_GLOBS = ("§*.md", "T*.md", "支线导言-*.md", "支线附录-*.md")
+DEFAULT_GLOBS = ("§*.md", "T*.md", "支线导言-*.md", "支线补页-*.md", "支线附录-*.md")
 
 
 def convert_segment(seg: str, stats: dict) -> str:

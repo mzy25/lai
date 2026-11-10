@@ -4,6 +4,7 @@
 
 用法
     python3 series/tools/unit_closeout.py "§N-….md" ["edit/§N.edit.md"]
+    python3 series/tools/unit_closeout.py "§N-….md" --card   # 追加节地图/衔接/答案镜像摘要
 
 依次运行并一屏汇总（正文只读；扫描报表写 series/.tmp/）：
   ① first_use_scan（有 edit 档案则查档案；v0.3 无档案时走 --ledger-only）
@@ -11,6 +12,7 @@
   ③ residue_scan（残留复扫）
   ④ cliche_scan（套话 WARN 与计数）
   ⑤ taste_probe（品味层探针摘要）
+  ⑥ --card：section_map --summary、coherence_scan、answer_mirror_check 摘要
 把此屏抄入 §N 的修订记录（若有）与总表 §六，即收尾取证；随后 build＋series_check＋提交。
 退出码：0 全过；1 first_use 有错或 residue_scan 有回流；2 用法/文件错。
 """
@@ -39,11 +41,13 @@ def last_lines(out: str, n: int) -> list[str]:
 
 
 def main() -> int:
-    if len(sys.argv) < 2:
+    card = "--card" in sys.argv
+    args = [a for a in sys.argv[1:] if a != "--card"]
+    if not args:
         print(__doc__)
         return 2
-    target = sys.argv[1]
-    edit = sys.argv[2] if len(sys.argv) > 2 else None
+    target = args[0]
+    edit = args[1] if len(args) > 1 else None
     if not Path(target).is_file():
         print(f"章文件不存在：{target}", file=sys.stderr)
         return 2
@@ -82,6 +86,20 @@ def main() -> int:
     keep = [l for l in out.splitlines() if re.match(r"\s*[SFCQBE][)）]", l)]
     for l in (keep or last_lines(out, 6)):
         print("   " + l)
+
+    if card:
+        print("== ⑥ 质量卡 ==")
+        out = run("section_map.py", target, "--summary")
+        rows = [l for l in out.splitlines() if l.startswith("|") and "---" not in l]
+        for l in rows[:9]:
+            print("   " + l)
+        out = run("coherence_scan.py", target)
+        kinds = [l[3:] for l in out.splitlines() if l.startswith("## ")]
+        print("   衔接候选：" + ("；".join(kinds) if kinds else "无"))
+        out = run("answer_mirror_check.py", target)
+        summary = [l for l in out.splitlines() if "答案块" in l or "未发现" in l]
+        for l in (summary or ["（无摘要）"]):
+            print("   镜像：" + l)
     return 1 if bad else 0
 
 
