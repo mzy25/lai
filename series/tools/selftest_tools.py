@@ -38,6 +38,7 @@ CORE = [
     ("first_use_scan.py", ["--selftest"]),
     ("metaphor_scan.py", ["--selftest"]),
     ("reference_lint.py", ["--selftest"]),
+    ("ending_check.py", ["--selftest"]),
     ("table_check.py", ["--selftest"]),
     ("cliche_scan.py", ["--selftest"]),
     ("taste_probe.py", ["--selftest"]),

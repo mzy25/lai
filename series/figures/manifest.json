@@ -31,17 +31,17 @@
   "file": "fig_t4_3_clip_path.png",
   "func": "fig_t4_3_clip_path"
  },
- "T4-5": {
-  "file": "fig_t4_5_open_closed.png",
-  "func": "fig_t4_5_open_closed"
- },
  "T4-6": {
-  "file": "fig_t4_6_studio.png",
-  "func": "fig_t4_6_studio"
+  "file": "fig_t4_6_open_closed.png",
+  "func": "fig_t4_6_open_closed"
  },
- "10-1": {
-  "file": "fig_10_1_double_descent.png",
-  "func": "fig_10_1_double_descent"
+ "T4-4": {
+  "file": "fig_t4_4_studio.png",
+  "func": "fig_t4_4_studio"
+ },
+ "10-2": {
+  "file": "fig_10_2_double_descent.png",
+  "func": "fig_10_2_double_descent"
  },
  "T1-1": {
   "file": "fig_t1_1_ink.png",
@@ -79,17 +79,17 @@
   "file": "fig_t4_1_cfg_extrapolation.png",
   "func": "fig_t4_1_cfg_extrapolation"
  },
- "T4-4": {
-  "file": "fig_t4_4_mask.png",
-  "func": "fig_t4_4_mask"
+ "T4-5": {
+  "file": "fig_t4_5_mask.png",
+  "func": "fig_t4_5_mask"
  },
  "7-1": {
   "file": "fig_7_1_rag_chain.png",
   "func": "fig_7_1_rag_chain"
  },
- "10-2": {
-  "file": "fig_10_2_map.png",
-  "func": "fig_10_2_map"
+ "10-1": {
+  "file": "fig_10_1_map.png",
+  "func": "fig_10_1_map"
  },
  "13-1": {
   "file": "fig_13_1_tests.png",

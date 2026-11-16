@@ -1,6 +1,6 @@
-# AI 大模型技术导引（v0.3.5）
+# AI 大模型技术导引（v0.3.6）
 
-> **在线阅读**：<https://mzy25.github.io/lai/> —— 30 个阅读单元（含导言与补页）的 hub、分章阅读、全文打印、术语总表与路线卡，浏览器打开即读，可离线。
+> **在线阅读**：<https://mzy25.github.io/lai/> —— 30 个阅读单元（含导言与补页）的 hub、分章阅读、术语总表与路线卡，浏览器打开即读，可离线。
 >
 > **源稿**：`series/`。
 
@@ -26,7 +26,6 @@
 
 - **目录与路线向导**：<https://mzy25.github.io/lai/>。默认自由读；四个方向＋半日试读：应用 / Agent、训练 / 调参、生成、研究；每个方向两条路线（先拿结果／走得更全），另有尝鲜与自由读。
 - **分章阅读**：hub 里的 30 个单元，各章有阅读时长与读法标记（▽ 可后读／○ 支线先补／◌ 延伸选读／◇ 主线依赖）；正文各章章末带自查。
-- **全文打印**：`print.html`，适合打印与全文检索。
 - **术语总表**：`terms.html`，按首现章排序，支持筛词。
 - **路线与论文清单**：`routes.html`。
 - **环境指南 / 数学自修自测 / 资产索引**：`env.html`、`selftest.html`、`assets.html`。
@@ -55,7 +54,7 @@ build/check_artifact_fresh.py  # 产物新鲜度门禁
 
 ```bash
 python3 series/tools/build_site.py       # series/*.md → series/dist/
-python3 series/tools/series_check.py     # 页面/锚点/路线/资产/配图/print 门禁
+python3 series/tools/series_check.py     # 页面/锚点/路线/资产/配图门禁
 python3 series/tools/build_readme.py --check
 python3 series/tools/first_use_scan.py --all --ledger-only --strict  # 术语首现/总账
 python3 build/check_artifact_fresh.py    # 与 HEAD 比对，源稿改了忘重建会报红

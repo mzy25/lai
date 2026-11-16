@@ -231,9 +231,9 @@ def fig_0_1_loop():
     axL.text(1.9, 6.9, "一: 猜", fontsize=8.5, color=GRAY["d"])
     axL.text(8.6, 3.2, "二: 算错多大", fontsize=8.5, color=GRAY["d"])
     axL.text(0.3, 2.9, "三: 改一点", fontsize=8.5, color=GRAY["d"])
-    # 右：单旋钮碗形曲线与下山轨迹
+    # 右：单旋钮损失曲线与参数更新轨迹
     axR.set_xlim(-3.2, 3.4); axR.set_ylim(-0.4, 9.6); axR.axis("off")
-    axR.text(0, 9.5, "单旋钮：碗形曲线与下山", ha="center", fontsize=11,
+    axR.text(0, 9.5, "单旋钮：损失曲线与参数更新", ha="center", fontsize=11,
              fontweight="bold", color=INK)
     w = np.linspace(-3.0, 3.0, 200)
     axR.plot(w, w * w, color=ROLE_PRIMARY, lw=2.0)
@@ -251,9 +251,9 @@ def fig_0_1_loop():
                                          shrinkA=2, shrinkB=2))
     axR.text(2.7, 8.2, "损失", fontsize=8.5, color=ROLE_PRIMARY, rotation=72)
     axR.text(-2.4, -0.1, "参数 w", fontsize=8.5, color=INK)
-    axR.annotate("一路滚到碗底", (0.15, 0.5), xytext=(-2.9, 4.6), fontsize=8.5,
+    axR.annotate("一路降到最低点", (0.15, 0.5), xytext=(-2.9, 4.6), fontsize=8.5,
                  color=GRAY["d"], arrowprops=dict(arrowstyle="-|>", color=GRAY["d"], lw=1.0))
-    axR.annotate("步子偏大：\n越过谷底再回调", xy=(0.9, 1.2), xytext=(0.4, 5.8),
+    axR.annotate("步子偏大：\n越过最低点再回调", xy=(0.9, 1.2), xytext=(0.4, 5.8),
                  fontsize=8.2, color=ROLE_WARNING, ha="left",
                  arrowprops=dict(arrowstyle="-|>", color=ROLE_WARNING, lw=1.0,
                                  connectionstyle="arc3,rad=-0.2"))
@@ -381,8 +381,8 @@ def fig_t4_3_clip_path():
     return save_fig(fig, "fig_t4_3_clip_path.png")
 
 
-@figure("T4-5", "fig_t4_5_open_closed.png")
-def fig_t4_5_open_closed():
+@figure("T4-6", "fig_t4_6_open_closed.png")
+def fig_t4_6_open_closed():
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(11.2, 4.4))
     for ax in (axL, axR):
         ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.axis("off")
@@ -409,17 +409,17 @@ def fig_t4_5_open_closed():
     axR.text(5, 1.9, "要建模动作条件与反馈；状态在环里", ha="center",
              fontsize=8.5, color=GRAY["d"])
     fig.subplots_adjust(wspace=0.05)
-    return save_fig(fig, "fig_t4_5_open_closed.png")
+    return save_fig(fig, "fig_t4_6_open_closed.png")
 
 
-@figure("T4-6", "fig_t4_6_studio.png")
-def fig_t4_6_studio():
+@figure("T4-4", "fig_t4_4_studio.png")
+def fig_t4_4_studio():
     fig, ax = plt.subplots(figsize=(11.0, 5.2))
     ax.set_xlim(0, 10); ax.set_ylim(-1.2, 10.2); ax.axis("off")
-    ax.text(5, 9.6, "画室挂架：四类技法 × 三把工具刷", ha="center",
+    ax.text(5, 9.6, "技法×工具挂架：四类技法 × 三把工具", ha="center",
             fontsize=11, fontweight="bold", color=INK)
     cols = ["大板刷\n（Transformer）", "勾线笔\n（U-Net）", "海绵滚轮\n（Mamba 一系）"]
-    rows = ["晕染（扩散 SDE）", "平涂（流匹配）", "线描（自回归）", "补全（离散扩散）"]
+    rows = ["去噪（扩散 SDE）", "直线（流匹配）", "逐词（自回归）", "填空（离散扩散）"]
     cells = [
         ["DiT、Sora", "原始 SD", "—"],
         ["SD3", "—", "—"],
@@ -440,7 +440,7 @@ def fig_t4_6_studio():
     ax.text(0.4, -0.9, "技法与工具互不绑定；交叉处是代表模型。\n"
             "— = 暂无代表模型，不等于组合不可行；海绵滚轮为补记、未进主表。",
             fontsize=8.2, color=GRAY["d"], linespacing=1.5)
-    return save_fig(fig, "fig_t4_6_studio.png")
+    return save_fig(fig, "fig_t4_4_studio.png")
 
 
 
@@ -466,8 +466,8 @@ def _gauss_mix_score(x, y, centers, sig, weights=None):
     return ux, uy
 
 
-@figure("10-1", "fig_10_1_double_descent.png")
-def fig_10_1_double_descent():
+@figure("10-2", "fig_10_2_double_descent.png")
+def fig_10_2_double_descent():
     """双下降曲线：与 assets/§10-体验实验/double_descent.py 同配方（seed 0）重算。"""
     PS = [10, 20, 40, 60, 80, 90, 95, 100, 105, 110, 120, 150, 200, 400, 800]
 
@@ -496,7 +496,7 @@ def fig_10_1_double_descent():
     ax.set_ylabel("测试 MSE", fontsize=9.5)
     ax.grid(color=GRAY["line"], lw=0.6, alpha=0.7)
     ax.legend(fontsize=8.5, frameon=False)
-    return save_fig(fig, "fig_10_1_double_descent.png")
+    return save_fig(fig, "fig_10_2_double_descent.png")
 
 
 def _droplet_image(n=96):
@@ -590,7 +590,7 @@ def fig_t1_6_field():
         ax.plot([cx], [cy], "o", color=ROLE_WARNING, ms=6)
         ax.text(cx + 0.25, cy + 0.25, f"峰 {i}", fontsize=8, color=ROLE_WARNING)
     ax.set_xlabel("第一维", fontsize=9); ax.set_ylabel("第二维", fontsize=9)
-    ax.set_title("分数函数：等高线与向量场（双峰玩具）", fontsize=10)
+    ax.set_title("密度分数：等高线与向量场（双峰玩具）", fontsize=10)
     ax.set_aspect("equal")
     for sp in ax.spines.values():
         sp.set_color(GRAY["line"])
@@ -643,7 +643,7 @@ def fig_t1_8_arrows():
     ax.text(3.2, 5.6, "噪声观测 x_t", fontsize=9, color=ROLE_DANGER)
     ax.text(3.2, 2.5, "去噪估计（后验均值）", fontsize=9, color=ROLE_SUCCESS)
     ax.text(1.1, 4.3, "去噪方向", fontsize=8.5, color=ROLE_PRIMARY)
-    ax.text(0.55, 0.5, "分数方向（更长，差 1/σ_t²）", fontsize=8.5, color=ROLE_PURPLE)
+    ax.text(0.55, 0.5, "密度分数方向（更长，差 1/σ_t²）", fontsize=8.5, color=ROLE_PURPLE)
     ax.set_xlim(0, 8); ax.set_ylim(-0.6, 6.8); ax.axis("off")
     return save_fig(fig, "fig_t1_8_arrows.png")
 
@@ -655,11 +655,11 @@ def fig_t1_9_noise_vs_score():
     sx, sy = _gauss_mix_score(gx, gy, centers, 1.0)
     st = 0.7
     fig, ax = plt.subplots(figsize=(6.8, 5.6))
-    ax.quiver(gx, gy, sx, sy, color=ROLE_PRIMARY, alpha=0.9, label="分数 s_θ")
+    ax.quiver(gx, gy, sx, sy, color=ROLE_PRIMARY, alpha=0.9, label="密度分数 s_θ")
     ax.quiver(gx, gy, -st * sx, -st * sy, color=ROLE_WARNING, alpha=0.55, label="预测噪声 ε_θ = −σ_t·s_θ")
     for cx, cy in centers:
         ax.plot([cx], [cy], "o", color=GRAY["d"], ms=6)
-    ax.set_title("预测噪声与预测分数：同一信息，差一个缩放", fontsize=10)
+    ax.set_title("预测噪声与预测密度分数：同一信息，差一个缩放", fontsize=10)
     ax.set_xticks([]); ax.set_yticks([]); ax.set_aspect("equal")
     ax.legend(fontsize=8.5, frameon=False, loc="upper right")
     for sp in ax.spines.values():
@@ -721,8 +721,8 @@ def fig_t4_1_cfg_extrapolation():
     return save_fig(fig, "fig_t4_1_cfg_extrapolation.png")
 
 
-@figure("T4-4", "fig_t4_4_mask.png")
-def fig_t4_4_mask():
+@figure("T4-5", "fig_t4_5_mask.png")
+def fig_t4_5_mask():
     words = ["猫", "坐", "在", "窗台", "上"]
     steps = [
         ("第 0 步：全文完好", [True] * 5),
@@ -743,7 +743,7 @@ def fig_t4_4_mask():
     fig.text(0.5, 0.04, "前向：越遮越多；反向：一步步填回来（先填最确定的空）",
              ha="center", fontsize=8.5, color=GRAY["d"])
     fig.subplots_adjust(wspace=0.05, bottom=0.2)
-    return save_fig(fig, "fig_t4_4_mask.png")
+    return save_fig(fig, "fig_t4_5_mask.png")
 
 
 
@@ -775,8 +775,8 @@ def fig_7_1_rag_chain():
     return save_fig(fig, "fig_7_1_rag_chain.png")
 
 
-@figure("10-2", "fig_10_2_map.png")
-def fig_10_2_map():
+@figure("10-1", "fig_10_1_map.png")
+def fig_10_1_map():
     qs = [("反常", "§10"), ("凭什么", "§11"), ("可预测", "§12"), ("内部", "§13"), ("边界", "§14")]
     fig, ax = plt.subplots(figsize=(11.2, 4.6))
     ax.set_xlim(0, 11.2); ax.set_ylim(0, 7.0); ax.axis("off")
@@ -798,7 +798,7 @@ def fig_10_2_map():
     ax.text(0.35 + 1.95 / 2, 0.35, "第一问下挂三个“不该发生却发生”的现象",
             ha="center", fontsize=8.5, color=GRAY["d"])
     ax.text(7.2, 0.95, "本章只答第一问；其余四问，一章一问", fontsize=8.5, color=GRAY["d"])
-    return save_fig(fig, "fig_10_2_map.png")
+    return save_fig(fig, "fig_10_1_map.png")
 
 
 @figure("13-1", "fig_13_1_tests.png")
@@ -971,7 +971,7 @@ def fig_12_1_scaling():
     l2 = np.array([0.297, 0.236, 0.205, 0.202, 0.222, 0.351])
     axR.plot(p2, l2, "o-", color=ROLE_WARNING, lw=1.6, ms=5)
     axR.axvspan(128, 192, color=GREEN["l"], alpha=0.7)
-    axR.annotate("谷底 128–192", xy=(160, 0.202), xytext=(245, 0.27),
+    axR.annotate("最低点 128–192", xy=(160, 0.202), xytext=(245, 0.27),
                  fontsize=8, color=GREEN["d"],
                  arrowprops=dict(arrowstyle="-|>", color=GREEN["d"], lw=0.9))
     axR.text(34, 0.315, "太小：欠拟合", fontsize=7.5, color=GRAY["d"])

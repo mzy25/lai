@@ -28,7 +28,7 @@
   --code-bg:#f3f4f6; --pre-bg:#f6f8fa; --th-bg:#f3f4f6; --row-alt:#fafafa;
   --sidebar-w:290px; --fs:17px;
   --group-agent:#2563eb; --group-train:#2e7d32;
-  --group-gen:#e65100; --group-research:#7b1fa2;
+  --group-gen:#c2410c; --group-research:#7b1fa2;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -80,10 +80,10 @@ a:hover { text-decoration:underline; }
 .sidebar ul.sub a.active { color:var(--accent); }
 .sidebar .mk { margin-left:4px; }
 .main { flex:1; min-width:0; padding:26px 34px 60px; }
-/* 无目录的页面（Hub / 打印 / 辅助页）：整条侧栏与目录开关不渲染 */
-html[data-page="hub-page"] .sidebar, html[data-page="print-page"] .sidebar,
+/* 无目录的页面（Hub / 辅助页）：整条侧栏与目录开关不渲染 */
+html[data-page="hub-page"] .sidebar,
 html[data-page="aux-page"] .sidebar,
-html[data-page="hub-page"] #navToggle, html[data-page="print-page"] #navToggle,
+html[data-page="hub-page"] #navToggle,
 html[data-page="aux-page"] #navToggle { display:none; }
 .content { max-width:46em; margin:0 auto; }
 .main.wide .content { max-width:none; }
@@ -533,8 +533,6 @@ body.show-offroute article.chapter section.sec.dim { display:block; }
   details.selfcheck-answer:not([open]) { display:none; }
   .selfcheck-label { border-top:0; padding-top:0; margin-top:1.4em; }
   .part-answers { break-before:page; border-top:0; padding-top:0; margin-top:0; }
-  .print-page .chapter { break-before:page; }
-  .print-page .chapter:first-of-type { break-before:auto; }
 }
 @media (max-width: 960px) {
   .sidebar { position:fixed; left:0; top:46px; bottom:0; transform:translateX(-100%);
@@ -570,7 +568,6 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
   <button id="fsDown" aria-label="减小字号">A−</button>
   <button id="fsUp" aria-label="增大字号">A+</button>
   <button id="themeToggle" aria-label="切换深浅色">◐</button>
-  <button id="printBtn" aria-label="打印本页">打印</button>
 </header>
 <div class="layout">
   <aside class="sidebar" id="sidebar">
@@ -601,7 +598,6 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     document.documentElement.dataset.theme = t;
     try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
   });
-  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
   document.getElementById('navToggle').addEventListener('click', function () {
     document.body.classList.toggle('nav-open');
     this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false');
@@ -633,7 +629,7 @@ figure.book-fig figcaption { font-size: .88em; color: #6b7280; margin-top: .5em;
     backTop.style.display = window.scrollY > 600 ? 'block' : 'none';
   });
   backTop.style.display = 'none';
-  /* 打印前自动展开折叠块，打印后还原（print.html 构建期已全开，此逻辑对其为空操作） */
+  /* 打印前自动展开折叠块，打印后还原 */
   var openedByPrint = [];
   window.addEventListener('beforeprint', function () {
     openedByPrint = [];

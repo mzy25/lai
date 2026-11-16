@@ -1,6 +1,6 @@
 {
-  "version": "0.3.5",
-  "date": "2026-11-10",
+  "version": "0.3.6",
+  "date": "2026-11-16",
   "contract": {
     "terms_min": 600,
     "projects": 4,

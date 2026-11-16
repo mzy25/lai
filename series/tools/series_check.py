@@ -7,7 +7,7 @@
 2. 每页：id 全站页内唯一；href="#…" 同页可达；href="X.html[#…]" 目标页与锚存在
    （含 assets.html 的 d-<dir> 锚）；资产链接落到 dist/assets 真实文件
 3. 每页：details 配对；标题行（h1–h3）剥徽章后无裸标记字形；标题锚以章 slug 开头
-4. print.html：全部章锚齐全；assets.html：series/assets 全目录在列
+4. assets.html：series/assets 全目录在列
 5. dist 页面集合与章表/路线/供给页精确一致（孤儿/缺页）
 6. anchors.json 漂移门（对照 git HEAD 版本，--accept 刷新；缺 git/首版则跳过）
 
@@ -109,11 +109,11 @@ def collect_ids(html: str) -> set[str]:
 
 
 AUX_SUPPLY = {"terms.html", "env.html", "selftest.html", "routes.html"}
-NON_CHAPTER = {"index.html", "print.html", "assets.html"} | AUX_SUPPLY
+NON_CHAPTER = {"index.html", "assets.html"} | AUX_SUPPLY
 
 
 def is_chapter_page(p: Path) -> bool:
-    return p.name not in NON_CHAPTER and not p.name.startswith("route-")
+    return p.name not in NON_CHAPTER
 
 
 def check_page(path: Path, chapters: list[dict], pages: set[str]) -> None:
@@ -183,18 +183,6 @@ def check_anchors_prefix(chapters: list[dict]) -> None:
         for m in re.finditer(r'<(h[1-3])\b[^>]*id="([^"]*)"', html):
             if not m.group(2).startswith(ch["slug"]):
                 fail(f"{ch['slug']}.html: 标题 id 异常 {m.group(2)}")
-
-
-def check_print(chapters: list[dict]) -> None:
-    p = DIST / "print.html"
-    if not p.exists():
-        fail("缺 print.html")
-        return
-    html = p.read_text(encoding="utf-8")
-    ids = collect_ids(html)
-    for ch in chapters:
-        if ch["slug"] not in ids:
-            fail(f"print.html 缺章锚 #{ch['slug']}")
 
 
 def check_assets_page() -> None:
@@ -304,6 +292,11 @@ def check_routes(chapters: list[dict]) -> None:
         for card in r.get("cards", []):
             if card.get("anchor") not in anchors:
                 fail(f"路线 {rid} 补课卡锚不存在 {card.get('anchor')}")
+    # 读者可见的路线自证题是最容易漏改的术语面；退役词出现在这里即拦。
+    route_text = rp.read_text(encoding="utf-8")
+    for term in ("理论四层", "分数函数", "规律部五条", "定理墙", "经验墙", "工程墙"):
+        if term in route_text:
+            fail(f"routes.json 含退役术语「{term}」")
     print(f"· 路线库：{len(routes)} 条（{'、'.join(ids)}）——章/锚可达，出口/自证/时数齐备，命名合规")
 
 
@@ -327,9 +320,8 @@ def check_page_set(chapters: list[dict]) -> None:
         fail("页面集合检查 routes.json 的 routes 必须是含 id 的对象列表")
         return
     expected = {f"{c['slug']}.html" for c in chapters}
-    expected |= {"index.html", "print.html", "assets.html", "terms.html",
+    expected |= {"index.html", "assets.html", "terms.html",
                  "env.html", "selftest.html", "routes.html"}
-    expected |= {f'route-{r["id"]}.html' for r in routes}
     actual = {p.name for p in page_files()}
     extra, missing = sorted(actual - expected), sorted(expected - actual)
     if extra:
@@ -532,16 +524,6 @@ def check_supply_pages() -> None:
     n_r = len(routes_cfg2["routes"])
     if rp2.count('class="route-facts"') != n_r:
         fail(f"routes.html 路线事实表 {rp2.count('class=\"route-facts\"')} ≠ {n_r}")
-    if rp2.count("打印本路线") != n_r:
-        fail(f"routes.html 打印链 {rp2.count('打印本路线')} ≠ {n_r}")
-    for r in routes_cfg2["routes"]:
-        pp = DIST / f'route-{r["id"]}.html'
-        if not pp.exists():
-            fail(f"缺打印页 route-{r['id']}.html")
-        else:
-            hh = pp.read_text(encoding="utf-8")
-            if "自证题" not in hh or r["title"] not in hh:
-                fail(f"route-{r['id']}.html 内容不齐")
     ep = DIST / "env.html"
     if not ep.exists():
         fail("缺 env.html（环境指南）")
@@ -594,7 +576,7 @@ def check_supply_pages() -> None:
 def check_part_answers(chapters: list[dict]) -> None:
     """篇末答案完整性：源答案块计数 = 篇末折叠数；章页不再留内联答案。"""
     summary_re = re.compile(
-        r'<details>\s*<summary>\s*先写，再看：答案与去处\s*</summary>', re.S)
+        r'<details>\s*<summary>\s*(?:先写，再看：)?答案与去处\s*</summary>', re.S)
     expected: dict[str, list[tuple[dict, int]]] = {}
     for ch in chapters:
         src = (SERIES / ch["file"]).read_text(encoding="utf-8")
@@ -630,13 +612,7 @@ def check_part_answers(chapters: list[dict]) -> None:
             if '<details class="selfcheck-answer">' in chapter_html:
                 fail(f"{ch['slug']}.html: 答案仍在章内，未搬到篇末")
 
-    print_page = DIST / "print.html"
-    if print_page.exists():
-        total = sum(n for entries in expected.values() for _, n in entries)
-        got = print_page.read_text(encoding="utf-8").count('class="selfcheck-answer part-answer"')
-        if got != total:
-            fail(f"print.html: 篇末答案 {got} ≠ 源答案 {total}")
-    print("· 篇末答案：源块计数、篇末折叠、章页指路、print 收口——逐项校验")
+    print("· 篇末答案：源块计数、篇末折叠、章页指路——逐项校验")
 
 
 def check_route_lint() -> None:
@@ -801,9 +777,8 @@ def selftest() -> int:
         case("路线库契约生效", any("路线库少于 6" in x for x in FAILS))
         CONTRACT["routes_min"] = 5
 
-        expected = {"ch01.html", "index.html", "print.html", "assets.html",
+        expected = {"ch01.html", "index.html", "assets.html",
                     "terms.html", "env.html", "selftest.html", "routes.html"}
-        expected |= {f"route-r{i}.html" for i in range(1, 6)}
         for name in expected:
             (DIST / name).write_text("<html></html>", encoding="utf-8")
         FAILS.clear()
@@ -832,14 +807,12 @@ def selftest() -> int:
             '<details><summary>x</summary>y</details>结果映射'
             '<div id="stScore"></div><div id="stSave"></div><div id="stSaved"></div>', encoding="utf-8")
         (DIST / "routes.html").write_text(
-            "每周 5h≈" * 5 + "打印本路线" * 5
+            "每周 5h≈" * 5
             + "尝鲜速览 应用 / Agent 训练 / 调参 生成方向 研究与理论 深究线 论文清单 自证题"
             + 'class="route-facts"' * 5
             + 'class="exit-check"' * 10, encoding="utf-8")
         (DIST / "env.html").write_text(
             '最后验证 2026-10 class="asset" href="assets/x"', encoding="utf-8")
-        for i in range(1, 6):
-            (DIST / f"route-r{i}.html").write_text(f"路线{i} 自证题", encoding="utf-8")
         FAILS.clear()
         check_supply_pages()
         case("供给页契约夹具", FAILS == [])
@@ -879,7 +852,6 @@ def main() -> int:
     for p in page_files():
         check_page(p, chapters, pages)
     check_anchors_prefix(chapters)
-    check_print(chapters)
     check_assets_page()
     check_supply_pages()
     check_part_answers(chapters)
@@ -889,12 +861,6 @@ def main() -> int:
     check_route_js()
     check_figures(chapters)
     check_b3(chapters)
-
-    prh = re.sub(r"<script\b.*?</script>", "", (DIST / "print.html").read_text(encoding="utf-8"), flags=re.S)
-    for leak in ('id="routeNext"', 'id="chapterMeta"', 'class="catchup-card"',
-                 'class="exit-check"', 'id="progressIO"', 'id="resumeBlock"'):
-        if leak in prh:
-            fail(f"print.html 泄漏运行时块：{leak}")
 
     if not args.accept:
         anchors_drift(accept=False)

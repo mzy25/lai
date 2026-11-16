@@ -3,7 +3,7 @@
 """md 表结构检查器（系列仓，纯 stdlib）。
 
 用法：
-    python3 series/tools/table_check.py [文件...]   # 缺省扫描 series/*.md
+    python3 series/tools/table_check.py [文件...]   # 缺省扫描 series/*.md 与 series/style/句长基准.md
     python3 series/tools/table_check.py --selftest  # 内置坏样/好样对照
 
 检查（只定位不判罚；有问题退出码 1，全绿 0）：
@@ -77,7 +77,8 @@ def selftest() -> bool:
     bad = (
         "| a | b |\n| c | d |\n\n"
         "| h | x |y| |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n\n"
-        "| 孤 | 行 |\n"
+        "| 孤 | 行 |\n\n"
+        "| h | x |\n| --- | --- |\n| 1 | 2 ||\n"
     )
     good = (
         "| a | b |\n| --- | --- |\n| c | d |\n\n"
@@ -96,7 +97,10 @@ def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if '--selftest' in sys.argv:
         return 0 if selftest() else 1
-    files = [pathlib.Path(a) for a in args] if args else sorted(ROOT.glob('*.md'))
+    # 句长基准是严格表格，纳入默认检查；style/ 其余文件（如喻体台账）按节分段、
+    # 行块之间不重复表头，不是标准 Markdown 表，不纳入本检查。
+    files = ([pathlib.Path(a) for a in args] if args
+             else sorted(ROOT.glob('*.md')) + [ROOT / "style" / "句长基准.md"])
     all_issues = []
     for f in files:
         if not f.exists() or not f.suffix == '.md':

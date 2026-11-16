@@ -47,7 +47,6 @@ def render() -> str:
     out.append("## 在线阅读")
     out.append("")
     out.append("- [目录 / 路线向导](./dist/index.html)")
-    out.append("- [全文打印版](./dist/print.html)")
     out.append("- [术语总表](./dist/terms.html)")
     out.append("- [路线与论文清单](./dist/routes.html)")
     out.append("- [环境指南](./dist/env.html)")

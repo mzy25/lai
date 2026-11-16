@@ -12,7 +12,7 @@
 | 答案/正文镜像 | `answer_mirror_check.py "series/§N-….md"` | 人工裁决；`--strict` 可用于审阅批 |
 | 单章精修取证 | `unit_closeout.py "series/§N-….md"` | 人工把摘要抄进修订记录；提交前仍跑 `finish_round` |
 | 一轮/多章收尾 | `finish_round.py` | 收尾表全过；提交前不要用 `--no-build` |
-| 内容审计 | `series-audit` skill：`table_check` / `reference_lint --strict` / `first_use_scan` / `metaphor_scan --strict` / `symbol_coverage --strict` / `residue_scan` / `row_check` | `series_check` |
+| 内容审计 | `series-audit` skill：`table_check` / `reference_lint --strict` / `ending_check` / `first_use_scan` / `metaphor_scan --strict` / `symbol_coverage --strict` / `residue_scan` / `row_check` | `series_check` |
 | Phase 0/1 体检 | `phase01.py --gates`：语病/条件候选＋第N部/§N 指针＋术语多释；报告写 `series/.tmp/phase01/` | 人工分诊；`--strict` 有 L0/指针错/术语多释退 1 |
 | 配图 | `series-figures` skill：`generate_figures.py` | `series_check` 配图 31/31 |
 | 构建/发布 | `build-pipeline` skill：`build_site.py` | `series_check` + `check_artifact_fresh` |
@@ -37,13 +37,13 @@
 
 | 工具 | 用途 | 状态 |
 | --- | --- | --- |
-| `build_site.py` | 章稿 → `series/dist/`（HTML／print／index／anchors）；`--selftest` 原子替换回归 | 构建 |
+| `build_site.py` | 章稿 → `series/dist/`（HTML／index／anchors）；`--selftest` 原子替换回归 | 构建 |
 | `site_template.html` | 页面模板与样式（`build_site.py` 读取） | 数据 |
 | `build_readme.py` | 生成／校验 `series/README.md` 章节表 | 构建／CI |
 | `generate_figures.py` | 重生成 `series/figures/`（需 numpy／matplotlib） | 构建 |
 | `fig_common.py` | 配图共用色板与函数（被 `generate_figures.py` 引用） | 模块 |
 | `sub_sup_convert.py` | 上下标与 `^`／`~` 字形转换（被 `build_site.py` 引用） | 模块／CLI |
-| `series_check.py` | 页面／锚／路线／资产／配图／print 门禁；`--selftest` 页面夹具回归 | 门禁（本地＋CI） |
+| `series_check.py` | 页面／锚／路线／资产／配图门禁；`--selftest` 页面夹具回归 | 门禁（本地＋CI） |
 | `route_lint.py` | 路线卡与正文引用断链审计 | 门禁（本地＋CI） |
 | `route_js_check.py` | 路线层 JavaScript 与视图表对拍 | 门禁（本地） |
 | `table_check.py` | Markdown 表格结构检查 | 门禁（本地＋CI） |
@@ -66,6 +66,7 @@
 | `residue_scan.py` | 修复批残留模式复扫（EXPECT0；可传章文件限定） | 门禁（收尾链） |
 | `metaphor_scan.py` | 喻体候选扫描；`--strict` 进收尾链 | 门禁（收尾链） |
 | `reference_lint.py` | 跨章回指、旧词残留与“后文简称”承诺检查；`--strict` 进收尾链 | 门禁（收尾链） |
+| `ending_check.py` | 末节「回望与下一章」体例：引导句／提示括号／部件标签／电报过渡／每题一问／题量／长度 | 门禁（收尾链＋CI） |
 | `cliche_scan.py` | 套话词表扫描（只定位，不判罚） | 测量 |
 | `taste_probe.py` | 品味层探针（S/F/C/Q/B/E 六节） | 测量 |
 | `symbol_coverage.py` | 符号台账对查；`--strict` 有 FAIL 退出 1 | 门禁（收尾链） |
@@ -84,9 +85,9 @@ python3 series/tools/build_readme.py --check
 python3 build/check_artifact_fresh.py
 
 # 改稿收尾（有 edit 档案走档案，无档案走 --ledger-only）
-python3 series/tools/finish_round.py --files "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md"
-python3 series/tools/unit_closeout.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md"
-python3 series/tools/unit_closeout.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md" --card
+python3 series/tools/finish_round.py --files "series/§0.3-这套读物怎么用？——标记、环境与工具.md"
+python3 series/tools/unit_closeout.py "series/§0.3-这套读物怎么用？——标记、环境与工具.md"
+python3 series/tools/unit_closeout.py "series/§0.3-这套读物怎么用？——标记、环境与工具.md" --card
 
 # 工具自检
 python3 series/tools/selftest_tools.py
@@ -105,13 +106,14 @@ python3 series/tools/review_log.py summary --chapter "§N"
 
 # 单项
 python3 series/tools/row_check.py
-python3 series/tools/first_use_scan.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md" --ledger-only
+python3 series/tools/first_use_scan.py "series/§0.3-这套读物怎么用？——标记、环境与工具.md" --ledger-only
 python3 series/tools/first_use_scan.py --all --ledger-only --strict
 python3 series/tools/first_use_scan.py --check-rules
 python3 series/tools/reference_lint.py --strict
+python3 series/tools/ending_check.py
 python3 series/tools/first_use_scan.py --all --ledger-only --no-context-exempt  # 审计：只认显式规则
 python3 series/tools/residue_scan.py
-python3 series/tools/sentence_stats.py "series/§0.3-这套读物怎么用？——路径、标记、环境与工具.md" --row
+python3 series/tools/sentence_stats.py "series/§0.3-这套读物怎么用？——标记、环境与工具.md" --row
 ```
 
 ## 公开仓说明

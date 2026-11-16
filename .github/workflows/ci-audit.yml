@@ -50,6 +50,8 @@ jobs:
         run: python3 series/tools/row_check.py
       - name: 跨章回指/旧词
         run: python3 series/tools/reference_lint.py --strict
+      - name: 末节体例
+        run: python3 series/tools/ending_check.py
       - name: 喻体预算
         run: python3 series/tools/metaphor_scan.py --strict
       - name: 修复批残留

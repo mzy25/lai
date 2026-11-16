@@ -171,6 +171,10 @@ def main() -> int:
     last = last_line(r)
     check("reference_lint --strict", r.returncode == 0, last)
 
+    r = run([sys.executable, "tools/ending_check.py"])
+    last = last_line(r)
+    check("ending_check", r.returncode == 0, last)
+
     r = run([sys.executable, "tools/route_lint.py", "--check"])
     last = last_line(r)
     check("route_lint --check", r.returncode == 0 and "后向 0" in last, last[:70])

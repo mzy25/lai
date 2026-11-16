@@ -3,7 +3,7 @@
 """series 阅读版 HTML 构建（从 0 新建；仅 stdlib ＋ pandoc ＋ series/tools/sub_sup_convert）。
 
 设计：
-- 页面模型：Hub（index）＋按章分页（<slug>.html）＋全文打印页（print.html）＋资产索引（assets.html）
+- 页面模型：Hub（index）＋按章分页（<slug>.html）＋资产索引（assets.html）
 - 单章管线：读源稿 → sub_sup 字形转换 → 结构规范化 → 标记（▽○◌◇）预扫
   （剥离字形→徽章 span＋锚点注入 {#slug-sNN}）→ pandoc(markdown-smart) →
   cb 行号 id 加章前缀 → §N 素文链接化（章级，精确匹配）→ assets 路径链接化
@@ -16,11 +16,10 @@
 - depth×节标记（实践档 ○/◌ 节降灰、理论档全亮）与 focus 章非焦点节降灰；
   降灰带 kind（path/depth/focus）供样式与提示分型。
 - 无 KaTeX（系列无 $ 数学）、无 npm、file:// 全功能（零外部请求）。
-- 打印：print.html 构建期 details 全开；章页 beforeprint JS 展开。
 
 用法：
-    python3 series/tools/build_site.py                 # 全量构建（含 assets 拷贝/print/index/anchors）
-    python3 series/tools/build_site.py --only ch16 t2  # 只重建指定页（不碰 print/index/anchors/assets）
+    python3 series/tools/build_site.py                 # 全量构建（含 assets 拷贝/index/anchors）
+    python3 series/tools/build_site.py --only ch16 t2  # 只重建指定页（不碰 index/anchors/assets）
     python3 series/tools/build_site.py --no-assets     # 跳过资产拷贝（调试）
 """
 
@@ -334,7 +333,7 @@ def migration_callout(ch: dict) -> str:
 
 def build_site_data(chapters: list[dict], parts: list[dict], routes: dict,
                     views: dict[str, dict]) -> str:
-    """页内数据块（Hub＋章页共用；print/assets 不注）。schema series-site-data/v2。"""
+    """页内数据块（Hub＋章页共用；assets 不注）。schema series-site-data/v2。"""
     data = {
         "schema": "series-site-data/v2",
         "default_route": routes.get("default_route", "free"),
@@ -496,7 +495,7 @@ def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
         f'<p class="rc-hours"><b>投入：</b>{H.escape(hours_full)}</p>'
         '<div class="rc-actions">'
         f'<a class="rc-start" href="{H.escape(start_href)}">{H.escape(start_label)}</a>'
-        f'<a class="rc-more" href="{H.escape(more_href)}">完整说明 / 打印 →</a>'
+        f'<a class="rc-more" href="{H.escape(more_href)}">完整说明 →</a>'
         '</div></div></details>'
     )
 
@@ -601,7 +600,7 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     out.append('<p class="doc-meta hub-tools">工具与参考：'
                '<a href="terms.html">术语总表</a> · <a href="env.html">环境指南</a> · '
                '<a href="selftest.html">数学自修自测</a> · '
-               '<a href="routes.html">路线与论文清单</a> · <a href="print.html">全文打印</a></p>')
+               '<a href="routes.html">路线与论文清单</a></p>')
     out.append('</section>')
 
     # ---- 路线图（30 节点；JS 按所选路线更新类）
@@ -703,14 +702,14 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     return "\n".join(out)
 # ---------------------------------------------------------------- 供给页
 
-FOOTER_LINKS = ('<a href="index.html">目录</a> · <a href="print.html">全文打印版</a> · '
+FOOTER_LINKS = ('<a href="index.html">目录</a> · '
                 '<a href="terms.html">术语总表</a> · <a href="routes.html">路线与论文清单</a> · '
                 '<a href="env.html">环境指南</a> · <a href="selftest.html">数学自修自测</a> · '
                 '<a href="assets.html">资产索引</a>')
 
 
 def _sec_short(text: str, n: int = 10) -> str:
-    """节名短形：冒号前 + 截断（路线卡与打印页共用）。"""
+    """节名短形：冒号前 + 截断。"""
     s = text.split("：")[0]
     return s if len(s) <= n else s[:n] + "…"
 
@@ -845,7 +844,7 @@ def env_content(chapters: list[dict], ref_map: dict[str, str]) -> str:
     md = (SERIES / "supply" / "环境指南.md").read_text(encoding="utf-8")
     html = pandoc_html(md, SERIES)
     html, _ = linkify_assets(html)
-    html, _ = linkify_refs(html, "env", ref_map, print_mode=False)
+    html, _ = linkify_refs(html, "env", ref_map)
     rows = []
     for ch in chapters:
         d = asset_dir_of(ch["slug"])
@@ -862,7 +861,7 @@ def env_content(chapters: list[dict], ref_map: dict[str, str]) -> str:
 def selftest_content(ref_map: dict[str, str]) -> str:
     md = (SERIES / "supply" / "数学自修自测.md").read_text(encoding="utf-8")
     html = pandoc_html(md, SERIES)
-    html, _ = linkify_refs(html, "selftest", ref_map, print_mode=False)
+    html, _ = linkify_refs(html, "selftest", ref_map)
     opts = "".join(f'<option value="{i}">{i}</option>' for i in range(0, 11))
     widget = ('<div class="selftest-save">'
               '<label for="stScore">自评：对了几题？</label> '
@@ -933,7 +932,6 @@ def routes_content(routes_cfg: dict, chapters: list[dict], views_by_route: dict)
                        f'<dt>时间</dt><dd>{route_time_text(r, chapters)}</dd>'
                        + (f'<dt>补站</dt><dd>{H.escape(r["backfill"])}</dd>' if r.get("backfill") else '')
                        + '</dl>')
-            out.append(f'<p class="doc-meta"><a href="route-{rid}.html">打印本路线（单页）→</a></p>')
             out.append(f'<p><b>读完能：</b>{H.escape("；".join(r["exit"]))}</p>')
             line = f'<p><b>读全章：</b>{H.escape("、".join(read)) or "—"}'
             if focus:
@@ -1016,44 +1014,6 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
     return "\n".join(out), info
 
 
-def route_print_content(r: dict, chapters: list[dict]) -> str:
-    """单路线打印页（H2-4）：构建期静态生成，file:// 下最稳。"""
-    lab = {c["slug"]: c["label"] for c in chapters}
-    sec_title = {s["anchor"]: s["text"] for c in chapters for s in c["sections"]}
-    read, focus = [], []
-    for e in r["sequence"]:
-        if e["mode"] == "read":
-            read.append(f'{lab[e["ch"]]}')
-        else:
-            titles = "、".join(_sec_short(sec_title.get(a, a.split("-")[-1]))
-                               for a in e.get("sections", []))
-            focus.append(f'{lab[e["ch"]]}（{titles}）')
-    skipped = sum(1 for d in route_view(r, chapters)["disp"].values() if d == "dim")
-    out = [f'<div class="chapter-head"><h1>{H.escape(r["title"])}</h1>'
-           f'<p class="doc-meta">{H.escape(r["audience"])}｜{route_time_text(r, chapters)}'
-           + (f'｜补站：{H.escape(r["backfill"])}' if r.get("backfill") else '')
-           + '</p>'
-           f'<p class="doc-meta"><a href="routes.html#route-{r["id"]}">← 回路线卡</a> · '
-           f'<a href="index.html">目录</a></p></div>']
-    out.append(f'<h2>读全章（{len(read)}）</h2><p>{H.escape("、".join(read)) or "—"}</p>')
-    if focus:
-        out.append(f'<h2>只读所列节（{len(focus)}）</h2><p>{H.escape("；".join(focus))}</p>')
-    if skipped > 0:
-        out.append(f'<p class="doc-meta">其余 {skipped} 个单元不读（自由读中仍可翻开）；'
-                   '补页参考随查，不计入路线。</p>')
-    if r.get("catchups"):
-        out.append('<h2>补课卡</h2><p>' + H.escape("；".join(
-            f'{c.get("where", "")}→{c.get("fix", "")}' for c in r["catchups"])) + '</p>')
-    if r.get("exempt"):
-        out.append('<h2>豁免</h2><p>' + H.escape("；".join(r["exempt"])) + '</p>')
-    out.append('<h2>读完能（出口）</h2><ul>' + "".join(
-        f'<li>{H.escape(x)}</li>' for x in r["exit"]) + '</ul>')
-    out.append('<h2>自证题</h2><ul>' + "".join(
-        f'<li>{H.escape(x)}</li>' for x in r["selfcheck"]) + '</ul>')
-    out.append('<p class="doc-meta">六站与结业项目按路线卡与正文；勾选进度在阅读版里（本页为打印版）。</p>')
-    return "\n".join(out)
-
-
 # ---------------------------------------------------------------- HTML 后处理层
 
 def pandoc_html(md: str, cwd: Path) -> str:
@@ -1073,7 +1033,7 @@ def prefix_cb(html: str, slug: str) -> str:
 _SKIP_REF = re.compile(r"<(code|pre|a|style|script|h1)\b|</(code|pre|a|style|script|h1)>")
 
 
-def linkify_refs(html: str, current: str, ref_map: dict[str, str], print_mode: bool) -> tuple[str, int]:
+def linkify_refs(html: str, current: str, ref_map: dict[str, str]) -> tuple[str, int]:
     """§N 素文链接化（章级；§N.M 形不链，计数上报）。"""
     parts = re.split(r"(<[^>]+>)", html)
     out: list[str] = []
@@ -1100,7 +1060,7 @@ def linkify_refs(html: str, current: str, ref_map: dict[str, str], print_mode: b
             tgt = ref_map.get(num)
             if not tgt:
                 return m.group(0)
-            href = f"#{tgt}" if (print_mode or tgt == current) else f"{tgt}.html"
+            href = f"#{tgt}" if tgt == current else f"{tgt}.html"
             return f'<a class="xref" href="{href}">§{num}</a>'
 
         out.append(_REF_RE.sub(repl, p))
@@ -1218,14 +1178,14 @@ def take_selfcheck_answer(html: str, replacement: str = "") -> tuple[str, str | 
     return html[:m.start()] + replacement + html[m.end():], m.group(1)
 
 
-def answers_note(ch: dict, print_mode: bool = False) -> str:
+def answers_note(ch: dict) -> str:
     """非篇末章：指向篇末答案。篇末章不挂链接，答案就在本章最末。"""
     part = ch["part"]
     end = PART_END.get(part)
     if not end or ch["slug"] == end:
         return ""
     label = PART_END_LABEL.get(part, end)
-    href = f"#answers-{part}" if print_mode else f"{end}.html#answers-{part}"
+    href = f"{end}.html#answers-{part}"
     return (f'<p class="selfcheck-answers-link">答案见<a href="{href}">'
             f'本篇末（{label}）</a>。</p>')
 
@@ -1264,39 +1224,40 @@ def stitch_part_answers(html: str, blocks: dict[str, list[tuple[dict, str]]]) ->
 
 
 def mark_selfcheck(html: str, anchor_id: str | None = "selfcheck") -> str:
-    """给章末自查一个可跳转的锚点，并把提示与答案折叠分层。
+    """给章末自查一个可跳转的锚点，并给答案折叠加类。
 
-    - “先别翻答案／十题”段落加 class/id，作为自查入口与视觉分隔；
-    - 题干末尾的括号提示包成 .hint，视觉上退后一层；
-    - “先写，再看：答案与去处”折叠加 class，网页轻量、打印带标题。
+    2026-11-11 末节严审后，正文不再有「先别翻答案／十题」引导行：
+    锚点直接挂到回望节后的第一张有序表（题干列表）上，页面不出现可见标签。
     """
     m = SELFCHECK_LABEL.search(html)
-    if not m:
-        return html
-    attrs = f' id="{anchor_id}"' if anchor_id else ""
-    text = m.group(1)
-    if "：" in text:
+    if m:
+        # 兼容旧稿：若仍有引导行，仍包成可见标签。
+        attrs = f' id="{anchor_id}"' if anchor_id else ""
+        text = m.group(1)
         head, sep, tail = text.partition("：")
-        body = f'<strong>{head}{sep}</strong>{tail}'
-    else:
-        body = f'<strong>{text}</strong>'
-    label = f'<p{attrs} class="selfcheck-label">{body}</p>'
-    html = html[:m.start()] + label + html[m.end():]
-
-    # 只处理自查标签后的第一张有序表：题目列表；答案列表在 details 里，不动。
-    start = html.find('class="selfcheck-label"')
-    if start != -1:
-        ol_start = html.find('<ol type="1">', start)
-        ol_end = html.find('</ol>', ol_start) if ol_start != -1 else -1
-        if ol_start != -1 and ol_end != -1:
-            block = html[ol_start:ol_end + 5]
-            block = re.sub(r'（([^（）]*)）(?=\s*</li>)',
-                           r'<span class="hint">（\1）</span>', block)
-            html = html[:ol_start] + block + html[ol_end + 5:]
+        body = f'<strong>{head}{sep}</strong>{tail}' if sep else f'<strong>{text}</strong>'
+        label = f'<p{attrs} class="selfcheck-label">{body}</p>'
+        html = html[:m.start()] + label + html[m.end():]
+    elif anchor_id:
+        hm = re.search(r'<h2 id="[^"]*">(?:回望与下一章|回望与收束|收束)</h2>', html)
+        if hm:
+            depth = 0
+            target = -1
+            tag = '<ol type="1">'
+            for mm in re.finditer(r'<details\b|</details>|<ol type="1">', html[hm.end():]):
+                token = mm.group(0)
+                if token.startswith("<details"):
+                    depth += 1
+                elif token == "</details>":
+                    depth = max(0, depth - 1)
+                elif depth == 0:
+                    target = hm.end() + mm.start()
+            if target != -1:
+                html = html[:target] + f'<ol type="1" id="{anchor_id}">' + html[target + len(tag):]
 
     html = re.sub(
-        r'<details>\s*<summary>\s*先写，再看：答案与去处\s*</summary>',
-        '<details class="selfcheck-answer">\n<summary>先写，再看：答案与去处</summary>',
+        r'<details>\s*<summary>\s*(?:先写，再看：)?答案与去处\s*</summary>',
+        '<details class="selfcheck-answer">\n<summary>答案与去处</summary>',
         html, count=1)
     return html
 
@@ -1574,7 +1535,7 @@ def _run_build(args) -> int:
         # 资产正则失配会导致笔记本链断裂。
         html, miss = linkify_assets(html)
         missing_assets.extend(miss)
-        html, sk = linkify_refs(html, slug, ref_map, print_mode=False)
+        html, sk = linkify_refs(html, slug, ref_map)
         skipped_sec_refs += sk
         html = embed_figures(html, slug)
         html = wrap_tables(html)
@@ -1643,47 +1604,6 @@ def _run_build(args) -> int:
         print(f"（--only 预览 → series/.tmp/only/；dist 未改动；答案保留章内；未链节引用 {skipped_sec_refs} 处）")
         return 0
 
-    # ---- print.html（details 全开；§N 同页锚）
-    print_frags: list[str] = []
-    print_answers: dict[str, list[tuple[dict, str]]] = {}
-    for ch in chapters:
-        html = pandoc_html(ch["md"], SERIES)
-        html = prefix_cb(html, ch["slug"])
-        # 同章页：资产链接化先于 §N 引用链接化（次序说明见章页构建处注释）。
-        html, miss = linkify_assets(html)
-        missing_assets.extend(miss)
-        html, sk = linkify_refs(html, ch["slug"], ref_map, print_mode=True)
-        skipped_sec_refs += sk
-        html = embed_figures(html, ch["slug"])
-        html = wrap_tables(html)
-        html = wrap_sections(html)
-        html = mark_selfcheck(html, anchor_id=None)
-        html, answer_ol = take_selfcheck_answer(html, answers_note(ch, print_mode=True))
-        if answer_ol:
-            print_answers.setdefault(ch["part"], []).append((ch, answer_ol))
-        if ch["slug"] == PART_END.get(ch["part"]):
-            # 同网页：答案块可能在后续章才收齐，先留槽，整轮结束后再填。
-            html += part_answers_marker(ch["part"])
-        html = re.sub(r'<details(?![^>]*\bopen\b)([^>]*)>', r'<details\1 open>', html)
-        print_frags.append(f'<article class="chapter" id="p-{ch["slug"]}">\n{html}\n{asset_card(ch["slug"])}\n</article>')
-    if set(print_answers) - set(PART_END):
-        raise RuntimeError(f"print 有答案的部没有 PART_END：{sorted(set(print_answers) - set(PART_END))}")
-    print_chapters = stitch_part_answers("\n".join(print_frags), print_answers)
-    # 篇末答案槽在逐章 details 全开之后才填入，需要再扫一遍。
-    print_chapters = re.sub(r'<details(?![^>]*\bopen\b)([^>]*)>', r'<details\1 open>', print_chapters)
-    toc = "\n".join(
-        f'<li><a href="#{c["slug"]}">{H.escape(c["label"])} {H.escape(short_title(c["title"], 30))}</a>'
-        f'{badge_html(c["h1_markers"])}</li>' for c in chapters)
-    print_content = (f'<div class="chapter-head"><h1>AI 系列读物 · 全文版</h1>'
-                     f'<p class="doc-meta">本页为全书单页版：适合打印与全文检索（Ctrl+F）。'
-                     f'分章阅读请回 <a href="index.html">目录</a>。</p></div>'
-                     f'<ul>{toc}</ul><hr>\n' + print_chapters)
-    print_page = render_page(template, title="AI 系列读物 · 全文版", bodyclass="print-page",
-                             sidebar="", content=print_content,
-                             footer=footer_html(build_date, "源稿共 30 个单元"))
-    (DIST / "print.html").write_text(print_page, encoding="utf-8", newline="\n")
-    print(f"✓ print.html ({len(print_page)//1024} KB)")
-
     # ---- assets.html
     seen: set[str] = set()
     asset_sections: list[str] = []
@@ -1744,13 +1664,6 @@ def _run_build(args) -> int:
                     site_data=site_data_html),
         encoding="utf-8", newline="\n")
     print("✓ routes.html")
-    for r in routes_cfg["routes"]:
-        (DIST / f'route-{r["id"]}.html').write_text(
-            render_page(template, title=f'{r["title"]} · 打印版 · AI 系列读物',
-                        bodyclass="aux-page", sidebar="",
-                        content=route_print_content(r, chapters), footer=footer_html(build_date)),
-            encoding="utf-8", newline="\n")
-    print(f"✓ route-*.html ×{len(routes_cfg['routes'])}")
 
     # ---- index.html（B3：向导＋路线图＋课表＋进度环＋检索；数据块内嵌）
     index_content = hub_content(chapters, parts, routes_cfg, free, views_by_route)
