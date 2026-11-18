@@ -43,6 +43,43 @@ NUM_RE = re.compile(r"(?<![A-Za-z0-9_.])(\d{1,3}(?:,\d{3})+(?:\.\d+)?%?|\d+(?:\.
 BOLD_RE = re.compile(r"\*\*([^*\n]+)\*\*")
 QUOTE_RE = re.compile(r"[“\"]([^”\"\n]{2,40})[”\"]")
 
+# 标题读法标记（▽○◌◇，含 ＋ 连接的多标记）。build_site / build_readme / sentence_stats 共用。
+MARK_CHARS = "▽○◌◇"
+_MARK_RUN = re.compile(r"[▽○◌◇](?:\s*[＋+]\s*[▽○◌◇])*")
+
+
+def strip_marks(s: str) -> tuple[str, list[str]]:
+    """剥离标题/摘要里的读法标记字形，返回（清洁文字, 标记序列）。"""
+    ms: list[str] = []
+
+    def cb(m: re.Match) -> str:
+        ms.extend(c for c in m.group(0) if c in MARK_CHARS)
+        return ""
+
+    t = _MARK_RUN.sub(cb, s)
+    t = re.sub(r"\s{2,}", " ", t)
+    t = re.sub(r"\s+([：:；;，,。．])", r"\1", t)
+    return t.strip(), list(dict.fromkeys(ms))
+
+
+def display_title(path: Path, label: str) -> str:
+    """单元展示题：H1 去读法标记与 label 前缀；缺失或不带前缀时回退文件名题。"""
+    fallback = path.stem.split("-", 1)[1] if "-" in path.stem else path.stem
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return fallback
+    for line in text.splitlines():
+        if not line.startswith("# "):
+            continue
+        clean, _ = strip_marks(line[2:].strip())
+        for sep in (f"{label} · ", f"{label} "):
+            if clean.startswith(sep):
+                return clean[len(sep):].strip()
+        break
+    return fallback
+
+
 
 def read_lines(path: Path) -> list[str]:
     return path.read_text(encoding="utf-8").splitlines()
@@ -281,7 +318,9 @@ def contains_text(term: str, text: str) -> bool:
 
 
 if __name__ == "__main__":
-    # 轻量自检：只测切分与测量，不写文件。
+    # 轻量自检：测切分、测量与题名解析，只在临时目录写文件。
+    import tempfile
+
     sample = (
         "# 标题\n\n"
         "第一段第一句。第一段第二句，长一点。\n\n"
@@ -294,10 +333,20 @@ if __name__ == "__main__":
     ps = paragraphs(lines)
     ss = sections(lines)
     m = measure_text("\n".join(p["text"] for p in ps))
+    with tempfile.TemporaryDirectory(prefix="pc_") as td:
+        ch = Path(td) / "§0.1-示例题.md"
+        ch.write_text("# §0.1 示例题 ▽◇\n", encoding="utf-8")
+        intro = Path(td) / "支线导言-专题.md"
+        intro.write_text("# 支线导言 · 专题\n", encoding="utf-8")
+        ok_title = (strip_marks("标题 ▽") == ("标题", ["▽"])
+                    and display_title(ch, "§0.1") == "示例题"
+                    and display_title(intro, "支线导言") == "专题"
+                    and display_title(Path(td) / "x-无.md", "§9") == "无")
     ok = (len(ps) == 2 and len(ss) == 2 and ss[1]["title"] == "小节"
           and m["n"] == 3 and m["dashes"] == 0
           and impact_type("他更强。", "他更稳。")[0] == "wording"
           and impact_type("得分 3.2。", "得分 3.4。")[0] == "number"
-          and impact_type("**术语**在这里。", "另一个词在这里。")[0] == "term")
+          and impact_type("**术语**在这里。", "另一个词在这里。")[0] == "term"
+          and ok_title)
     print("prose_common selftest:", "PASS" if ok else "FAIL")
     raise SystemExit(0 if ok else 1)

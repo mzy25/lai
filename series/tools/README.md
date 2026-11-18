@@ -39,7 +39,7 @@
 | --- | --- | --- |
 | `build_site.py` | 章稿 → `series/dist/`（HTML／index／anchors）；`--selftest` 原子替换回归 | 构建 |
 | `site_template.html` | 页面模板与样式（`build_site.py` 读取） | 数据 |
-| `build_readme.py` | 生成／校验 `series/README.md` 章节表 | 构建／CI |
+| `build_readme.py` | 生成／校验 `series/README.md` 章节表；`--check` 另验根 README 组标签与版本号 | 构建／CI |
 | `generate_figures.py` | 重生成 `series/figures/`（需 numpy／matplotlib） | 构建 |
 | `fig_common.py` | 配图共用色板与函数（被 `generate_figures.py` 引用） | 模块 |
 | `sub_sup_convert.py` | 上下标与 `^`／`~` 字形转换（被 `build_site.py` 引用） | 模块／CLI |
@@ -47,7 +47,7 @@
 | `route_lint.py` | 路线卡与正文引用断链审计 | 门禁（本地＋CI） |
 | `route_js_check.py` | 路线层 JavaScript 与视图表对拍 | 门禁（本地） |
 | `table_check.py` | Markdown 表格结构检查 | 门禁（本地＋CI） |
-| `sentence_stats.py` | 句长／破折号密度测量；`--update` 刷基准表 | 测量 |
+| `sentence_stats.py` | 句长／破折号密度测量；`--update` 刷基准表并写入变更史（题名取自 H1） | 测量 |
 | `selftest_tools.py` | 工具自检总入口；默认跑新审阅工具，`--all` 追加核心工具 | 维护 |
 | `prose_common.py` | 正文审阅共用切分/测量模块（被 section_map/coherence_scan/answer_mirror_check/prose_diff 引用） | 模块 |
 | `reader_packet.py` | 冷读包生成：本章正文＋截至本章之前的术语；排除后文/答案/edit；`--selftest` | 手动 |
@@ -61,7 +61,7 @@
 | `ripple_check.py` | 按改动类型跑涟漪检查；标“本章/全系列”，全系列默认只提示 | 手动 |
 | `blind_pair.py` | 原文/改写随机 A/B 盲评表；`score` 读 votes/key 算胜率并可写 `review_log` | 手动 |
 | `review_log.py` | 审阅裁决日志与接受率汇总（默认 `series/edit/review_log.tsv`） | 手动 |
-| `row_check.py` | `style/句长基准.md` 与实测逐列对账 | 门禁（收尾链） |
+| `row_check.py` | `style/句长基准.md` 与实测逐列对账；`--fix` 回写数值并记入变更史 | 门禁（收尾链） |
 | `first_use_scan.py` | 术语首现／总账核对；`--all --ledger-only --strict`；`--check-rules` | 门禁（收尾链＋CI） |
 | `residue_scan.py` | 修复批残留模式复扫（EXPECT0；可传章文件限定） | 门禁（收尾链） |
 | `metaphor_scan.py` | 喻体候选扫描；`--strict` 进收尾链 | 门禁（收尾链） |

@@ -23,6 +23,9 @@ HERE = Path(__file__).resolve().parent
 SERIES = HERE.parent
 TABLE = SERIES / "style" / "句长基准.md"
 
+sys.path.insert(0, str(HERE))
+from sentence_stats import append_history  # noqa: E402
+
 
 def _numbers(values: tuple[str, ...]) -> tuple:
     """数值列按数比较：35.0 与 35 相同；非数值原样比较。"""
@@ -79,9 +82,8 @@ def main() -> int:
                 lc[j] = v
             if len(lc) >= 9:
                 stamp = f"{datetime.date.today().isoformat()} row_check --fix"
-                if "row_check --fix" not in lc[8]:
-                    note = lc[8].strip().rstrip("；; ")
-                    lc[8] = (note + "；" + stamp) if note else stamp
+                append_history(lc[0].split(" ")[0], stamp, dedupe=True)
+                lc[8] = stamp
             lines[idx] = "| " + " | ".join(lc) + " |"
     if a.fix and diffs:
         TABLE.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")

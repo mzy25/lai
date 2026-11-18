@@ -134,15 +134,14 @@ RELEASE = _load_release()
 
 sys.path.insert(0, str(HERE))
 import sub_sup_convert as ssc  # noqa: E402
+from prose_common import strip_marks  # noqa: E402
 
-MARK_CHARS = "▽○◌◇"
 MARK_META = {"▽": "可后读", "○": "支线先补", "◌": "延伸选读", "◇": "主线依赖"}
 
 _HEAD_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 _HR_RE = re.compile(r"^\s*(?:(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,})\s*$")
 _SUMMARY_RE = re.compile(r"^(\s*<summary>)(.*?)(</summary>\s*)$")
-_MARK_RUN = re.compile(r"[▽○◌◇](?:\s*[＋+]\s*[▽○◌◇])*")
 _ID_TAIL = re.compile(r"\s*\{#[^}]*\}\s*$")
 
 _REF_RE = re.compile(r"§(0\.[123]|\d{1,2})(?![\d.．])")
@@ -172,20 +171,6 @@ def norm_structure(text: str) -> str:
                     out.append("")
         out.append(ln)
     return "\n".join(out)
-
-
-def strip_marks(s: str) -> tuple[str, list[str]]:
-    """剥离标题/摘要里的读法标记字形，返回（清洁文字, 标记序列）。"""
-    ms: list[str] = []
-
-    def cb(m: re.Match) -> str:
-        ms.extend(c for c in m.group(0) if c in MARK_CHARS)
-        return ""
-
-    t = _MARK_RUN.sub(cb, s)
-    t = re.sub(r"\s{2,}", " ", t)
-    t = re.sub(r"\s+([：:；;，,。．])", r"\1", t)
-    return t.strip(), list(dict.fromkeys(ms))
 
 
 def badge_html(ms: list[str]) -> str:
@@ -983,6 +968,15 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
                 anchor = slug
                 info["h1"] = clean
                 info["h1_markers"] = ms
+                badges = badge_html(ms)
+                tail = f" {badges}" if badges else ""
+                if "——" in clean:
+                    main, sub = clean.split("——", 1)
+                    out.append(f'# {main.strip()}{tail} '
+                               f'<span class="h1-sub">—— {sub.strip()}</span> {{#{anchor}}}')
+                else:
+                    out.append(f"{hashes} {clean}{tail} {{#{anchor}}}")
+                continue
             elif len(hashes) == 2:
                 h2i += 1
                 h3i = 0

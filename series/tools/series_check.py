@@ -30,11 +30,13 @@ from pathlib import Path
 from urllib.parse import unquote
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from prose_common import MARK_CHARS  # noqa: E402
+
 SERIES = HERE.parent
 DIST = SERIES / "dist"
 PROFILES = SERIES / "profiles"
 ASSETS = SERIES / "assets"
-MARK_CHARS = "▽○◌◇"
 
 DEFAULT_CONTRACT = {
     "terms_min": 600,

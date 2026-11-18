@@ -15,7 +15,8 @@
   python series/tools/sentence_stats.py <章.md> [<章.md> ...]
   python series/tools/sentence_stats.py series/§*.md --row   # 直接输出基准表行
   python series/tools/sentence_stats.py <章.md> --update [--note "前缀"] [--dry-run]
-      # 就地刷新 style/句长基准.md 对应行：数值替换＋备注追加「日期 前缀后复测 旧→新」
+      # 刷新基准行：数值替换、题名取 H1；备注只留最近一条，完整记录进
+      # style/句长基准-变更史.md
   python series/tools/sentence_stats.py --selftest
 """
 from __future__ import annotations
@@ -27,10 +28,10 @@ import statistics
 import sys
 from pathlib import Path
 
-SENT_END = re.compile(r"[。！？]")
-DASH = "——"
-SKIP_PREFIX = ("#", "|", "〔")
-SHORT = 20  # B10②：≤20 字算短句，连续 5 句须插长句垫底
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from prose_common import DASH, SENT_END, SHORT, SKIP_PREFIX, display_title  # noqa: E402
+
+HIST = Path(__file__).resolve().parent.parent / "style" / "句长基准-变更史.md"
 
 
 def short_run(lens: list[int]) -> tuple[int, int]:
@@ -112,7 +113,7 @@ def part_of(uid: str) -> str:
 
 def row(path: Path, m: dict) -> str:
     uid = path.stem.split("-")[0]
-    title = path.stem.split("-", 1)[1] if "-" in path.stem else path.stem
+    title = display_title(path, uid)
     return (f"| {uid} {title} | {part_of(uid)} | {m['n']} | {m['mean']:.1f} | "
             f"{int(m['med'])} | {m['p90']} | {m['dashes']} | {m['dens']:.2f} |")
 
@@ -133,15 +134,54 @@ def selftest() -> int:
     # ／破折——一次(6) —— 引号内两问各自成句（细则①）
     ok = (m["n"] == 6 and m["dashes"] == 1 and abs(m["dens"] - round(1 / 6, 2)) < 1e-9
           and m["med"] == 5.5 and m["p90"] == 9)
-    print("sentence_stats selftest:", "PASS" if ok else f"FAIL {m}")
+    h = tmp / "hist.md"
+    append_history("§1", "2026-01-01 甲", hist=h)
+    append_history("§1", "2026-01-02 乙", hist=h)
+    append_history("§1", "2026-01-02 乙", hist=h, dedupe=True)
+    append_history("§2", "2026-01-03 丙", hist=h)
+    ht = h.read_text(encoding="utf-8")
+    ok = ok and ht.count("- 2026-01-02 乙") == 1 and "## §1" in ht and "## §2" in ht
+    bench = tmp / "bench.md"
+    bench.write_text(
+        "| 章 | 部 | 句数 | 均值 | 中位 | P90 | 破折号 | 密度 | 备注 |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "| §1 示例 | 第一部 | 9 | 9.9 | 9 | 9 | 0 | 0.00 | 旧记录 |\n",
+        encoding="utf-8")
+    chap = tmp / "§1-示例.md"
+    chap.write_text("一句。\n", encoding="utf-8")
+    update_row(chap, {"n": 1, "mean": 3.0, "med": 3, "p90": 3, "dashes": 0, "dens": 0.0},
+               "自检", False, bench=bench, hist=h)
+    bt = bench.read_text(encoding="utf-8")
+    ht = h.read_text(encoding="utf-8")
+    ok = ok and "旧记录" not in bt and bt.count("自检后复测") == 1 and "自检后复测" in ht
+    print("sentence_stats selftest:", "PASS" if ok else f"FAIL {m} {bt!r}")
     return 0 if ok else 1
 
 
 
-def update_row(p: Path, m: dict, note: str, dry: bool) -> int:
-    """就地刷新 style/句长基准.md 对应行。行定位＝『| <文件名第一段> 』前缀。"""
+def append_history(uid: str, entry: str, hist: Path | None = None,
+                   dedupe: bool = False) -> None:
+    """把一条复测记录追加到变更史的 uid 节；节不存在时在文末新建。"""
+    p = hist or HIST
+    text = p.read_text(encoding="utf-8") if p.exists() else "# 句长基准·变更史\n"
+    m = re.search(rf"^## {re.escape(uid)}\s*$", text, re.M)
+    if not m:
+        text = text.rstrip() + f"\n\n## {uid}\n\n- {entry}\n"
+    else:
+        nxt = re.search(r"^## ", text[m.end():], re.M)
+        end = m.end() + nxt.start() if nxt else len(text)
+        body = text[m.end():end]
+        if dedupe and f"- {entry}" in body:
+            return
+        text = text[:m.end()] + body.rstrip() + f"\n- {entry}\n\n" + text[end:]
+    p.write_text(text, encoding="utf-8", newline="\n")
+
+
+def update_row(p: Path, m: dict, note: str, dry: bool,
+               bench: Path | None = None, hist: Path | None = None) -> int:
+    """就地刷新句长基准行：数值替换，备注只留最近一条并写入变更史。"""
     import datetime
-    bench = Path(__file__).resolve().parent.parent / "style" / "句长基准.md"
+    bench = bench or Path(__file__).resolve().parent.parent / "style" / "句长基准.md"
     lines = bench.read_text(encoding="utf-8").splitlines()
     key = p.name.split("-")[0] if "-" in p.name else p.stem
     vals = [str(m["n"]), f"{m['mean']:.1f}", str(int(m["med"])), str(m["p90"]),
@@ -159,6 +199,7 @@ def update_row(p: Path, m: dict, note: str, dry: bool) -> int:
     if len(f) < 10:
         print(f"行格式异常：{key}", file=sys.stderr)
         return 2
+    f[1] = f" {key} {display_title(p, key)} "
     old = [x.strip() for x in f[3:9]]
     changed = old != vals
     delta = ""
@@ -168,13 +209,15 @@ def update_row(p: Path, m: dict, note: str, dry: bool) -> int:
         for j, v in zip(range(3, 9), vals):
             f[j] = " " + v + " "
     tail = f"{date} {note}后复测" if note else f"{date} 复测"
-    f[9] = " " + f[9].strip() + "；" + tail + (delta if changed else "值不变") + " "
-    lines[hit] = "|".join(f)
+    entry = tail + (delta if changed else "值不变")
     if dry:
-        print(f"[dry-run] {key}：{tail}{delta if changed else '值不变'}")
+        print(f"[dry-run] {key}：{entry}")
         return 0
+    append_history(key, entry, hist=hist)
+    f[9] = " " + entry + " "
+    lines[hit] = "|".join(f)
     bench.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-    print(f"{key}：{tail}{delta if changed else '值不变'}")
+    print(f"{key}：{entry}")
     return 0
 
 def main() -> int:

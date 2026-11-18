@@ -34,6 +34,7 @@ PROSE = [
     ("review_log.py", ["--selftest"]),
 ]
 CORE = [
+    ("build_readme.py", ["--selftest"]),
     ("sentence_stats.py", ["--selftest"]),
     ("first_use_scan.py", ["--selftest"]),
     ("metaphor_scan.py", ["--selftest"]),
