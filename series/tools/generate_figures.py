@@ -223,7 +223,7 @@ def fig_0_1_loop():
     axL.text(5, 9.5, "训练回路", ha="center", fontsize=11, fontweight="bold", color=INK)
     _box(axL, 3.4, 6.6, 2.6, 1.3, "预测", BLUE["l"], BLUE["d"], fs=10)
     _box(axL, 6.4, 4.0, 3.0, 1.3, "比对（损失）", GREEN["l"], GREEN["d"], fs=10)
-    _box(axL, 3.4, 1.4, 2.6, 1.3, "调整（旋钮）", ORANGE["l"], ORANGE["d"], fs=10)
+    _box(axL, 3.4, 1.4, 2.6, 1.3, "调整（参数）", ORANGE["l"], ORANGE["d"], fs=10)
     _arr(axL, (6.0, 7.1), (6.6, 5.3), color=GRAY["d"], rad=-0.15)
     _arr(axL, (7.6, 4.0), (6.0, 2.4), color=GRAY["d"], rad=-0.15)
     _arr(axL, (4.4, 2.7), (3.9, 6.6), color=GRAY["d"], rad=-0.2)
@@ -231,9 +231,9 @@ def fig_0_1_loop():
     axL.text(1.9, 6.9, "一: 猜", fontsize=8.5, color=GRAY["d"])
     axL.text(8.6, 3.2, "二: 算错多大", fontsize=8.5, color=GRAY["d"])
     axL.text(0.3, 2.9, "三: 改一点", fontsize=8.5, color=GRAY["d"])
-    # 右：单旋钮损失曲线与参数更新轨迹
+    # 右：单参数损失曲线与参数更新轨迹
     axR.set_xlim(-3.2, 3.4); axR.set_ylim(-0.4, 9.6); axR.axis("off")
-    axR.text(0, 9.5, "单旋钮：损失曲线与参数更新", ha="center", fontsize=11,
+    axR.text(0, 9.5, "单参数：损失曲线与参数更新", ha="center", fontsize=11,
              fontweight="bold", color=INK)
     w = np.linspace(-3.0, 3.0, 200)
     axR.plot(w, w * w, color=ROLE_PRIMARY, lw=2.0)
@@ -716,7 +716,7 @@ def fig_t4_1_cfg_extrapolation():
     ax.set_xlim(-0.8, 2.6); ax.set_ylim(-0.8, 11.0)
     ax.set_xlabel("第一维：无条件预测方向 ε_unc", fontsize=9)
     ax.set_ylabel("第二维：条件修正方向（ε_cond − ε_unc 的倍数）", fontsize=9)
-    ax.set_title("CFG 外推：w 拧大 = 沿条件方向走出去", fontsize=10)
+    ax.set_title("CFG 外推：w 调大 = 沿条件方向走出去", fontsize=10)
     ax.grid(color=GRAY["line"], lw=0.6, alpha=0.6)
     return save_fig(fig, "fig_t4_1_cfg_extrapolation.png")
 

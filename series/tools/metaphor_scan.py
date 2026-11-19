@@ -10,6 +10,7 @@
 
 用法：
   python3 series/tools/metaphor_scan.py            # 全量扫描
+  python3 series/tools/metaphor_scan.py --audit    # 台账对账明细（只报告）
   python3 series/tools/metaphor_scan.py --selftest # 纯函数自测
   python3 series/tools/metaphor_scan.py --strict   # WARN 退 1（默认 exit 0）
 """
@@ -58,11 +59,11 @@ TITLE_KEEP = {
     "回收地图": "结构名节题（登记行在册，三义分立）",
     "概率速查：四张卡片": "速查装置名（台账在册，非修辞喻）",
     "概率回访：四张卡片": "回访节题（装置名设计内回收，台账行在册）",
+    "视频": "模态词，非喻（记忆对照的实义一侧）",
 }
 
 # A1/A3 已判豁免（描述性行名与历史引用噪声）
-A1_EXEMPT = {"餐馆追责", "乐器上调节旋钮", "房间白噪音音量", "电视雪花屏",
-             "谷底热噪声（势能场）", "广场人群",
+A1_EXEMPT = {"餐馆追责", "广场人群",
              "考试域单点群（同词不同考场／同一张卷子的两面／答卷）", "铺轨／换轨（连接器）"}
 A3_EXEMPT = {"钥匙（句）", "铺轨／换轨（连接器）", "原料·喂·口味（喂养簇）",
              "押（下注类动词）"}
@@ -81,13 +82,66 @@ def tok(fn: str) -> str:
 
 def split_tokens(name: str) -> list[str]:
     base = re.sub(r"（[^）]*）", "", name).replace("复用备案", "").strip("* ")
-    parts = re.split(r"[／、，;；＋]|与", base)
+    parts = re.split(r"[／、，;；＋·]|与", base)
     out: list[str] = []
     for p in parts:
         p = p.strip().strip("*（） ").strip()
         if len(p) >= 2 and not re.search(r"[·—＋]", p):
             out.append(p)
     return out
+
+
+def split_tokens_all(name: str) -> list[str]:
+    """审计用：保留括注里的并列名（如「图书馆（索引卡／小标签）」）。"""
+    base = re.sub(r"[（）()]", "／", name)
+    parts = re.split(r"[／、，;；＋·]|与", base)
+    out: list[str] = []
+    for p in parts:
+        p = p.strip(" *·—")
+        if len(p) >= 2:
+            out.append(p)
+    return out
+
+
+RETIRE_STATUS = re.compile(r"退役|撤除|撤册|出册|转惯用|并入")
+
+
+def audit_ledger() -> dict:
+    """台账与正文对账：活跃行零命中、括注并列名部分零命中、豁免词零命中。"""
+    rows = []
+    for i, ln in enumerate(LEDGER.read_text(encoding="utf-8").splitlines(), 1):
+        t = ln.strip()
+        if not t.startswith("|") or "---" in t:
+            continue
+        cols = [c.strip() for c in t.strip("|").split("|")]
+        if len(cols) < 3:
+            continue
+        name = cols[0].strip("* ")
+        if not name or name in ("喻体/装置", "喻体", "装置") or re.match(r"第\d+ ?章", name):
+            continue
+        status = cols[2] if len(cols) > 2 else ""
+        retired = bool(RETIRE_STATUS.search(name) or RETIRE_STATUS.search(status))
+        rows.append((i, name, retired, split_tokens(name), split_tokens_all(name)))
+
+    texts = list(load_chapters().values())
+
+    def hits(term: str) -> int:
+        return sum(1 for L in texts for l in L if term in l)
+
+    zero, partial = [], []
+    for i, name, retired, toks, alltoks in rows:
+        if retired or name in A1_EXEMPT:
+            continue
+        hs = [(t, hits(t)) for t in toks]
+        if hs and all(h == 0 for _, h in hs):
+            zero.append((i, name, toks))
+        elif "／" in name:
+            z = [t for t in alltoks if hits(t) == 0]
+            if z:
+                partial.append((i, name, z))
+    exempt = [t for t in sorted(A1_EXEMPT | A3_EXEMPT) if hits(t) == 0]
+    return {"active": sum(1 for r in rows if not r[2]), "zero": zero,
+            "partial": partial, "exempt": exempt}
 
 
 def load_ledger() -> list[tuple[int, str, bool, list[str], str]]:
@@ -206,6 +260,8 @@ def selftest() -> None:
     assert bool(SKIP_MARK.search("| 墙 | 建筑 |")) is False
     assert any(k in "## 动手：六站，前五站跑通最小骨架" for k in TITLE_KEEP)
     assert "餐馆追责" in A1_EXEMPT
+    assert bool(RETIRE_STATUS.search("—（撤除）"))
+    assert split_tokens_all("图书馆（索引卡／小标签／书架）") == ["图书馆", "索引卡", "小标签", "书架"]
     print("metaphor_scan selftest OK")
 
 
@@ -216,7 +272,18 @@ def main() -> int:
         return 0
     rows = load_ledger()
     corpus = load_chapters()
+    a = audit_ledger()
     print(f"metaphor_scan：台账数据行 {len(rows)} ／ 章节文件 {len(corpus)}")
+    print(f"\n[A0] 台账审计：活跃 {a['active']}／零命中 {len(a['zero'])}"
+          f"／部分零命中 {len(a['partial'])}／豁免零命中 {len(a['exempt'])}")
+    for i, name, toks in a["zero"][:20]:
+        print(f"  [零命中] L{i} {name}（词：{'/'.join(toks[:4])}）")
+    if "--audit" in args:
+        for i, name, z in a["partial"][:30]:
+            print(f"  [部分零命中] L{i} {name}（零词：{'/'.join(z[:4])}）")
+        if a["exempt"]:
+            print(f"  [豁免零命中] {'、'.join(a['exempt'])}")
+        return 0
     z = scan_zero(rows, corpus)
     print(f"\n[A1] 零命中行（候退役）{len(z)}（已判豁免 {len(A1_EXEMPT)} 条）：")
     for i, name, toks in z[:20]:
@@ -241,7 +308,7 @@ def main() -> int:
     print(f"\n[D] 装置密度 top12（命中在册装置词的行数）：")
     for fk, n in de[:12]:
         print(f"  {fk}: {n}")
-    warn = len(z) + len(d) + len(dr) + len(ti) + len(ca)
+    warn = len(a["zero"]) + len(d) + len(dr) + len(ti) + len(ca)
     print(f"\n合计候选 {warn}（只定位；判读按复议报告 §四 治理五件套）")
     if "--strict" in args and warn:
         return 1

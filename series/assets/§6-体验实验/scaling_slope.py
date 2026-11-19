@@ -9,7 +9,7 @@ rng = np.random.default_rng(0)            # 固定种子：任何人重跑，数
 
 K = 100                                   # 目标含 100 个频率成分（相对 n≤12 等效"无穷谱"）
 ks = np.arange(1, K + 1, dtype=float)     # 频率编号 1..100
-AMP = ks ** -2.0                          # 振幅谱 ∝ k^-2（scaling 的"构造旋钮"）
+AMP = ks ** -2.0                          # 振幅谱 ∝ k^-2（scaling 的"构造参数"）
 PHI = rng.uniform(0, 2 * np.pi, K)        # 每个频率的随机相位（任务本体）
 
 def target(x):
