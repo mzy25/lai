@@ -10,7 +10,7 @@
     python3 series/tools/ending_check.py <章.md>…   # 只查指定章
     python3 series/tools/ending_check.py --selftest # 夹具自检
 
-§0.3 是查阅页：不写末节、不出题，NO_ENDING 中豁免。
+§0.2 是查阅页：不写末节、不出题，NO_ENDING 中豁免。
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ HINT = re.compile(
 TYPE_LABEL = re.compile(r"（知识点）|（逻辑链迁移）")
 SHORT_NEXT = re.compile(r"下一章，[^。]{1,8}。")
 LONG_CHAPTERS = {"§9", "§14", "§21"}
-NO_ENDING = {"§0.3"}  # 查阅页：不写回望，也不出题
+NO_ENDING = {"§0.2"}  # 查阅页：不写回望，也不出题
 PROSE_LIMIT = 320
 PROSE_LIMIT_LONG = 340
 ITEM_LIMIT = 60

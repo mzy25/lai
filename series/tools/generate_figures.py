@@ -300,32 +300,38 @@ def fig_15_1_pomdp():
 
 @figure("16-1", "fig_16_1_harness.png")
 def fig_16_1_harness():
-    fig, ax = plt.subplots(figsize=(10.2, 5.6))
-    ax.set_xlim(0, 10); ax.set_ylim(0, 10); ax.axis("off")
-    ax.text(4.6, 9.6, "Harness 六层：模型的外围，每层一个工程动作", ha="center",
-            fontsize=11, fontweight="bold", color=INK)
-    layers = [
-        ("L1 推理", "接任何 OpenAI 兼容端点"),
-        ("L2 协议与工具", "注册一个带 schema 的工具"),
-        ("L3 记忆与知识", "把会话事件日志写进上下文"),
-        ("L4 编排", "决定何时重试、何时中断"),
-        ("L5 评估与可观测", "让每一步可回放、可打分"),
-        ("L6 护栏与安全", "给一个动作过一道安全的门"),
-    ]
-    for i, (name, act) in enumerate(layers):
-        y = 0.9 + i * 1.32
-        fc = BLUE["xl"] if i % 2 == 0 else BLUE["l"]
-        _box(ax, 0.7, y, 3.4, 1.05, name, fc, BLUE["d"], fs=9.5)
-        if i >= 4:
-            ax.add_patch(FancyBboxPatch((0.64, y - 0.06), 3.52, 1.17,
-                         boxstyle="round,pad=0.02,rounding_size=0.06",
-                         fc="none", ec=ROLE_WARNING, lw=1.5, ls=(0, (4, 2))))
-        ax.text(4.35, y + 0.52, act, fontsize=8.5, color=INK, va="center")
-    ax.plot([0.5, 0.5], [0.9, 8.4], color=GRAY["m"], lw=1.4)
-    ax.text(0.22, 4.6, "模型外", rotation=90, ha="center", va="center",
-            fontsize=8.5, color=GRAY["d"])
-    ax.text(0.7, 0.15, "六层全在模型外面；橙色虚线 L5／L6 是常见缺口。"
-            "权重里只装了推理与工具用法。", fontsize=8.5, color=GRAY["d"])
+    fig, ax = plt.subplots(figsize=(11.4, 6.2))
+    ax.set_xlim(0, 12.6); ax.set_ylim(0, 10); ax.axis("off")
+    ax.text(6.3, 9.55, "Agent 的最小形状：一个循环，六件事（分工，不是层级）",
+            ha="center", fontsize=11, fontweight="bold", color=INK)
+    # 横切带：评估与观测、护栏与权限
+    _box(ax, 0.6, 7.95, 11.4, 0.95,
+         "评估与观测：判断这一步、这一轮做对没有——横切每一步",
+         GREEN["l"], GREEN["d"], fs=9)
+    _box(ax, 0.6, 0.45, 11.4, 0.95,
+         "护栏与权限：决定动作能不能生效——横切每一步",
+         RED["l"], RED["d"], fs=9)
+    # 编排：包住整个循环的虚线框
+    ax.add_patch(FancyBboxPatch((1.5, 2.3), 10.4, 4.8,
+                 boxstyle="round,pad=0.05,rounding_size=0.12",
+                 fc="none", ec=ROLE_PURPLE, lw=1.5, ls="--"))
+    ax.text(6.7, 6.72, "编排：循环怎么走、何时停、何时升级给人",
+            ha="center", fontsize=9.5, color=ROLE_PURPLE)
+    # 循环三盒：上下文与记忆 → 模型调用 → 工具与协议
+    _box(ax, 2.0, 4.75, 2.7, 1.5, "上下文与记忆\n决定模型看到什么",
+         BLUE["l"], BLUE["d"], fs=9)
+    _box(ax, 5.55, 4.75, 2.7, 1.5, "模型调用\n读上下文，选动作",
+         BLUE["xl"], BLUE["d"], fs=9)
+    _box(ax, 9.1, 4.75, 2.7, 1.5, "工具与协议\n执行动作，接外部世界",
+         BLUE["l"], BLUE["d"], fs=9)
+    _arr(ax, (4.7, 5.5), (5.55, 5.5), color=GRAY["d"])
+    _arr(ax, (8.25, 5.5), (9.1, 5.5), color=GRAY["d"])
+    # 观测回写：工具结果沿底线写回上下文
+    _arr(ax, (10.45, 4.75), (10.45, 3.6), color=GRAY["m"], style="-")
+    _arr(ax, (10.45, 3.6), (3.35, 3.6), color=GRAY["m"], style="-")
+    _arr(ax, (3.35, 3.6), (3.35, 4.75), color=GRAY["m"])
+    ax.text(6.9, 3.15, "观测写回上下文（下一轮从这里开始）",
+            ha="center", fontsize=8.5, color=GRAY["d"])
     return save_fig(fig, "fig_16_1_harness.png")
 
 
@@ -333,16 +339,16 @@ def fig_16_1_harness():
 def fig_16_2_agent_loop():
     fig, ax = plt.subplots(figsize=(11.0, 4.8))
     ax.set_xlim(0, 11); ax.set_ylim(0, 10); ax.axis("off")
-    # L4 编排虚线框
+    # 编排虚线框
     ax.add_patch(FancyBboxPatch((0.6, 3.3), 9.8, 5.4,
                  boxstyle="round,pad=0.05,rounding_size=0.12",
                  fc="none", ec=ROLE_PURPLE, lw=1.5, ls="--"))
-    ax.text(5.5, 9.1, "L4 编排：何时调用模型／重试／中断／升级给人",
+    ax.text(5.5, 9.1, "编排：何时调用模型／重试／中断／升级给人",
             ha="center", fontsize=9.5, color=ROLE_PURPLE)
     boxes = [("$o_t$\n观测", 1.1), ("$b_t$\n信念", 3.6), ("$a_t$\n动作", 6.1), ("$o_{t+1}$\n新观测", 8.6)]
     for txt, x in boxes:
         _box(ax, x, 5.4, 1.7, 1.5, txt, BLUE["l"], BLUE["d"], fs=9.5)
-    for x, lab in [(3.25, "L3 记忆"), (5.75, "L1 推理"), (8.25, "L2 工具")]:
+    for x, lab in [(3.25, "上下文与记忆"), (5.75, "模型调用"), (8.25, "工具")]:
         _arr(ax, (x - 0.5, 6.15), (x + 0.4, 6.15), color=GRAY["d"])
         ax.text(x, 7.2, lab, ha="center", fontsize=8, color=GRAY["d"])
     _arr(ax, (9.45, 5.4), (9.45, 3.95), color=GRAY["m"], style="-")

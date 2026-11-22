@@ -168,8 +168,8 @@ SD.chapters.forEach(c => {
     sections.push(sec);
   });
 });
-const selfcheckSec = sections.find(s => s.getAttribute('data-anchor') === 'ch17-s10');
-if (!selfcheckSec) throw new Error('stub missing ch17-s10');
+const selfcheckSec = sections.find(s => s.getAttribute('data-anchor') === 'ch17-s08');
+if (!selfcheckSec) throw new Error('stub missing ch17-s08');
 const selfcheck = register('selfcheck', mkEl('p'));
 selfcheckSec.appendChild(selfcheck);
 const exitInputs = SD.routes.map(r => {
@@ -310,7 +310,7 @@ if (progText.value.indexOf('series-focus-v1') < 0) fail('export missing focus ke
 global.localStorage.setItem('series-progress-v1', JSON.stringify(['ch13', 'ch01']));
 global.localStorage.setItem('series-route-v1', 'agent-fast');
 T.applyRoute('agent-fast');
-if (byId['ringMainN'].textContent !== '1/20') fail('ring numerator: ' + byId['ringMainN'].textContent);
+if (byId['ringMainN'].textContent !== '1/21') fail('ring numerator: ' + byId['ringMainN'].textContent);
 progText.value = JSON.stringify({ v: 1, 'series-projects-v1': '["p2"]' });
 progImport.dispatch('click');
 if (global.localStorage.getItem('series-projects-v1') !== '["p2"]') fail('import did not write');
@@ -334,9 +334,9 @@ if (offrouteNote.textContent.indexOf('页不在路线上') < 0) fail('offrouteNo
 focusHide.checked = false; focusHide.dispatch('change');
 if (global.document.body._cls.has('focus-hide')) fail('focus-hide not cleared');
 if ((global.localStorage.getItem('series-focus-v1') || '').indexOf('0') < 0) fail('focus pref not saved');
-global.localStorage.setItem('series-progress-v1', JSON.stringify(['s0a', 's0b', 's0c']));
-if (T.firstStation('taste') !== 'ch14.html#ch14-s05') fail('firstStation taste: ' + T.firstStation('taste'));
-global.localStorage.setItem('series-progress-v1', JSON.stringify(['s0a', 's0b', 's0c', 'ch01']));
+global.localStorage.setItem('series-progress-v1', JSON.stringify(['s0a', 's0c', 's0d', 's0e']));
+if (T.firstStation('taste') !== 'ch14.html#ch14-s04') fail('firstStation taste: ' + T.firstStation('taste'));
+global.localStorage.setItem('series-progress-v1', JSON.stringify(['s0a', 's0c', 's0d', 's0e', 'ch01']));
 if (T.firstStation('agent-fast') !== 'ch02.html') fail('firstStation agent-fast: ' + T.firstStation('agent-fast'));
 // §0/支线章标签不得重复前缀（读者反馈：'§0.2 §0.2 …'）
 banner.setAttribute('data-slug', 's0a');

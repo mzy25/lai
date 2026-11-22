@@ -7,6 +7,8 @@
   B “后文简称 X”之后是否真的再次使用 X
   C 高风险表达式（已知的坏搭配）是否重现
   D “§N 那套 X”这类回指，X 是否还能在 §N 找到（启发式，WARN）
+  E 段内前向指针预算：线性读物里指向后章的 §N 引用会打断读者（2026-11-19 立；
+    §0.1 全书地图与 §0.2 查阅页豁免；章末回望、表格、details 不计）
 
 用法：
   python3 series/tools/reference_lint.py
@@ -131,6 +133,86 @@ def check_bad_patterns(files: list[Path]) -> tuple[int, int]:
     return errors, warnings
 
 
+FORWARD_BUDGET = 2
+FORWARD_EXEMPT = {"§0.1", "§0.2"}
+
+# 快照词：出现在主线机制句里即 WARN（白名单：同一 <details>、表格、引注括号内豁免）
+SNAPSHOT_WORDS = ["U-Net", "DiT", "MM-DiT", "adaLN", "Sora", "AlphaEdit", "WilKE"]
+SNAPSHOT_SEAL = re.compile(r"截至|快照|早期|202[456] 年|（\d{4} 年")
+
+
+def check_snapshot_position(files: list[Path]) -> tuple[int, int]:
+    """快照词出现在未封条的机制句里 → WARN。"""
+    errors = warnings = 0
+    for path in files:
+        lab = label_of(path)
+        if lab in FORWARD_EXEMPT:
+            continue
+        text = path.read_text(encoding="utf-8")
+        # 只扫正文（去 details），不去回望（回收地图里的快照词合法）
+        head = text.split("\n## 回望")[0]
+        head = re.sub(r"<details.*?</details>", "", head, flags=re.S)
+        # 去表格行
+        head = re.sub(r"^\|.*$", "", head, flags=re.M)
+        # 去图注行
+        head = re.sub(r"^〔图.*$", "", head, flags=re.M)
+        for lineno, line in enumerate(head.splitlines(), 1):
+            for w in SNAPSHOT_WORDS:
+                if w not in line:
+                    continue
+                if SNAPSHOT_SEAL.search(line):
+                    continue
+                # 同段（±2 行）有封条就放过
+                lines = head.splitlines()
+                ctx = "\n".join(lines[max(0, lineno - 10):lineno + 10])
+                if SNAPSHOT_SEAL.search(ctx):
+                    continue
+                print(
+                    f"WARN {path.name}:{lineno}: 快照词『{w}』出现在机制句里，"
+                    f"且无日期封条；改法：角色名承担机制，快照词降为括号例证并补封条"
+                )
+                warnings += 1
+    return errors, warnings
+
+
+def _label_num(label: str) -> float:
+    return float(label[1:])
+
+
+def forward_refs(text: str, labels: list[str], own: str) -> list[str]:
+    """正文段内指向后章的 §N 引用（不计回望、表格、details）。"""
+    head = text.split("\n## 回望")[0]
+    head = re.sub(r"<details.*?</details>", "", head, flags=re.S)
+    head = re.sub(r"^\|.*$", "", head, flags=re.M)
+    head = re.sub(r"^〔图.*$", "", head, flags=re.M)
+    out = []
+    for m in re.finditer(r"§(\d+(?:\.\d+)?)", head):
+        lab = "§" + m.group(1)
+        if lab in labels and _label_num(lab) > _label_num(own):
+            out.append(lab)
+    return out
+
+
+def check_forward_budget(files: list[Path]) -> tuple[int, int]:
+    labels = sorted(
+        {label_of(p) for p in files if re.match(r"^§\d", label_of(p))},
+        key=_label_num,
+    )
+    errors = 0
+    for path in files:
+        lab = label_of(path)
+        if lab not in labels or lab in FORWARD_EXEMPT:
+            continue
+        refs = forward_refs(path.read_text(encoding="utf-8"), labels, lab)
+        if len(refs) > FORWARD_BUDGET:
+            print(
+                f"ERROR {path.name}: 段内前向指针 {len(refs)} 处 > 预算 {FORWARD_BUDGET}"
+                f"（{','.join(refs)}）；改法见系列写作规范·互引纪律"
+            )
+            errors += 1
+    return errors, 0
+
+
 def check_cross_refs(files: list[Path]) -> tuple[int, int]:
     errors = warnings = 0
     texts = {label_of(p): p.read_text(encoding="utf-8") for p in files}
@@ -162,6 +244,10 @@ def selftest() -> int:
     assert CROSS_RE.search("还是 §6 那套三件套，等比缩小").groups() == ("6", "三件套")
     assert in_scope("§6", "§6,§7")
     assert not in_scope("§8", "§6,§7")
+    labels = [f"§{i}" for i in range(1, 4)] + ["§0.1", "§9"]
+    assert forward_refs("这里见 §9 的专页。", labels, "§1") == ["§9"]
+    assert forward_refs("§1 已经立过。", labels, "§9") == []
+    assert forward_refs("§9 先记。\n\n## 回望与下一章\n\n§3 见。", labels, "§1") == ["§9"]
     print("reference_lint selftest OK")
     return 0
 
@@ -176,7 +262,7 @@ def main() -> int:
 
     files = chapter_files()
     errors = warnings = 0
-    for check in (check_migrations, check_definition_promises, check_bad_patterns, check_cross_refs):
+    for check in (check_migrations, check_definition_promises, check_bad_patterns, check_cross_refs, check_forward_budget, check_snapshot_position):
         e, w = check(files)
         errors += e
         warnings += w

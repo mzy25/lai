@@ -33,7 +33,7 @@ CHAP_CN_REF = re.compile(r"第\s?(\d{1,2})\s?章")
 FENCE = re.compile(r"```.*?```", re.S)
 INLINE = re.compile(r"`[^`]*`")
 
-S0_MAP = {"0.1": "s0a", "0.2": "s0b", "0.3": "s0c"}
+S0_MAP = {"0.1": "s0a", "0.2": "s0c", "0.3": "s0d", "0.4": "s0e"}  # 2026-11-20 重编号：旧 §0.2 并入 §0.1；slug 冻结，s0b 退役
 
 
 def strip_noise(text: str) -> str:

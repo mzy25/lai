@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -74,11 +75,23 @@ def _filter_terms(rows: list[dict], prior: list[dict]) -> list[dict]:
     return [row for row in rows if row.get("首现章") in labels]
 
 
+def _strip_answers(text: str) -> str:
+    """剥离章末答案块（<details><summary>…答案…</summary>…</details>）。
+
+    冷读必须盲读；误读/延伸/选读等 details 是正文内容，保留。
+    """
+    pat = re.compile(
+        r"<details[^>]*>\s*<summary>[^<]*答案[^<]*</summary>.*?</details>",
+        re.S,
+    )
+    return pat.sub("", text)
+
+
 def _build(chapter: dict, terms: list[dict], include_side: bool) -> str:
     path = SERIES / chapter["file"]
     if not path.is_file():
         raise SystemExit(f"章文件不存在：{path}")
-    text = path.read_text(encoding="utf-8")
+    text = _strip_answers(path.read_text(encoding="utf-8"))
     scope = "主线与支线" if include_side else "主线"
     lines = [
         f"# 冷读包：{chapter['label']}",

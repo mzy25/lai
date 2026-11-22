@@ -144,7 +144,7 @@ _HR_RE = re.compile(r"^\s*(?:(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,})\s*$")
 _SUMMARY_RE = re.compile(r"^(\s*<summary>)(.*?)(</summary>\s*)$")
 _ID_TAIL = re.compile(r"\s*\{#[^}]*\}\s*$")
 
-_REF_RE = re.compile(r"§(0\.[123]|\d{1,2})(?![\d.．])")
+_REF_RE = re.compile(r"§(0\.[1-9]|\d{1,2})(?![\d.．])")
 _ASSET_DIR_S = r"(?:§\d+[a-z]?-体验实验|T\d-体验实验)"
 _ASSET_RE = re.compile(
     r"(?:series/)?assets/" + _ASSET_DIR_S + r"(?:/[^\s`<>（）()「」『』“”\"'。，、；：！？]*)?"
@@ -175,7 +175,8 @@ def norm_structure(text: str) -> str:
 
 def badge_html(ms: list[str]) -> str:
     return " ".join(
-        f'<span class="mk mk-{c}" title="{MARK_META[c]}">{c}</span>' for c in ms)
+        f'<span class="mk mk-{c}" data-marker="{c}" role="button" tabindex="0"'
+        f' title="{MARK_META[c]}（点按看全部标记）">{c}</span>' for c in ms)
 
 
 def reading_metrics(md: str) -> tuple[int, int]:
@@ -193,6 +194,15 @@ def reading_stats(md: str) -> str:
     n, mins = reading_metrics(md)
     amount = f"{n / 10000:.1f} 万字" if n >= 10000 else f"{n} 字"
     return f"{amount} · 约 {mins} 分钟"
+
+
+def add_section_mins(html: str, sec_mins: dict[str, int]) -> str:
+    """章页 h2 前缀注入「≈N′」小标；分钟取 section_mins_map（与章头同口径）。"""
+    def repl(m: re.Match) -> str:
+        n = sec_mins.get(m.group(1), 0)
+        return (m.group(0) + f'<span class="sec-mins" title="本节约 {n} 分钟">≈{n}′</span>'
+                if n else m.group(0))
+    return re.sub(r'<h2 id="([^"]+)"[^>]*>', repl, html)
 
 
 def section_mins_map(md: str, sections: list[dict]) -> dict[str, int]:
@@ -265,7 +275,7 @@ def route_view(route: dict, chapters: list[dict]) -> dict:
 
 
 def free_view(chapters: list[dict]) -> dict:
-    """自由读（默认态）：全 30 个单元全亮、无节级降灰、折叠默认收起。"""
+    """自由读（默认态）：全 32 个单元全亮、无节级降灰、折叠默认收起。"""
     return {"disp": {c["slug"]: "read" for c in chapters},
             "dim_sections": {},
             "counts": {"main": sum(1 for c in chapters
@@ -391,7 +401,8 @@ def route_load(r: dict, chapters: list[dict]) -> tuple[float, float, float, str]
 def route_time_text(r: dict, chapters: list[dict], *, short: bool = False) -> str:
     """路线卡与路线页的时长说明。"""
     if r["id"] == "taste":
-        return "约 0.5–0.8h（一次半天）"
+        fast, _, _, _ = route_load(r, chapters)
+        return f"约 {fast:.1f}h（一次半天）"
     fast, study, total, weeks = route_load(r, chapters)
     p = r["hours"]["practice"]
     j = r["hours"]["project"]
@@ -410,7 +421,8 @@ def route_time_text(r: dict, chapters: list[dict], *, short: bool = False) -> st
 def route_time_total_text(r: dict, chapters: list[dict]) -> str:
     """对照表用的短时数：只报总计与周数，细节留给路线节。"""
     if r["id"] == "taste":
-        return "约 0.5–0.8h（一次半天）"
+        fast, _, _, _ = route_load(r, chapters)
+        return f"约 {fast:.1f}h（一次半天）"
     _, _, total, weeks = route_load(r, chapters)
     return f'总计≈{total:.1f}h · {weeks}'
 
@@ -418,7 +430,8 @@ def route_time_total_text(r: dict, chapters: list[dict]) -> str:
 def route_time_compact_text(r: dict, chapters: list[dict]) -> str:
     """首页矩阵摘要用：只给一个主数字，周数留在展开详情。"""
     if r["id"] == "taste":
-        return "0.5–0.8h"
+        fast, _, _, _ = route_load(r, chapters)
+        return f"{fast:.1f}h"
     _, _, total, _ = route_load(r, chapters)
     return f"{total:.0f}h"
 
@@ -444,7 +457,7 @@ def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
                     start_href: str, start_label: str, more_href: str,
                     goal: str = "", positioning: str = "", abilities: str = "",
                     summary: str = "", variant: str = "full") -> str:
-    """首页路线卡：摘要只放选择所需信息，完整字段收在 details 内。"""
+    """首页路线卡：摘要即全部选择信息；卡体只留一行动作，完整字段见 routes.html。"""
     tag_html = (f'<span class="rc-tag">{H.escape(tag)}</span>'
                 if tag and tag not in title else '')
     if variant == "option":
@@ -472,12 +485,7 @@ def route_card_html(*, rid: str, title: str, tag: str, audience: str, plan: str,
         f' data-variant="{H.escape(variant)}" id="route-card-{H.escape(rid)}"'
         f' aria-label="{H.escape(title, quote=True)}">'
         f'<summary class="route-card-summary">{summary_html}</summary>'
-        '<div class="route-card-body">'
-        + (f'<p><b>目标：</b>{H.escape(goal)}</p>' if goal else '')
-        + f'<p><b>适合：</b>{H.escape(audience)}</p>'
-        f'<p><b>覆盖：</b>{H.escape(plan)}</p>'
-        f'<p><b>出口：</b>{H.escape(exit_text)}</p>'
-        f'<p class="rc-hours"><b>投入：</b>{H.escape(hours_full)}</p>'
+        '<div class="route-card-body rc-slim">'
         '<div class="rc-actions">'
         f'<a class="rc-start" href="{H.escape(start_href)}">{H.escape(start_label)}</a>'
         f'<a class="rc-more" href="{H.escape(more_href)}">完整说明 →</a>'
@@ -489,8 +497,11 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
                 free: dict, views_by_route: dict) -> str:
     """Hub＝选方向＋路线卡＋试读/自由读＋路线图＋我的＋参考。默认＝自由读。"""
     out: list[str] = []
+    n_main = sum(1 for c in chapters if c.get("part") != "branch")
+    n_branch = len(chapters) - n_main
     out.append('<div class="hero"><h1>AI 系列读物 · 阅读版</h1>'
-               '<p class="doc-meta">30 个阅读单元：主线 24＋支线 6。先选一个方向；也可以直接自由读。</p></div>')
+               f'<p class="doc-meta">{len(chapters)} 个阅读单元：主线 {n_main}＋支线 {n_branch}。'
+               '先选一个方向；也可以直接自由读。</p></div>')
     out.append('<div class="resume" id="resumeBlock" hidden>'
                '<a class="resume-link" id="resumeLink" href="#"></a>'
                '<ul class="recent" id="recentList"></ul></div>')
@@ -500,9 +511,8 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     out.append('<section class="hub-sec" id="hub-start"><h2 class="hub-h">选一个方向</h2>')
     out.append('<div class="route-cards" id="routeCards">')
     route_by_id = {r["id"]: r for r in routes["routes"]}
-    out.append('<p class="route-pick-note">每个方向两条：一条先拿结果，一条走得更全；'
-               '补页随查，不计入时数。'
-               '<a href="routes.html#compare">看九种走法对比</a>。</p>')
+    out.append('<p class="route-pick-note">每个方向两条：先拿结果 / 走得更全——'
+               '<a href="routes.html#compare">九种走法对比</a>。</p>')
 
     def route_card_for(r: dict) -> str:
         hrs_short = route_time_compact_text(r, chapters)
@@ -552,14 +562,14 @@ def hub_content(chapters: list[dict], parts: list[dict], routes: dict,
     out.append(route_card_html(
         rid="free", title="自由读", tag="",
         audience="不选路线，按顺序或按兴趣翻",
-        plan="30 个单元全亮（含补页参考）",
+        plan=f"{len(chapters)} 个单元全亮（含补页参考）",
         exit_text="无（自由读没有出口承诺，走到哪算哪）",
         hours_short=f'{free_study:.0f}h',
         hours_full=f'读 速读≈{free_fast:.1f}h / 学习≈{free_study:.1f}h（全书）· 折叠块默认收起',
         start_href="s0a.html", start_label="从 §0.1 开始 →",
         more_href="routes.html#route-free",
         positioning="默认",
-        abilities="30 个单元全亮", variant="bar"))
+        abilities=f"{len(chapters)} 个单元全亮", variant="bar"))
     out.append('</div>')
 
     # ---- 两个问题 → 推荐路线（放在选择卡片之后）
@@ -713,7 +723,9 @@ def _slug_of_label(lab: str, chapters: list[dict]) -> str | None:
     if lab.startswith("§"):
         num = lab[1:].strip()
         if num.startswith("0."):
-            return {"0.1": "s0a", "0.2": "s0b", "0.3": "s0c"}.get(num)
+            # slug 与编号自 2026-11-20 起错位一位（旧 §0.2 并入 §0.1、后续前移；
+            # s0b 退役）。slug 冻结不动以保 URL/书签稳定。
+            return {"0.1": "s0a", "0.2": "s0c", "0.3": "s0d", "0.4": "s0e"}.get(num)
         if num.isdigit():
             return f"ch{int(num):02d}"
         return None
@@ -869,7 +881,7 @@ def routes_content(routes_cfg: dict, chapters: list[dict], views_by_route: dict)
            '实际耗时可能上浮。周数按每周 5–10 小时折算。支线补页是参考页，不计入路线时数。</p></div>']
     out.append('<section class="route-full" id="route-free">'
                '<h2>自由读 <span class="rc-tag">默认</span></h2>'
-               '<p class="doc-meta">不选路线：30 个阅读单元全亮（含补页参考），按顺序或按兴趣翻；'
+               '<p class="doc-meta">不选路线：32 个阅读单元全亮（含补页参考），按顺序或按兴趣翻；'
                '没有出口承诺，走到哪算哪。下面按目标列出九种走法，每种都带出口与审计，随时可切。</p></section>')
 
     # ---- 一张表：先比覆盖与时间，再往下看细节
@@ -1047,7 +1059,7 @@ def linkify_refs(html: str, current: str, ref_map: dict[str, str]) -> tuple[str,
             out.append(p)
             continue
         # 统计未链的节级引用（诚实报告，不打断；排除 §0.x 章级引用——它们会被链接化）
-        skipped_sections += len(re.findall(r"§0\.\d\.\d|§(?!0\.[123]\b)\d{1,2}\.\d", p))
+        skipped_sections += len(re.findall(r"§0\.\d\.\d|§(?!0\.[1-9]\b)\d{1,2}\.\d", p))
 
         def repl(m: re.Match) -> str:
             num = m.group(1)
@@ -1334,7 +1346,7 @@ def nav_prevnext(prev: dict | None, nxt: dict | None, special: str = "") -> str:
              f'{H.escape(short_title(nxt["title"], 16))} →</a>') if nxt else "<span></span>"
     box = f'<nav class="prevnext">{left}{right}</nav>'
     if special:
-        box = f'<div class="asset-card">{special}</div>\n' + box
+        box = special + "\n" + box
     return box
 
 
@@ -1360,9 +1372,9 @@ def asset_card(slug: str) -> str:
 
 
 BRANCH_DOOR = (
-    '<div class="asset-card"><b>支线入口：</b>想走生成方向的话，从这里进支线'
-    '（<a href="intro.html">导言</a> → T1–T4；公式与变体在<a href="recipe.html">补页</a>），'
-    '否则 <a href="ch10.html">直接过 §10</a>。</div>'
+    '<div class="asset-card"><b>支线入口：</b>扩散专题（<a href="intro.html">导言</a> → T1–T4；'
+    '公式与变体在<a href="recipe.html">补页</a>）排在卷末；想现在深挖生成方向的，也可从这里进。'
+    '主线继续：<a href="ch10.html">§10</a>。</div>'
 )
 
 
@@ -1498,14 +1510,19 @@ def _run_build(args) -> int:
         if slug in main_flow:
             i = main_flow.index(slug)
             prev = by_slug[main_flow[i - 1]] if i > 0 else None
-            nxt = by_slug[main_flow[i + 1]] if i + 1 < len(main_flow) else None
+            # 卷末专题：主线最后一章（§21 收束）之后接支线导言（可选）
+            nxt = (by_slug[main_flow[i + 1]] if i + 1 < len(main_flow)
+                   else by_slug["intro"])
             if slug == "ch09":
                 special = BRANCH_DOOR
             return prev, nxt, special
         i = branch_flow.index(slug)
-        prev_slug = branch_flow[i - 1] if i > 0 else "ch09"
-        nxt_slug = branch_flow[i + 1] if i + 1 < len(branch_flow) else "ch10"
-        return by_slug[prev_slug], by_slug[nxt_slug], ""
+        # 支线已归位卷末：导言的上一页＝§21；补页之后无下一页
+        prev_slug = branch_flow[i - 1] if i > 0 else "ch21"
+        nxt_slug = branch_flow[i + 1] if i + 1 < len(branch_flow) else None
+        prev = by_slug[prev_slug] if prev_slug else None
+        nxt = by_slug[nxt_slug] if nxt_slug else None
+        return prev, nxt, ""
 
     # ---- 渲染（pandoc）
     todo = [c for c in chapters if not args.only or c["slug"] in args.only]
@@ -1536,6 +1553,8 @@ def _run_build(args) -> int:
         html = wrap_sections(html)
         html = apply_section_dim(html, default_dim_sections)
         html = mark_selfcheck(html)
+        # 节分钟须在 mark_selfcheck 之后：自查锚的兜底正则要求 h2 精确形态
+        html = add_section_mins(html, ch["sec_mins"])
         part_answers = ""
         if args.only:
             # 单章预览不搬答案：篇末页可能没重建，搬走会留下死链或丢答案。

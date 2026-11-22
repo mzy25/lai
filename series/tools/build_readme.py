@@ -64,7 +64,7 @@ def render() -> str:
     out: list[str] = []
     out.append(f"# AI 系列读物 · v{version}")
     out.append("")
-    out.append("> 30 个阅读单元：开篇 3 节＋第一篇 9 章＋支线导言＋T1–T4＋补页＋第二篇 5 章＋第三篇 5 章＋终篇 2 章。")
+    out.append("> 32 个阅读单元：开篇 5 节＋第一篇 9 章＋支线导言＋T1–T4＋补页＋第二篇 5 章＋第三篇 5 章＋终篇 2 章。")
     out.append("")
     out.append("## 在线阅读")
     out.append("")
@@ -75,7 +75,7 @@ def render() -> str:
     out.append("- [数学自修自测](./dist/selftest.html)")
     out.append("- [资产索引](./dist/assets.html)")
     out.append("")
-    out.append("## 30 个单元")
+    out.append("## 32 个单元")
     out.append("")
     out.append("| 篇 | 号 | 章题 | 源稿 | 在线 |")
     out.append("| --- | --- | --- | --- | --- |")
