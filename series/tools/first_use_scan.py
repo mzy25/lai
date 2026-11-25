@@ -503,9 +503,9 @@ def selftest() -> int:
     r8 = analyze(ch7, None, ledger=led5, uid="§0.2")
     ok &= not r8["errors"] and r8["stats"]["pointer"] == 1
 
-    ok &= (chapter_key("§9") < chapter_key("支线导言")
-           < chapter_key("T1") < chapter_key("T4") < chapter_key("支线补页")
-           < chapter_key("§10"))
+    ok &= (chapter_key("§9") < chapter_key("§10")
+           and chapter_key("§21") < chapter_key("支线导言")
+           < chapter_key("T1") < chapter_key("T4") < chapter_key("支线补页"))
     ok &= chapter_key("§0.3") < chapter_key("§1")
     print("first_use_scan selftest:", "PASS" if ok else "FAIL")
     return 0 if ok else 1

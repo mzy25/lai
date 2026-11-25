@@ -171,6 +171,13 @@ def main() -> int:
     last = last_line(r)
     check("reference_lint --strict", r.returncode == 0, last)
 
+    # 答案“回看”指针必须是本章现有节题（只查指针，数字/术语候选仍走人工判读）。
+    for p in chapters:
+        key = p.name.split("-")[0] if "-" in p.name else p.stem
+        r = run([sys.executable, "tools/answer_mirror_check.py", str(p),
+                 "--pointers-only", "--strict"])
+        check(f"回看指针 {key}", r.returncode == 0, last_line(r))
+
     r = run([sys.executable, "tools/ending_check.py"])
     last = last_line(r)
     check("ending_check", r.returncode == 0, last)

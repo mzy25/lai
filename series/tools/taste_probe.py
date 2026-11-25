@@ -15,7 +15,7 @@
   E) 回声词计数（默认表＋--echo 追加；≥3 列出）
 
 v0.2 相对 .tmp/v2base 版：补 F/C/E 三节与 --selftest；代码块按原行数剥离，
-行号与源稿一致。判读口径见 `series/edit/行文质量研讨.2026-10-16.md`。
+行号与源稿一致。判读口径见《写作声音》与《首稿契约》。
 """
 from __future__ import annotations
 

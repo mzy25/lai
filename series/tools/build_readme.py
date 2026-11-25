@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""生成 series/README.md（GitHub 上的 30 单元阅读入口）。
+"""生成 series/README.md（GitHub 上的阅读入口）。
 
 结构单一来源：profiles/chapters.json + profiles/routes.json + profiles/release.json。
 章题单一来源：各单元 md 的 H1（display_title 去读法标记与号前缀），文件名只作路径。
@@ -17,6 +17,7 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from urllib.parse import quote
 
@@ -53,6 +54,28 @@ def root_issues(root_text: str, parts: list[dict], version: str) -> list[str]:
     return issues
 
 
+def unit_headline(chapters: dict) -> tuple[str, str]:
+    """按 chapters.json 的实际组成生成单元总数行与小节标题。
+
+    旧版把「32 个阅读单元：开篇 5 节」写死在 render 里，chapters.json 改成 31/4
+    后表体随数据走、头部不动，--check 仍全绿。这里改为同源计数，并断言总数与
+    分篇数对得上；支线固定为 导言＋T1–T4＋补页 六项。
+    """
+    rows = chapters["chapters"]
+    counts = Counter(c["part"] for c in rows)
+    total = len(rows)
+    if total != sum(counts.values()):
+        raise ValueError(f"单元总数 {total} ≠ 分篇计数之和 {sum(counts.values())}")
+    if counts.get("branch") != 6:
+        raise ValueError(f"支线单元数 {counts.get('branch')} ≠ 6（导言＋T1–T4＋补页）")
+    detail = (
+        f"开篇 {counts.get('zero', 0)} 节＋第一篇 {counts.get('build', 0)} 章＋"
+        f"支线导言＋T1–T4＋补页＋第二篇 {counts.get('law', 0)} 章＋"
+        f"第三篇 {counts.get('drive', 0)} 章＋终篇 {counts.get('frontier', 0)} 章"
+    )
+    return f"> {total} 个阅读单元：{detail}。", f"## {total} 个单元"
+
+
 def render() -> str:
     chapters = load("chapters.json")
     routes = load("routes.json")
@@ -60,11 +83,12 @@ def render() -> str:
     parts = {p["id"]: p["label"] for p in chapters["parts"]}
     version = release.get("version", "")
     date = release.get("date", "")
+    headline, section_title = unit_headline(chapters)
 
     out: list[str] = []
     out.append(f"# AI 系列读物 · v{version}")
     out.append("")
-    out.append("> 32 个阅读单元：开篇 5 节＋第一篇 9 章＋支线导言＋T1–T4＋补页＋第二篇 5 章＋第三篇 5 章＋终篇 2 章。")
+    out.append(headline)
     out.append("")
     out.append("## 在线阅读")
     out.append("")
@@ -75,7 +99,7 @@ def render() -> str:
     out.append("- [数学自修自测](./dist/selftest.html)")
     out.append("- [资产索引](./dist/assets.html)")
     out.append("")
-    out.append("## 32 个单元")
+    out.append(section_title)
     out.append("")
     out.append("| 篇 | 号 | 章题 | 源稿 | 在线 |")
     out.append("| --- | --- | --- | --- | --- |")
@@ -119,15 +143,33 @@ def render() -> str:
     return "\n".join(out)
 
 
+def _fake_chapters(counts: dict[str, int]) -> dict:
+    rows: list[dict] = []
+    for part, n in counts.items():
+        rows.extend({"part": part} for _ in range(n))
+    return {"chapters": rows}
+
+
 def selftest() -> int:
     parts = [{"label": "开篇 · 总览与读法"}, {"label": "支线 · 扩散专题"}]
     good = "开篇 总览与读法（3 节）\n支线 扩散专题（导言＋T1–T4）\nv0.3.6\n"
     bad = "开篇 总览与读法\nv0.3.6\n"
-    ok = (root_issues(good, parts, "0.3.6") == []
-          and root_issues(bad, parts, "0.3.6")
-          == ["根 README 缺组标签：支线 · 扩散专题"]
-          and root_issues("支线扩散专题", parts, "0.3.6")
-          == ["根 README 缺组标签：开篇 · 总览与读法", "根 README 缺版本号：v0.3.6"])
+    root_ok = (root_issues(good, parts, "0.3.6") == []
+               and root_issues(bad, parts, "0.3.6")
+               == ["根 README 缺组标签：支线 · 扩散专题"]
+               and root_issues("支线扩散专题", parts, "0.3.6")
+               == ["根 README 缺组标签：开篇 · 总览与读法", "根 README 缺版本号：v0.3.6"])
+    headline, title = unit_headline(_fake_chapters(
+        {"zero": 4, "build": 9, "law": 5, "drive": 5, "frontier": 2, "branch": 6}))
+    count_ok = (headline.startswith("> 31 个阅读单元：开篇 4 节")
+                and title == "## 31 个单元")
+    bad_ok = False
+    try:
+        unit_headline(_fake_chapters(
+            {"zero": 4, "build": 9, "law": 5, "drive": 5, "frontier": 2, "branch": 5}))
+    except ValueError:
+        bad_ok = True
+    ok = root_ok and count_ok and bad_ok
     print("build_readme selftest:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 

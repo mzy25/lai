@@ -137,8 +137,10 @@ FORWARD_BUDGET = 2
 FORWARD_EXEMPT = {"§0.1", "§0.2"}
 
 # 快照词：出现在主线机制句里即 WARN（白名单：同一 <details>、表格、引注括号内豁免）
-SNAPSHOT_WORDS = ["U-Net", "DiT", "MM-DiT", "adaLN", "Sora", "AlphaEdit", "WilKE"]
-SNAPSHOT_SEAL = re.compile(r"截至|快照|早期|202[456] 年|（\d{4} 年")
+SNAPSHOT_WORDS = ["U-Net", "DiT", "MM-DiT", "adaLN", "Sora", "AlphaEdit", "WilKE",
+                  "Qwen-Scope", "LatentMAS", "SkillDroid", "ARC-Bench", "TaarofBench",
+                  "IdeaScientist", "RoboJEPA", "EvoAgentBench"]
+SNAPSHOT_SEAL = re.compile(r"截至|快照|早期|202[456] 年|（\d{4} 年|（[^）]{0,60}20[2-6]\d[，,]")
 
 
 def check_snapshot_position(files: list[Path]) -> tuple[int, int]:

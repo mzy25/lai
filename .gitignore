@@ -34,3 +34,9 @@ series/tools/visual_pack.py
 
 # 系统
 .DS_Store
+
+# 本地私有工作区（不入公开仓库；与 .git/info/exclude 双保险）
+.opencode/
+internal/
+/AGENTS.md
+/opencode.json

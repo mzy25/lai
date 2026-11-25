@@ -57,7 +57,7 @@
 | `logic_lint.py` | 语病/条件/二分/约数候选（L0/L1/L2；只定位，不判罚）；`--include-absolute` 才列绝对化 | 测量 |
 | `consistency_scan.py` | 第N部/第N章/§N 指针、术语多释、数字台账 | 测量 |
 | `phase01.py` | Phase 0/1 一键体检：logic_lint + consistency_scan + 可选 series_check；`--recall` 出机器面全量候选，`--coverage N` 出覆盖抽样单；报告写 `series/.tmp/phase01/` | 手动 |
-| `answer_mirror_check.py` | 答案块数字/术语/引语回正文对账；数字比较归一化（3.20=3.2）；`--strict` 有候选退 1 | 测量 |
+| `answer_mirror_check.py` | 答案块数字/术语/引语回正文对账；数字比较归一化（3.20=3.2）；`--pointers-only` 只查「回看」指针是否指向现有节题（进 finish_round）；`--strict` 有候选退 1 | 测量 |
 | `ripple_check.py` | 按改动类型跑涟漪检查；标“本章/全系列”，全系列默认只提示 | 手动 |
 | `blind_pair.py` | 原文/改写随机 A/B 盲评表；`score` 读 votes/key 算胜率并可写 `review_log` | 手动 |
 | `review_log.py` | 审阅裁决日志与接受率汇总（默认 `series/edit/review_log.tsv`） | 手动 |
@@ -66,7 +66,7 @@
 | `residue_scan.py` | 修复批残留模式复扫（EXPECT0；可传章文件限定） | 门禁（收尾链） |
 | `metaphor_scan.py` | 喻体候选扫描；`--strict` 进收尾链 | 门禁（收尾链） |
 | `reference_lint.py` | 跨章回指、旧词残留与“后文简称”承诺检查；`--strict` 进收尾链 | 门禁（收尾链） |
-| `ending_check.py` | 末节「回望与下一章」体例：引导句／提示括号／部件标签／电报过渡／每题一问／题量／长度 | 门禁（收尾链＋CI） |
+| `ending_check.py` | 末节「回望与下一章」体例：引导句／提示括号／部件标签／电报过渡／每题一问／题量范围（常规 3–6，长章 10–12）／长度 | 门禁（收尾链＋CI） |
 | `cliche_scan.py` | 套话词表扫描（只定位，不判罚） | 测量 |
 | `taste_probe.py` | 品味层探针（S/F/C/Q/B/E 六节） | 测量 |
 | `symbol_coverage.py` | 符号台账对查；`--strict` 有 FAIL 退出 1 | 门禁（收尾链） |

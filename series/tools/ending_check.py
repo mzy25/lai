@@ -3,7 +3,7 @@
 """ending_check：末节「回望与下一章」体例门禁（2026-11-11 末节严审）。
 
 只管可计算项：引导句、提示括号、部件标签、电报式过渡、每题问号数、
-题量与回望长度。语义好坏仍归人工。
+题量范围（常规 3–6，长章 10–12）与回望长度。语义好坏仍归人工。
 
 用法:
     python3 series/tools/ending_check.py            # 全系列
@@ -92,9 +92,9 @@ def _scan(path: Path) -> list[str]:
             m = ITEM.match(line)
             if m:
                 items.append(m.group(1))
-    want = 10 if key in LONG_CHAPTERS else 3
-    if len(items) != want:
-        errors.append(f"题量 {len(items)} ≠ {want}")
+    lo, hi = (10, 12) if key in LONG_CHAPTERS else (3, 6)
+    if not (lo <= len(items) <= hi):
+        errors.append(f"题量 {len(items)} 不在 {lo}–{hi} 范围")
     for i, item in enumerate(items, 1):
         q = item.count("？")
         if q != 1:
@@ -119,6 +119,31 @@ def _selftest() -> int:
 2. 问二？
 3. 问三？
 """
+    ok4 = """# T
+
+## 回望与下一章
+
+一句平常话。
+
+1. 问一？
+2. 问二？
+3. 问三？
+4. 问四？
+"""
+    too = """# T
+
+## 回望与下一章
+
+一句平常话。
+
+1. 问一？
+2. 问二？
+3. 问三？
+4. 问四？
+5. 问五？
+6. 问六？
+7. 问七？
+"""
     bad = """# T
 
 ## 回望与下一章
@@ -134,15 +159,24 @@ def _selftest() -> int:
 """
     with tempfile.TemporaryDirectory() as td:
         okp = Path(td) / "ok.md"
+        ok4p = Path(td) / "ok4.md"
+        toop = Path(td) / "too.md"
         badp = Path(td) / "bad.md"
         okp.write_text(ok, encoding="utf-8")
+        ok4p.write_text(ok4, encoding="utf-8")
+        toop.write_text(too, encoding="utf-8")
         badp.write_text(bad, encoding="utf-8")
         e1 = _scan(okp)
+        e4 = _scan(ok4p)
+        et = _scan(toop)
         e2 = _scan(badp)
-        good = not e1 and len(e2) >= 4
+        good = (not e1 and not e4 and len(e2) >= 4
+                and any("题量 7 不在 3–6 范围" in x for x in et))
         print(f"ending_check selftest: {'PASS' if good else 'FAIL'}")
         if not good:
             print("  ok errors:", e1)
+            print("  ok4 errors:", e4)
+            print("  too errors:", et)
             print("  bad errors:", e2)
         return 0 if good else 1
 
