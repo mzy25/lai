@@ -34,8 +34,6 @@ jobs:
         run: python3 series/tools/selftest_tools.py
       - name: 表格结构
         run: python3 series/tools/table_check.py
-      - name: 路线断链
-        run: python3 series/tools/route_lint.py --check
       - name: 阅读入口 README 是否同步
         run: python3 series/tools/build_readme.py --check
       - name: 术语首现与总账
@@ -67,3 +65,5 @@ jobs:
         run: python3 series/tools/build_site.py
       - name: 站点结构/路线/资产门禁
         run: python3 series/tools/series_check.py
+      - name: 路线断链（依赖构建产物）
+        run: python3 series/tools/route_lint.py --check
