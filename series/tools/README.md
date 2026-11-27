@@ -15,7 +15,7 @@
 | 内容审计 | `series-audit` skill：`table_check` / `reference_lint --strict` / `ending_check` / `first_use_scan` / `metaphor_scan --strict` / `symbol_coverage --strict` / `residue_scan` / `row_check` | `series_check` |
 | Phase 0/1 体检 | `phase01.py --gates`：语病/条件候选＋第N部/§N 指针＋术语多释；报告写 `series/.tmp/phase01/` | 人工分诊；`--strict` 有 L0/指针错/术语多释退 1 |
 | 配图 | `series-figures` skill：`generate_figures.py` | `series_check` 配图 31/31 |
-| 构建/发布 | `build-pipeline` skill：`build_site.py` | `series_check` + `check_artifact_fresh` |
+| 构建/发布 | `build-pipeline` skill：`build_site.py` | `series_check`（CI 构建并部署） |
 | 规划/重排 | `series-planning` skill | `route_lint --check` + `build_readme --check` + anchors 漂移门 |
 
 **收尾契约**：`finish_round.py` 是批量硬门禁；`unit_closeout.py` 是单章证据，不替代
