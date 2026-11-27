@@ -14,12 +14,12 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        python3 -m pip install --quiet -r build/requirements-build.txt
+        python3 -m pip install --quiet --require-hashes -r build/requirements-build.txt
     - name: 版本断言（漂移即红）
       shell: bash
       run: |
         set -euo pipefail
-        want=$(sed -n 's/^markdown-it-py==//p' build/requirements-build.txt)
+        want=$(sed -n 's/^markdown-it-py==\([0-9.]*\).*/\1/p' build/requirements-build.txt)
         python3 - "$want" <<'PY'
         import sys
         import markdown_it

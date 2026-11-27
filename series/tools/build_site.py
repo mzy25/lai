@@ -141,7 +141,6 @@ _HEAD_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 _HR_RE = re.compile(r"^\s*(?:(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,})\s*$")
 _SUMMARY_RE = re.compile(r"^(\s*<summary>)(.*?)(</summary>\s*)$")
-_ID_TAIL = re.compile(r"\s*\{#[^}]*\}\s*$")
 
 _REF_RE = re.compile(r"§(0\.[1-9]|\d{1,2})(?![\d.．])")
 _ASSET_DIR_S = r"(?:§\d+[a-z]?-体验实验|T\d-体验实验)"
@@ -216,8 +215,6 @@ def section_mins_map(md: str, sections: list[dict]) -> dict[str, int]:
     out: dict[str, int] = {}
     for i, sec in enumerate(h2s, start=1):
         body = parts[i] if i < len(parts) else ""
-        # 标题 id 属元数据，不计入阅读字数（M1 起 id 由后处理赋，口径保持一致）
-        body = re.sub(r"\A([^\n]*?)\s*\{#[^}]*\}", r"\1", body, count=1)
         out[sec["anchor"]] = max(1, reading_metrics("## " + body)[1])
     return out
 
@@ -980,7 +977,7 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
             continue
         m = _HEAD_RE.match(ln)
         if m:
-            hashes, body = m.group(1), _ID_TAIL.sub("", m.group(2))
+            hashes, body = m.group(1), m.group(2)
             clean, ms = strip_marks(body)
             if len(hashes) == 1:
                 anchor = slug
@@ -1055,11 +1052,6 @@ def render_md(md: str) -> str:
     """md→HTML：唯一引擎 renderer_mdit（M3 起；pandoc 已退役）。"""
     import renderer_mdit
     return renderer_mdit.render(md)
-
-
-def prefix_cb(html: str, slug: str) -> str:
-    html = re.sub(r'id="(cb[0-9][^"]*)"', lambda m: f'id="{slug}-{m.group(1)}"', html)
-    return re.sub(r'href="#(cb[0-9][^"]*)"', lambda m: f'href="#{slug}-{m.group(1)}"', html)
 
 
 _SKIP_REF = re.compile(r"<(code|pre|a|style|script|h1)\b|</(code|pre|a|style|script|h1)>")
@@ -1569,7 +1561,6 @@ def _run_build(args) -> int:
         slug = ch["slug"]
         html = render_md(ch["md"])
         html = assign_heading_ids(html, ch["anchors"])
-        html = prefix_cb(html, slug)
         # 资产链接化必须先于 §N 引用链接化：否则 assets/§N-… 路径里的 §N 先被拆链、
         # 资产正则失配会导致笔记本链断裂。
         html, miss = linkify_assets(html)
