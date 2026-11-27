@@ -1545,7 +1545,7 @@ def _run_build(args) -> int:
         nxt = by_slug[nxt_slug] if nxt_slug else None
         return prev, nxt, ""
 
-    # ---- 渲染（pandoc）
+    # ---- 渲染（renderer_mdit）
     todo = [c for c in chapters if not args.only or c["slug"] in args.only]
     if args.only:
         unknown = [s for s in args.only if s not in by_slug]
