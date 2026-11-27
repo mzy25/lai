@@ -44,6 +44,7 @@ CORE = [
     ("cliche_scan.py", ["--selftest"]),
     ("taste_probe.py", ["--selftest"]),
     ("sub_sup_convert.py", ["--selftest"]),
+    ("html_gap_check.py", ["--selftest"]),
     ("series_check.py", ["--selftest"]),
     ("build_site.py", ["--selftest"]),
 ]

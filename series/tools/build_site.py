@@ -212,6 +212,8 @@ def section_mins_map(md: str, sections: list[dict]) -> dict[str, int]:
     out: dict[str, int] = {}
     for i, sec in enumerate(h2s, start=1):
         body = parts[i] if i < len(parts) else ""
+        # 标题 id 属元数据，不计入阅读字数（M1 起 id 由后处理赋，口径保持一致）
+        body = re.sub(r"\A([^\n]*?)\s*\{#[^}]*\}", r"\1", body, count=1)
         out[sec["anchor"]] = max(1, reading_metrics("## " + body)[1])
     return out
 
@@ -963,7 +965,7 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
     out: list[str] = []
     fence = False
     h2i = h3i = 0
-    info: dict = {"h1": "", "h1_markers": [], "sections": []}
+    info: dict = {"h1": "", "h1_markers": [], "sections": [], "anchors": []}
     for ln in lines:
         if _FENCE_RE.match(ln):
             fence = not fence
@@ -980,14 +982,15 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
                 anchor = slug
                 info["h1"] = clean
                 info["h1_markers"] = ms
+                info["anchors"].append(anchor)
                 badges = badge_html(ms)
                 tail = f" {badges}" if badges else ""
                 if "——" in clean:
                     main, sub = clean.split("——", 1)
                     out.append(f'# {main.strip()}{tail} '
-                               f'<span class="h1-sub">—— {sub.strip()}</span> {{#{anchor}}}')
+                               f'<span class="h1-sub">—— {sub.strip()}</span>')
                 else:
-                    out.append(f"{hashes} {clean}{tail} {{#{anchor}}}")
+                    out.append(f"{hashes} {clean}{tail}")
                 continue
             elif len(hashes) == 2:
                 h2i += 1
@@ -995,17 +998,19 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
                 anchor = f"{slug}-s{h2i:02d}"
                 info["sections"].append(
                     {"level": 2, "text": clean, "markers": ms, "anchor": anchor})
+                info["anchors"].append(anchor)
             elif len(hashes) == 3:
                 h3i += 1
                 anchor = f"{slug}-s{h2i:02d}-{h3i}"
                 info["sections"].append(
                     {"level": 3, "text": clean, "markers": ms, "anchor": anchor})
+                info["anchors"].append(anchor)
             else:
                 out.append(ln)
                 continue
             badges = badge_html(ms)
             tail = f" {badges}" if badges else ""
-            out.append(f"{hashes} {clean}{tail} {{#{anchor}}}")
+            out.append(f"{hashes} {clean}{tail}")
             continue
         sm = _SUMMARY_RE.match(ln)
         if sm:
@@ -1022,9 +1027,29 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
 
 # ---------------------------------------------------------------- HTML 后处理层
 
+def assign_heading_ids(html: str, anchors: list[str]) -> str:
+    """标题 id 由构建赋：不依赖任何引擎的标题属性语法（M1 起）。"""
+    idx = 0
+
+    def repl(m: re.Match) -> str:
+        nonlocal idx
+        if idx >= len(anchors):
+            raise RuntimeError("标题数超过锚点表")
+        a = anchors[idx]
+        idx += 1
+        rest = m.group(2) or ""
+        return f'<h{m.group(1)} id="{a}"{rest}>'
+
+    out = re.sub(r"<h([1-6])(\s[^>]*)?>", repl, html)
+    if idx != len(anchors):
+        raise RuntimeError(f"标题锚点未对齐：{idx} != {len(anchors)}")
+    return out
+
+
 def pandoc_html(md: str, cwd: Path) -> str:
     r = subprocess.run(
-        ["pandoc", "-f", "markdown-smart", "-t", "html5", "--wrap=none"],
+        ["pandoc", "-f", "markdown-smart-subscript-superscript-auto_identifiers",
+         "-t", "html5", "--wrap=none"],
         input=md, capture_output=True, text=True, cwd=cwd)
     if r.returncode != 0:
         raise RuntimeError("pandoc 失败：\n" + r.stderr[:2000])
@@ -1471,6 +1496,7 @@ def _run_build(args) -> int:
         ch["title"] = info["h1"]
         ch["h1_markers"] = info["h1_markers"]
         ch["sections"] = info["sections"]
+        ch["anchors"] = info["anchors"]
         ch["sec_mins"] = section_mins_map(processed, info["sections"])
         ch["stats"] = reading_stats(raw)
         ch["mins"] = reading_metrics(raw)[1]
@@ -1541,6 +1567,7 @@ def _run_build(args) -> int:
     for ch in todo:
         slug = ch["slug"]
         html = pandoc_html(ch["md"], SERIES)
+        html = assign_heading_ids(html, ch["anchors"])
         html = prefix_cb(html, slug)
         # 资产链接化必须先于 §N 引用链接化：否则 assets/§N-… 路径里的 §N 先被拆链、
         # 资产正则失配会导致笔记本链断裂。
