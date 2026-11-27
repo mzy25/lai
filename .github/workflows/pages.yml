@@ -16,9 +16,33 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/site-env
+      - name: 构建站点
+        run: python3 series/tools/build_site.py
+      - name: 站点结构/路线/资产门禁
+        run: python3 series/tools/series_check.py
+      - name: 双跑逐字节一致（确定性断言）
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, pathlib, subprocess, sys
+          def digest():
+              h = hashlib.sha256()
+              for f in sorted(pathlib.Path("series/dist").rglob("*")):
+                  if f.is_file():
+                      h.update(str(f.relative_to("series/dist")).encode())
+                      h.update(f.read_bytes())
+              return h.hexdigest()
+          d1 = digest()
+          subprocess.run([sys.executable, "series/tools/build_site.py"], check=True)
+          d2 = digest()
+          print(f"dist digest {d1[:12]} == {d2[:12]}" if d1 == d2 else f"dist digest {d1[:12]} != {d2[:12]}")
+          sys.exit(0 if d1 == d2 else 1)
+          PY
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
@@ -30,7 +54,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
