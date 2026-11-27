@@ -1,4 +1,4 @@
-# AI 系列读物 · v0.4.5
+# AI 系列读物 · v0.4.6
 
 > 31 个阅读单元：开篇 4 节＋第一篇 9 章＋支线导言＋T1–T4＋补页＋第二篇 5 章＋第三篇 5 章＋终篇 2 章。
 
@@ -60,11 +60,11 @@
 ## 构建与门禁
 
 ```bash
+python3 -m pip install -r build/requirements-build.txt
 python3 series/tools/build_site.py
 python3 series/tools/series_check.py
 python3 series/tools/build_readme.py --check
 python3 series/tools/first_use_scan.py --all --ledger-only --strict
-python3 build/check_artifact_fresh.py
 ```
 
 改稿收尾：`python3 series/tools/finish_round.py`；工具索引见

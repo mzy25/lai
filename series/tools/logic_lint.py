@@ -227,7 +227,7 @@ def render_tsv(findings: list[dict]) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("files", nargs="*", help="章文件；省略则需 --series")
-    ap.add_argument("--series", action="store_true", help="扫描全部 30 个单元")
+    ap.add_argument("--series", action="store_true", help="扫描全系列单元")
     ap.add_argument("--format", choices=("md", "tsv", "json"), default="md")
     ap.add_argument("--out", help="写入文件；默认 stdout")
     ap.add_argument("--top", type=int, default=25, help="Markdown 里 L2 最多展示条数")

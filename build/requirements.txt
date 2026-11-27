@@ -1,4 +1,4 @@
-# 本地技能环境（series v1 站点构建本身只需系统 python3 + pandoc + node）
+# 本地配图与长文编辑环境（.venv）；站点构建依赖见 build/requirements-build.txt
 # 配图：numpy / matplotlib / pillow；长文编辑的骨架脚本：markdown-it-py
 numpy
 matplotlib

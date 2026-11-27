@@ -80,10 +80,10 @@
 
 ```bash
 # 全量构建与读者面门禁
+python3 -m pip install -r build/requirements-build.txt
 python3 series/tools/build_site.py
 python3 series/tools/series_check.py
 python3 series/tools/build_readme.py --check
-python3 build/check_artifact_fresh.py
 
 # 改稿收尾（有 edit 档案走档案，无档案走 --ledger-only）
 python3 series/tools/finish_round.py --files "series/§0.3-这套读物怎么用？——标记、环境与工具.md"

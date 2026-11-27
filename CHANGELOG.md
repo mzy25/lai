@@ -2,6 +2,16 @@
 
 本文件记录版本变化与发布过程。README 与正文只保留当前版本内容。
 
+## v0.4.6 — 2026-11-27
+
+### 收尾
+
+- 清理退役工具的最后引用：`series/README.md`（生成器 `build_readme.py`）与
+  `series/tools/README.md` 不再列 `check_artifact_fresh`；构建命令块改列钉版依赖
+  安装（`pip install -r build/requirements-build.txt`）。
+- 帮助与文档串去数字化：`logic_lint`／`residue_scan` 不写死单元数；`套话词表`
+  背景注改“全系列”；`build/requirements.txt` 头注同步（pandoc 已退役）。
+
 ## v0.4.5 — 2026-11-27
 
 ### 维护
