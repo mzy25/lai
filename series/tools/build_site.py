@@ -172,10 +172,15 @@ def norm_structure(text: str) -> str:
     return "\n".join(out)
 
 
-def badge_html(ms: list[str]) -> str:
+def badge_html(ms: list[str], interactive: bool = True) -> str:
+    """读法标记。侧栏用 interactive=False：链接内不得再嵌交互控件（a11y）。"""
+    if interactive:
+        return " ".join(
+            f'<span class="mk mk-{c}" data-marker="{c}" role="button" tabindex="0"'
+            f' title="{MARK_META[c]}（点按看全部标记）">{c}</span>' for c in ms)
     return " ".join(
-        f'<span class="mk mk-{c}" data-marker="{c}" role="button" tabindex="0"'
-        f' title="{MARK_META[c]}（点按看全部标记）">{c}</span>' for c in ms)
+        f'<span class="mk mk-{c}" data-marker="{c}" title="{MARK_META[c]}">{c}</span>'
+        for c in ms)
 
 
 def reading_metrics(md: str) -> tuple[int, int]:
@@ -1016,7 +1021,8 @@ def scan_and_rewrite(raw: str, slug: str) -> tuple[str, dict]:
             head, body, tail = sm.groups()
             clean, ms = strip_marks(body)
             if ms:
-                out.append(f"{head}{clean} {badge_html(ms)}{tail}")
+                # summary 自身可聚焦，标记降为展示型（避免嵌套交互）
+                out.append(f"{head}{clean} {badge_html(ms, interactive=False)}{tail}")
             else:
                 out.append(ln)
             continue
@@ -1341,7 +1347,7 @@ def sidebar_html(chapters: list[dict], parts: list[dict], current: dict | None,
                 cls += " focus"
                 title = "只读所列节"
             tattr = f' title="{H.escape(title, quote=True)}"' if title else ""
-            badges = badge_html(ch.get("h1_markers", []))
+            badges = badge_html(ch.get("h1_markers", []), interactive=False)
             out.append(
                 f'<li class="{cls}" data-slug="{ch["slug"]}"><a href="{ch["slug"]}.html"{tattr}>'
                 f'{H.escape(short_title(ch["title"]))}{badges}</a>')

@@ -45,13 +45,43 @@ def _real_len(s: str) -> int:
     return n
 
 
-def _split_row(line: str) -> list[str]:
-    s = line.strip()
+def _strip_outer_pipes(s: str) -> str:
     if s.startswith("|"):
         s = s[1:]
     if s.endswith("|"):
-        s = s[:-1]
-    return s.split("|")
+        # 末尾竖线前若为奇数个反斜杠，则它是转义字符而非分隔符
+        k = 0
+        j = len(s) - 2
+        while j >= 0 and s[j] == "\\":
+            k += 1
+            j -= 1
+        if k % 2 == 0:
+            s = s[:-1]
+    return s
+
+
+def _split_row(line: str) -> list[str]:
+    r"""按未转义竖线切分（`\|` 属单元格内容，与 GFM/表格解析一致）。"""
+    s = _strip_outer_pipes(line.strip())
+    cells: list[str] = []
+    buf: list[str] = []
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\" and i + 1 < len(s):
+            buf.append(c)
+            buf.append(s[i + 1])
+            i += 2
+            continue
+        if c == "|":
+            cells.append("".join(buf))
+            buf = []
+            i += 1
+            continue
+        buf.append(c)
+        i += 1
+    cells.append("".join(buf))
+    return cells
 
 
 def _table_metrics(src_lines: list[str], token) -> list[float] | None:

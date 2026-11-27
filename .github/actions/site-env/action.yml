@@ -19,11 +19,13 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        python3 - <<'PY'
+        want=$(sed -n 's/^markdown-it-py==//p' build/requirements-build.txt)
+        python3 - "$want" <<'PY'
+        import sys
         import markdown_it
-        v = markdown_it.__version__
-        print("markdown-it-py", v)
-        assert v == "4.2.0", f"期望 4.2.0，实得 {v}"
+        got = markdown_it.__version__
+        print(f"markdown-it-py {got}（要求 {sys.argv[1]}）")
+        assert got == sys.argv[1], f"期望 {sys.argv[1]}，实得 {got}"
         PY
         python3 -V
         node --version
