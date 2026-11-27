@@ -8,3 +8,7 @@ __pycache__/
 
 # Windows 元数据残留
 *:Zone.Identifier
+
+# 发布产物：CI 构建并部署；仅 anchors 漂移快照入库
+dist/*
+!dist/anchors.json

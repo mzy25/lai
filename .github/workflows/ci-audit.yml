@@ -67,16 +67,3 @@ jobs:
         run: python3 series/tools/build_site.py
       - name: 站点结构/路线/资产门禁
         run: python3 series/tools/series_check.py
-      # 与 HEAD 比对：series/dist 逐字节；失败时转成 check-run annotation。
-      - name: 产物新鲜度门禁
-        run: |
-          set +e
-          out=$(python3 build/check_artifact_fresh.py 2>&1)
-          rc=$?
-          printf '%s\n' "$out"
-          if [ "$rc" -ne 0 ]; then
-            printf '%s\n' "$out" | while IFS= read -r line; do
-              [ -n "$line" ] && echo "::error title=freshness::$line"
-            done
-          fi
-          exit "$rc"

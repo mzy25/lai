@@ -2,6 +2,24 @@
 
 本文件记录版本变化与发布过程。README 与正文只保留当前版本内容。
 
+## v0.4.2 — 2026-11-27
+
+### 结构
+
+- `series/dist` 出库：站点改由 CI 从源稿构建并部署；仓库只保留 `series/dist/anchors.json`
+  作为锚点漂移快照。`build/check_artifact_fresh.py` 退役——新鲜度由“部署即构建”
+  结构性保证，发布线不再携带构建产物。
+- 构建环境收编为 `.github/actions/site-env`（Python 3.12＋Node 20＋pandoc 3.1.3，
+  含版本断言）；Pages 工作流内建“双跑逐字节一致”断言，CI 的 artifacts job 降级为
+  PR 构建冒烟。
+- 工具整理：`sync_public_data` 退役（`series/data` 为唯一台账源），收尾链与文档同步；
+  口径统一到 31 单元。
+
+### 构建
+
+- `series/.gitignore` 收编 `dist/*`（仅 `!anchors.json` 例外）；README/AGENTS
+  的仓库结构、构建与提交约定同步。
+
 ## v0.4.1 — 2026-11-25
 
 ### 内容与引文

@@ -20,8 +20,7 @@
 
 **收尾契约**：`finish_round.py` 是批量硬门禁；`unit_closeout.py` 是单章证据，不替代
 全量门禁。`symbol_coverage --strict` 已入 `finish_round`；`cliche_scan`/`taste_probe`
-只定位，不入硬门禁。公开数据 `series/data/` 由 `sync_public_data.py` 维护，本地有
-私有 `series/edit/术语总账.tsv` 时 `finish_round` 会校验同步。行文 pass 在
+只定位，不入硬门禁。公开数据 `series/data/` 是唯一台账源，直接维护；收尾链据此对账。行文 pass 在
 `series-writing`，不在本目录的机械工具里。
 
 **正文审阅工具边界**：`prose_diff`/`section_map`/`coherence_scan`/`answer_mirror_check`/
@@ -70,7 +69,6 @@
 | `cliche_scan.py` | 套话词表扫描（只定位，不判罚） | 测量 |
 | `taste_probe.py` | 品味层探针（S/F/C/Q/B/E 六节） | 测量 |
 | `symbol_coverage.py` | 符号台账对查；`--strict` 有 FAIL 退出 1 | 门禁（收尾链） |
-| `sync_public_data.py` | 从私有 `edit/` 导出公开 `data/`；`--check` 校验是否过期 | 维护（本地） |
 | `apply_edits.py` | 断言式批量落文（锚全过才写） | 手动 |
 | `unit_closeout.py` | 单章收尾取证：first_use／句长／残留／套话／品味；`--card` 加节地图/衔接/答案镜像 | 手动 |
 | `finish_round.py` | 轮次收尾一条龙：改动章 → 总账/规则表 → 符号/表格/残留 → 四仪 → build 双跑；`--no-build` 快速循环 | 收尾链 |
@@ -122,8 +120,7 @@ python3 series/tools/sentence_stats.py "series/§0.3-这套读物怎么用？—
 `--ledger-only`：只对账公开的 `data/术语总账.tsv`，不查加粗术语、幽灵登记与 gloss；
 这些检查需要本地档案，仅在档案存在时启用。
 `finish_round.py` 有本地档案时走档案模式，否则走 `--ledger-only`，并跑一次
-`--all --strict` 的总账硬门禁。公开数据由 `sync_public_data.py` 从私有台账导出，
-本地有 `edit/术语总账.tsv` 时收尾链会顺带校验它是否最新。
+`--all --strict` 的总账硬门禁。公开数据 `series/data/` 即台账源，改完直接跑门禁。
 
 ### 术语扫描契约
 

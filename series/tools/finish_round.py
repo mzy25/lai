@@ -131,13 +131,6 @@ def main() -> int:
              "--ledger-only", "--strict", "--no-context-exempt"])
     check("first_use 规则显式化", r.returncode == 0, last_line(r))
 
-    # 私有 edit 仍在本地时，确认公开 data 是从它导出的最新版本。
-    if (ROOT / "edit" / "术语总账.tsv").is_file():
-        r = run([sys.executable, "tools/sync_public_data.py", "--check"])
-        check("公开数据同步", r.returncode == 0, last_line(r))
-    else:
-        print("  ↷ 无私有 edit 台账：跳过公开数据同步检查")
-
     # 符号台账硬门禁：缺席/越界/孤立重现（--strict 有 FAIL 即 1）
     r = run([sys.executable, "tools/symbol_coverage.py", "--strict"])
     check("symbol_coverage --strict", r.returncode == 0, last_line(r))

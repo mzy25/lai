@@ -1,4 +1,4 @@
-# AI 大模型技术导引（v0.4.1）
+# AI 大模型技术导引（v0.4.2）
 
 > **在线阅读**：<https://mzy25.github.io/lai/> —— 31 个阅读单元（含导言与补页）的 hub、分章阅读、术语总表与路线卡，浏览器打开即读，可离线。
 >
@@ -44,20 +44,19 @@ series/                     # 源稿与构建工具（唯一内容权威）
 ├── style/                  # 写作声音、句长基准、喻体台账、套话词表
 ├── data/                   # 术语/符号/引用规则（公开构建数据）
 ├── tools/                  # build_site / series_check / 行文与路线仪器
-└── dist/                   # ★ 发布产物（GitHub Pages 直接上传此目录）
-build/check_artifact_fresh.py  # 产物新鲜度门禁
+└── dist/                   # 本地构建预览（CI 构建并部署；仅 anchors.json 入库）
+build/                      # 配图与工具依赖清单
 ```
 
 ## 构建
 
-普通阅读不需要构建：`series/dist/` 已随仓库提供。二次开发或校订时：
+普通阅读不需要构建：站点由 CI 从源稿构建并部署到 GitHub Pages。二次开发或校订时，本地构建用于预览：
 
 ```bash
 python3 series/tools/build_site.py       # series/*.md → series/dist/
 python3 series/tools/series_check.py     # 页面/锚点/路线/资产/配图门禁
 python3 series/tools/build_readme.py --check
 python3 series/tools/first_use_scan.py --all --ledger-only --strict  # 术语首现/总账
-python3 build/check_artifact_fresh.py    # 与 HEAD 比对，源稿改了忘重建会报红
 ```
 
 环境要求：
@@ -87,7 +86,7 @@ python3 build/check_artifact_fresh.py    # 与 HEAD 比对，源稿改了忘重�
 
 本仓库全部内容以宽松许可开放，可自由使用、修改、再分发（含商业用途），保留署名/版权声明即可：
 
-- **正文与配图**（`series/` 下 `.md`、`figures/`、`assets/`、`dist/`）：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh-hans)
+- **正文与配图**（`series/` 下 `.md`、`figures/`、`assets/`，以及由其构建的站点）：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh-hans)
 - **构建脚本与代码**（`series/tools/`、`build/`）：MIT
 
 详见 [`LICENSE`](LICENSE)。

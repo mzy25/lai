@@ -1,5 +1,4 @@
-# 公开术语数据：由私有 series/edit/术语总账.tsv 导出；备注已清洗。
-# 只读；更新私有台账后运行 series/tools/sync_public_data.py。
+# 公开术语数据（唯一台账源）：直接维护；改后跑 first_use_scan --all --ledger-only --strict。
 名词	首现章	备注
 训练	§0.1	工作定义：调模型的参数
 AI	§0.1	要动脑子的活
