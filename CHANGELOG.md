@@ -2,6 +2,30 @@
 
 本文件记录版本变化与发布过程。README 与正文只保留当前版本内容。
 
+## v0.4.3 — 2026-11-27
+
+### 渲染引擎
+
+- md→HTML 从 pandoc 切换为 markdown-it-py（`series/tools/renderer_mdit.py`）：
+  CommonMark＋GFM 管道表＋raw HTML 直通，构建依赖改 pip 钉版（`build/requirements-build.txt`）。
+  pandoc 从构建链与 CI 退役；本机用 `.venv/bin/python` 构建。
+- 双引擎对拍通过后切换：31 单元＋2 个供给页在切换前逐字节零差异；`render_equiv.py`
+  与 `render_golden/` 黄金夹具成为常驻回归。
+- HTML 形状归一化（两引擎共同口径，渲染效果不变）：`<summary>` 内容内联、
+  表宽交给 CSS（去 pandoc 内联宽度）、去 pandoc 附带的文本呈现变体符。
+
+### 语料与管线
+
+- 语料中立化：上下标直出 `<sub>/<sup>`（删转义层与 pandoc 扩展语法）；标题 id 改由
+  构建后处理赋；§11 三处 `</details>` 补空行；新增 `html_gap_check` 门禁并进 CI。
+- 节阅读分钟口径修正：标题 id 不再计入估算字数（3 处 −1 分钟）。
+
+### 构建与工具
+
+- CI 构建环境改为 Python＋Node＋pip 钉版依赖；结构 job 增装构建依赖以跑渲染回归。
+- `series/tools/README.md` 收录渲染层与回归工具；旧五篇 DOCX 流水线不再属于构建链
+  （历史文档留在 `references/archive/legacy-docx/`）。
+
 ## v0.4.2 — 2026-11-27
 
 ### 结构

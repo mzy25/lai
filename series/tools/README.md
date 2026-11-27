@@ -47,6 +47,8 @@
 | `route_js_check.py` | 路线层 JavaScript 与视图表对拍 | 门禁（本地） |
 | `table_check.py` | Markdown 表格结构检查 | 门禁（本地＋CI） |
 | `html_gap_check.py` | 块级 HTML 与 markdown 内容必须空行分隔（CommonMark 对齐） | 门禁（结构＋CI） |
+| `renderer_mdit.py` | markdown-it-py 渲染层（站点 HTML 形状契约；md→HTML 唯一引擎） | 构建链 |
+| `render_equiv.py` | 黄金夹具回归：`render_golden/` 逐对重渲染比对 | 门禁（selftest） |
 | `sentence_stats.py` | 句长／破折号密度测量；`--update` 刷基准表并写入变更史（题名取自 H1） | 测量 |
 | `selftest_tools.py` | 工具自检总入口；默认跑新审阅工具，`--all` 追加核心工具 | 维护 |
 | `prose_common.py` | 正文审阅共用切分/测量模块（被 section_map/coherence_scan/answer_mirror_check/prose_diff 引用） | 模块 |

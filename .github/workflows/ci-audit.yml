@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: 安装构建依赖（钉版）
+        run: python3 -m pip install --quiet -r build/requirements-build.txt
       - name: 环境读数（诊断用）
         run: |
           python3 -V

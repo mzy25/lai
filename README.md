@@ -1,4 +1,4 @@
-# AI 大模型技术导引（v0.4.2）
+# AI 大模型技术导引（v0.4.3）
 
 > **在线阅读**：<https://mzy25.github.io/lai/> —— 31 个阅读单元（含导言与补页）的 hub、分章阅读、术语总表与路线卡，浏览器打开即读，可离线。
 >
@@ -62,7 +62,7 @@ python3 series/tools/first_use_scan.py --all --ledger-only --strict  # 术语首
 环境要求：
 
 - **Python 3.10+**（构建脚本使用新式类型标注）
-- **pandoc**（HTML 构建；开发与 CI 使用 3.1.3）
+- **Python 构建依赖**（`pip install -r build/requirements-build.txt`：markdown-it-py 钉版）
 - **Node.js**（`series_check` 的路线层 JS 对拍）
 - 配图另需 **matplotlib/numpy** 与中文字体（Noto Sans CJK）；配图已入库，普通构建不需要重生成
 

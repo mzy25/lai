@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""series 阅读版 HTML 构建（从 0 新建；仅 stdlib ＋ pandoc ＋ series/tools/sub_sup_convert）。
+"""series 阅读版 HTML 构建（从 0 新建；仅 stdlib ＋ markdown-it-py ＋ series/tools/sub_sup_convert）。
 
 设计：
 - 页面模型：Hub（index）＋按章分页（<slug>.html）＋资产索引（assets.html）
 - 单章管线：读源稿 → sub_sup 字形转换 → 结构规范化 → 标记（▽○◌◇）预扫
-  （剥离字形→徽章 span＋锚点注入 {#slug-sNN}）→ pandoc(markdown-smart) →
+  （剥离字形→徽章 span＋标题 id 后处理）→ renderer_mdit（markdown-it-py）→
   cb 行号 id 加章前缀 → §N 素文链接化（章级，精确匹配）→ assets 路径链接化
   → 章尾 prev/next＋资产卡 → 页壳装配。
 - 锚点＝序号制稳定锚（ch<slug>-sNN[-M]）：文本编辑不动锚，增删节触发
@@ -35,7 +35,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -841,7 +840,7 @@ def terms_content(chapters: list[dict]) -> str:
 
 def env_content(chapters: list[dict], ref_map: dict[str, str]) -> str:
     md = (SERIES / "supply" / "环境指南.md").read_text(encoding="utf-8")
-    html = pandoc_html(md, SERIES)
+    html = render_md(md)
     html, _ = linkify_assets(html)
     html, _ = linkify_refs(html, "env", ref_map)
     rows = []
@@ -859,7 +858,7 @@ def env_content(chapters: list[dict], ref_map: dict[str, str]) -> str:
 
 def selftest_content(ref_map: dict[str, str]) -> str:
     md = (SERIES / "supply" / "数学自修自测.md").read_text(encoding="utf-8")
-    html = pandoc_html(md, SERIES)
+    html = render_md(md)
     html, _ = linkify_refs(html, "selftest", ref_map)
     opts = "".join(f'<option value="{i}">{i}</option>' for i in range(0, 11))
     widget = ('<div class="selftest-save">'
@@ -1046,14 +1045,10 @@ def assign_heading_ids(html: str, anchors: list[str]) -> str:
     return out
 
 
-def pandoc_html(md: str, cwd: Path) -> str:
-    r = subprocess.run(
-        ["pandoc", "-f", "markdown-smart-subscript-superscript-auto_identifiers",
-         "-t", "html5", "--wrap=none"],
-        input=md, capture_output=True, text=True, cwd=cwd)
-    if r.returncode != 0:
-        raise RuntimeError("pandoc 失败：\n" + r.stderr[:2000])
-    return r.stdout
+def render_md(md: str) -> str:
+    """md→HTML：唯一引擎 renderer_mdit（M3 起；pandoc 已退役）。"""
+    import renderer_mdit
+    return renderer_mdit.render(md)
 
 
 def prefix_cb(html: str, slug: str) -> str:
@@ -1566,7 +1561,7 @@ def _run_build(args) -> int:
 
     for ch in todo:
         slug = ch["slug"]
-        html = pandoc_html(ch["md"], SERIES)
+        html = render_md(ch["md"])
         html = assign_heading_ids(html, ch["anchors"])
         html = prefix_cb(html, slug)
         # 资产链接化必须先于 §N 引用链接化：否则 assets/§N-… 路径里的 §N 先被拆链、

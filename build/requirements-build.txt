@@ -1,0 +1,3 @@
+# 站点构建（md→HTML）依赖：纯 Python、可钉版、跨机确定
+markdown-it-py==4.2.0
+mdurl==0.1.2
